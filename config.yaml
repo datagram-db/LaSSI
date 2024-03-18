@@ -1,0 +1,20 @@
+stanford_nlp_host: "localhost"
+stanford_nlp_port: 9999
+iterations: 100
+do_news_parser: yes
+do_crawl_from_csv: yes
+do_final_gsm_stanza_db: yes
+news_parser:
+ RSSFeedCsv: "newcastle_slim.txt"
+ back_archive: yes
+ min_date: "2024-03-17"
+ threads: 8
+ shuffle: yes
+ reverse: yes
+ no_ssl: yes
+ store_json: yes
+ db_ph1: 'db.json'
+generate_final_db:
+  db_ph2: 'final_db.json'
+crawl_to_gsm:
+  stanza_db: 'final_gsm_stanza_db'

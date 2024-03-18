@@ -1,0 +1,4 @@
+www.chroniclelive.co.uk/?service=rss,ncl_chron_$day.csv
+https://www.nexus.org.uk/news.xml,nexus_$day.csv
+https://www.ncl.ac.uk/data/mobile/rss/pressoffice/pressnews/index.xml,uni_$day.csv
+https://www.theguardian.com/uk/newcastle/rss,guardian_$day.csv

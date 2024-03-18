@@ -1,0 +1,2 @@
+https://www.ncl.ac.uk/data/mobile/rss/pressoffice/pressnews/index.xml,uni_$day.csv
+https://www.theguardian.com/uk/newcastle/rss,guardian_$day.csv
