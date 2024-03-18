@@ -1,0 +1,9 @@
+[submodule "submodules/news-crawler"]
+	path = submodules/news-crawler
+	url = git@github.com:datagram-db/news-crawler.git
+[submodule "stanfordnlp_dg_server"]
+	path = submodules/stanfordnlp_dg_server
+	url = git@github.com:datagram-db/stanfordnlp_dg_server.git
+[submodule "submodules/datagram-db"]
+	path = submodules/datagram-db
+	url = https://github.com/datagram-db/datagram-db
