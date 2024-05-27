@@ -1,5 +1,5 @@
 stanford_nlp_host: "localhost"
-stanford_nlp_port: 9999
+stanford_nlp_port: 9998
 iterations: 100
 do_news_parser: yes
 do_crawl_from_csv: yes
