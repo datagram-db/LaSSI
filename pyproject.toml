@@ -15,7 +15,7 @@ dynamic = ["version", "description"]
 dependencies = [
     "requests==2.31.0",
     "psycopg2-binary==2.9.9",
-    "psycopg2",
+    "psycopg2==2.9.9",
     "stanza==1.8.1",
     "news-please==1.5.35",
     "newspaper3k==0.2.8",
@@ -28,12 +28,16 @@ dependencies = [
     "lxml==4.9.3",
     "colorama==0.4.6",
     "pytz==2023.3.post1",
-    "plotille",
+    "plotille==5.0.0",
     "urllib3==2.0.7",
     "StanfordNLPExtractor @ git+https://github.com/datagram-db/stanfordnlp_dg_server.git",
     "PyDatagramDB @ git+https://github.com/datagram-db/datagram-db.git#egg=PyDatagramDB&subdirectory=DatagramDB",
-    "rdflib",
-    "pandas==2.1.4"
+    "rdflib==7.0.0",
+    "pandas==2.1.4",
+    "dacite==1.1.4",
+    "websockets==13.0.1",
+    "fastapi==0.115.0",
+    "uvicorn==0.30.6"
 ]
 
 #[tool.scikit-build]

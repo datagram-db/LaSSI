@@ -11,6 +11,10 @@ from collections import OrderedDict
 
 import psycopg2
 from psycopg2 import Error
+
+from LaSSI.files.ReadFileContent import ReadFileContent
+
+
 class FuzzyStringMatchDatabase:
     _instance = None
     def create(self, tablename, file):
@@ -31,7 +35,8 @@ class FuzzyStringMatchDatabase:
                 # self.connection.commit()
                 cursor2.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
                 # self.connection.commit()
-                with open(file, 'r') as f:
+                from LaSSI.files.ReadFileContent import ReadFileContent
+                with ReadFileContent(file) as f:
                     # Notice that we don't need the csv module.
                     next(f)  # Skip the header row.
                     cursor2.copy_from(f, tablename,sep='\t')
@@ -106,9 +111,14 @@ class DBFuzzyStringMatching:
 
 
 if __name__ == "__main__":
-    c = FuzzyStringMatchDatabase.instance()
-    c.init("conceptnet")
-    print(c.morphosyntax("conceptnet", "traffic", "ed"))
+    with ReadFileContent("https://osf.io/download/a6yn8/") as r:
+        next(r)
+        for x in r:
+            print(x)
+
+    # c = FuzzyStringMatchDatabase.instance()
+    # c.init("conceptnet")
+    # print(c.morphosyntax("conceptnet", "traffic", "ed"))
     # c.create("conceptnet", "/home/giacomo/projects/similarity-pipeline/submodules/news-crawler/mini.h5_sql_input.txt")
     # c.create("geonames", "/home/giacomo/projects/similarity-pipeline/submodules/stanfordnlp_dg_server/allCountries.txt_sql_input.txt")
     # print(c.similarity("conceptnet", "giacomo", 20, .8))

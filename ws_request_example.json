@@ -1,0 +1,5 @@
+{
+"dataset_name": "BillyBallo",
+  "dataset_request": ["The cat eats the mouse", "Mice eat cats"],
+"sentence_representation": 3
+}

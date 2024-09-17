@@ -41,6 +41,14 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
     type: str
     confidence: float
 
+@dataclass(order=True, frozen=True, eq=True)
+class SingletonProperties():
+    begin: str
+    end: str
+    pos: str
+    specification: str = None
+    number: str = None
+    extra: str = None
 
 def replaceNamed(entity: Singleton, s: str) -> Singleton:
     return Singleton(id=entity.id,

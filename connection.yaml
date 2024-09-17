@@ -1,0 +1,8 @@
+db: conceptnet
+fuzzy_dbs:
+  conceptnet: https://osf.io/download/a6yn8/
+  geonames: https://osf.io/download/dprm3
+host: localhost
+port: 5432
+pw: omocaig
+uname: giacomo
