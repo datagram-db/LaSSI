@@ -1,0 +1,1428 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix parmenides: <https://lo-ds.github.io/parmenides#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+parmenides:Adverb a owl:Class ;
+    rdfs:subClassOf parmenides:GrammaticalFunction .
+
+parmenides:IntransitiveVerb a owl:Class ;
+    rdfs:subClassOf parmenides:Verb .
+
+parmenides:TransitiveVerb a owl:Class ;
+    rdfs:subClassOf parmenides:Verb .
+
+parmenides:accept a parmenides:TransitiveVerb ;
+    rdfs:label "accept"^^xsd:string .
+
+parmenides:acknowledge a parmenides:TransitiveVerb ;
+    rdfs:label "acknowledge"^^xsd:string .
+
+parmenides:acl a parmenides:dependency ;
+    rdfs:label "acl"^^xsd:string .
+
+parmenides:acl_relcl a parmenides:dependency ;
+    rdfs:label "acl_relcl"^^xsd:string .
+
+parmenides:admit a parmenides:TransitiveVerb ;
+    rdfs:label "admit"^^xsd:string .
+
+parmenides:advcl a parmenides:dependency ;
+    rdfs:label "advcl"^^xsd:string .
+
+parmenides:advmod a parmenides:dependency ;
+    rdfs:label "advmod"^^xsd:string .
+
+parmenides:aggravate a parmenides:TransitiveVerb ;
+    rdfs:label "aggravate"^^xsd:string .
+
+parmenides:amod a parmenides:dependency ;
+    rdfs:label "amod"^^xsd:string .
+
+parmenides:answer a parmenides:TransitiveVerb ;
+    rdfs:label "answer"^^xsd:string .
+
+parmenides:appos a parmenides:dependency ;
+    rdfs:label "appos"^^xsd:string .
+
+parmenides:arrest a parmenides:TransitiveVerb ;
+    rdfs:label "arrest"^^xsd:string .
+
+parmenides:ask a parmenides:TransitiveVerb ;
+    rdfs:label "ask"^^xsd:string .
+
+parmenides:aux a parmenides:dependency ;
+    rdfs:label "aux"^^xsd:string .
+
+parmenides:auxpass a parmenides:dependency ;
+    rdfs:label "auxpass"^^xsd:string .
+
+parmenides:avoid a parmenides:TransitiveVerb ;
+    rdfs:label "avoid"^^xsd:string .
+
+parmenides:bash a parmenides:TransitiveVerb ;
+    rdfs:label "bash"^^xsd:string .
+
+parmenides:beat a parmenides:TransitiveVerb ;
+    rdfs:label "beat"^^xsd:string .
+
+parmenides:bend a parmenides:TransitiveVerb ;
+    rdfs:label "bend"^^xsd:string .
+
+parmenides:bite a parmenides:TransitiveVerb ;
+    rdfs:label "bite"^^xsd:string .
+
+parmenides:bless a parmenides:TransitiveVerb ;
+    rdfs:label "bless"^^xsd:string .
+
+parmenides:blow a parmenides:TransitiveVerb ;
+    rdfs:label "blow"^^xsd:string .
+
+parmenides:bother a parmenides:TransitiveVerb ;
+    rdfs:label "bother"^^xsd:string .
+
+parmenides:break a parmenides:TransitiveVerb ;
+    rdfs:label "break"^^xsd:string .
+
+parmenides:brush a parmenides:TransitiveVerb ;
+    rdfs:label "brush"^^xsd:string .
+
+parmenides:build a parmenides:TransitiveVerb ;
+    rdfs:label "build"^^xsd:string .
+
+parmenides:bump a parmenides:TransitiveVerb ;
+    rdfs:label "bump"^^xsd:string .
+
+parmenides:burn a parmenides:TransitiveVerb ;
+    rdfs:label "burn"^^xsd:string .
+
+parmenides:call a parmenides:TransitiveVerb ;
+    rdfs:label "call"^^xsd:string .
+
+parmenides:cancel a parmenides:TransitiveVerb ;
+    rdfs:label "cancel"^^xsd:string .
+
+parmenides:capture a parmenides:TransitiveVerb ;
+    rdfs:label "capture"^^xsd:string .
+
+parmenides:carry a parmenides:TransitiveVerb ;
+    rdfs:label "carry"^^xsd:string .
+
+parmenides:case a parmenides:dependency ;
+    rdfs:label "case"^^xsd:string .
+
+parmenides:catch a parmenides:TransitiveVerb ;
+    rdfs:label "catch"^^xsd:string .
+
+parmenides:cc a parmenides:dependency ;
+    rdfs:label "cc"^^xsd:string .
+
+parmenides:ccomp a parmenides:dependency ;
+    rdfs:label "ccomp"^^xsd:string .
+
+parmenides:change a parmenides:TransitiveVerb ;
+    rdfs:label "change"^^xsd:string .
+
+parmenides:charge a parmenides:TransitiveVerb ;
+    rdfs:label "charge"^^xsd:string .
+
+parmenides:chase a parmenides:TransitiveVerb ;
+    rdfs:label "chase"^^xsd:string .
+
+parmenides:chastise a parmenides:TransitiveVerb ;
+    rdfs:label "chastise"^^xsd:string .
+
+parmenides:check a parmenides:TransitiveVerb ;
+    rdfs:label "check"^^xsd:string .
+
+parmenides:chill a parmenides:TransitiveVerb ;
+    rdfs:label "chill"^^xsd:string .
+
+parmenides:clean a parmenides:TransitiveVerb ;
+    rdfs:label "clean"^^xsd:string .
+
+parmenides:close a parmenides:TransitiveVerb ;
+    rdfs:label "close"^^xsd:string .
+
+parmenides:clutch a parmenides:TransitiveVerb ;
+    rdfs:label "clutch"^^xsd:string .
+
+parmenides:collect a parmenides:TransitiveVerb ;
+    rdfs:label "collect"^^xsd:string .
+
+parmenides:comfort a parmenides:TransitiveVerb ;
+    rdfs:label "comfort"^^xsd:string .
+
+parmenides:composite_form_with a owl:ObjectProperty .
+
+parmenides:compound a parmenides:Rejectable,
+        parmenides:dependency ;
+    rdfs:label "compound"^^xsd:string .
+
+parmenides:compound%3Aprt a parmenides:dependency ;
+    rdfs:label "compound:prt"^^xsd:string .
+
+parmenides:confuse a parmenides:TransitiveVerb ;
+    rdfs:label "confuse"^^xsd:string .
+
+parmenides:conj a parmenides:dependency ;
+    rdfs:label "conj"^^xsd:string .
+
+parmenides:consume a parmenides:TransitiveVerb ;
+    rdfs:label "consume"^^xsd:string .
+
+parmenides:contradict a parmenides:TransitiveVerb ;
+    rdfs:label "contradict"^^xsd:string .
+
+parmenides:convert a parmenides:TransitiveVerb ;
+    rdfs:label "convert"^^xsd:string .
+
+parmenides:cop a parmenides:dependency ;
+    rdfs:label "cop"^^xsd:string .
+
+parmenides:copy a parmenides:TransitiveVerb ;
+    rdfs:label "copy"^^xsd:string .
+
+parmenides:correct a parmenides:TransitiveVerb ;
+    rdfs:label "correct"^^xsd:string .
+
+parmenides:cover a parmenides:TransitiveVerb ;
+    rdfs:label "cover"^^xsd:string .
+
+parmenides:crack a parmenides:TransitiveVerb ;
+    rdfs:label "crack"^^xsd:string .
+
+parmenides:cross a parmenides:TransitiveVerb ;
+    rdfs:label "cross"^^xsd:string .
+
+parmenides:csubj a parmenides:dependency ;
+    rdfs:label "csubj"^^xsd:string .
+
+parmenides:csubjpass a parmenides:dependency ;
+    rdfs:label "csubjpass"^^xsd:string .
+
+parmenides:cut a parmenides:TransitiveVerb ;
+    rdfs:label "cut"^^xsd:string .
+
+parmenides:d_object a owl:ObjectProperty .
+
+parmenides:dampen a parmenides:TransitiveVerb ;
+    rdfs:label "dampen"^^xsd:string .
+
+parmenides:dash a parmenides:TransitiveVerb ;
+    rdfs:label "dash"^^xsd:string .
+
+parmenides:daze a parmenides:TransitiveVerb ;
+    rdfs:label "daze"^^xsd:string .
+
+parmenides:dazzle a parmenides:TransitiveVerb ;
+    rdfs:label "dazzle"^^xsd:string .
+
+parmenides:deceive a parmenides:TransitiveVerb ;
+    rdfs:label "deceive"^^xsd:string .
+
+parmenides:define a parmenides:TransitiveVerb ;
+    rdfs:label "define"^^xsd:string .
+
+parmenides:delay a parmenides:TransitiveVerb ;
+    rdfs:label "delay"^^xsd:string .
+
+parmenides:deny a parmenides:TransitiveVerb ;
+    rdfs:label "deny"^^xsd:string .
+
+parmenides:dep a parmenides:dependency ;
+    rdfs:label "dep"^^xsd:string .
+
+parmenides:derail a parmenides:TransitiveVerb ;
+    rdfs:label "derail"^^xsd:string .
+
+parmenides:describe a parmenides:TransitiveVerb ;
+    rdfs:label "describe"^^xsd:string .
+
+parmenides:destroy a parmenides:TransitiveVerb ;
+    rdfs:label "destroy"^^xsd:string .
+
+parmenides:det a parmenides:dependency ;
+    rdfs:label "det"^^xsd:string .
+
+parmenides:det_predet a parmenides:dependency ;
+    rdfs:label "det_predet"^^xsd:string .
+
+parmenides:devastate a parmenides:TransitiveVerb ;
+    rdfs:label "devastate"^^xsd:string .
+
+parmenides:dig a parmenides:TransitiveVerb ;
+    rdfs:label "dig"^^xsd:string .
+
+parmenides:discourse a parmenides:dependency ;
+    rdfs:label "discourse"^^xsd:string .
+
+parmenides:discover a parmenides:TransitiveVerb ;
+    rdfs:label "discover"^^xsd:string .
+
+parmenides:discuss a parmenides:TransitiveVerb ;
+    rdfs:label "discuss"^^xsd:string .
+
+parmenides:dislocated a parmenides:dependency ;
+    rdfs:label "dislocated"^^xsd:string .
+
+parmenides:dismiss a parmenides:TransitiveVerb ;
+    rdfs:label "dismiss"^^xsd:string .
+
+parmenides:distinguish a parmenides:TransitiveVerb ;
+    rdfs:label "distinguish"^^xsd:string .
+
+parmenides:disturb a parmenides:TransitiveVerb ;
+    rdfs:label "disturb"^^xsd:string .
+
+parmenides:dobj a parmenides:dependency ;
+    rdfs:label "dobj"^^xsd:string .
+
+parmenides:drag a parmenides:TransitiveVerb ;
+    rdfs:label "drag"^^xsd:string .
+
+parmenides:draw a parmenides:TransitiveVerb ;
+    rdfs:label "draw"^^xsd:string .
+
+parmenides:dress a parmenides:TransitiveVerb ;
+    rdfs:label "dress"^^xsd:string .
+
+parmenides:drink a parmenides:TransitiveVerb ;
+    rdfs:label "drink"^^xsd:string .
+
+parmenides:drive a parmenides:TransitiveVerb ;
+    rdfs:label "drive"^^xsd:string .
+
+parmenides:drop a parmenides:TransitiveVerb ;
+    rdfs:label "drop"^^xsd:string .
+
+parmenides:drown a parmenides:TransitiveVerb ;
+    rdfs:label "drown"^^xsd:string .
+
+parmenides:dry a parmenides:TransitiveVerb ;
+    rdfs:label "dry"^^xsd:string .
+
+parmenides:dunk a parmenides:TransitiveVerb ;
+    rdfs:label "dunk"^^xsd:string .
+
+parmenides:eat a parmenides:TransitiveVerb ;
+    rdfs:label "eat"^^xsd:string .
+
+parmenides:edify a parmenides:TransitiveVerb ;
+    rdfs:label "edify"^^xsd:string .
+
+parmenides:eject a parmenides:TransitiveVerb ;
+    rdfs:label "eject"^^xsd:string .
+
+parmenides:embarrass a parmenides:TransitiveVerb ;
+    rdfs:label "embarrass"^^xsd:string .
+
+parmenides:embrace a parmenides:TransitiveVerb ;
+    rdfs:label "embrace"^^xsd:string .
+
+parmenides:empower a parmenides:TransitiveVerb ;
+    rdfs:label "empower"^^xsd:string .
+
+parmenides:enable a parmenides:TransitiveVerb ;
+    rdfs:label "enable"^^xsd:string .
+
+parmenides:enclose a parmenides:TransitiveVerb ;
+    rdfs:label "enclose"^^xsd:string .
+
+parmenides:encourage a parmenides:TransitiveVerb ;
+    rdfs:label "encourage"^^xsd:string .
+
+parmenides:enjoy a parmenides:TransitiveVerb ;
+    rdfs:label "enjoy"^^xsd:string .
+
+parmenides:enlighten a parmenides:TransitiveVerb ;
+    rdfs:label "enlighten"^^xsd:string .
+
+parmenides:enlist a parmenides:TransitiveVerb ;
+    rdfs:label "enlist"^^xsd:string .
+
+parmenides:entertain a parmenides:TransitiveVerb ;
+    rdfs:label "entertain"^^xsd:string .
+
+parmenides:escort a parmenides:TransitiveVerb ;
+    rdfs:label "escort"^^xsd:string .
+
+parmenides:examine a parmenides:TransitiveVerb ;
+    rdfs:label "examine"^^xsd:string .
+
+parmenides:excite a parmenides:TransitiveVerb ;
+    rdfs:label "excite"^^xsd:string .
+
+parmenides:excuse a parmenides:TransitiveVerb ;
+    rdfs:label "excuse"^^xsd:string .
+
+parmenides:execute a parmenides:TransitiveVerb ;
+    rdfs:label "execute"^^xsd:string .
+
+parmenides:expl a parmenides:dependency ;
+    rdfs:label "expl"^^xsd:string .
+
+parmenides:fascinate a parmenides:TransitiveVerb ;
+    rdfs:label "fascinate"^^xsd:string .
+
+parmenides:feed a parmenides:TransitiveVerb ;
+    rdfs:label "feed"^^xsd:string .
+
+parmenides:feel a parmenides:TransitiveVerb ;
+    rdfs:label "feel"^^xsd:string .
+
+parmenides:fight a parmenides:TransitiveVerb ;
+    rdfs:label "fight"^^xsd:string .
+
+parmenides:file a parmenides:TransitiveVerb ;
+    rdfs:label "file"^^xsd:string .
+
+parmenides:fill a parmenides:TransitiveVerb ;
+    rdfs:label "fill"^^xsd:string .
+
+parmenides:find a parmenides:TransitiveVerb ;
+    rdfs:label "find"^^xsd:string .
+
+parmenides:finish a parmenides:TransitiveVerb ;
+    rdfs:label "finish"^^xsd:string .
+
+parmenides:fire a parmenides:TransitiveVerb ;
+    rdfs:label "fire"^^xsd:string .
+
+parmenides:fix a parmenides:TransitiveVerb ;
+    rdfs:label "fix"^^xsd:string .
+
+parmenides:flick a parmenides:TransitiveVerb ;
+    rdfs:label "flick"^^xsd:string .
+
+parmenides:flip a parmenides:TransitiveVerb ;
+    rdfs:label "flip"^^xsd:string .
+
+<https://lo-ds.github.io/parmenides#flow+fast> a parmenides:CompoundForm ;
+    rdfs:label "flow fast"^^xsd:string ;
+    parmenides:entryPoint parmenides:flow%23v ;
+    parmenides:hasAdjective parmenides:fast .
+
+parmenides:follow a parmenides:TransitiveVerb ;
+    rdfs:label "follow"^^xsd:string .
+
+parmenides:force a parmenides:TransitiveVerb ;
+    rdfs:label "force"^^xsd:string .
+
+parmenides:foreign a parmenides:dependency ;
+    rdfs:label "foreign"^^xsd:string .
+
+parmenides:forget a parmenides:TransitiveVerb ;
+    rdfs:label "forget"^^xsd:string .
+
+parmenides:forgive a parmenides:TransitiveVerb ;
+    rdfs:label "forgive"^^xsd:string .
+
+parmenides:freeze a parmenides:TransitiveVerb ;
+    rdfs:label "freeze"^^xsd:string .
+
+parmenides:frighten a parmenides:TransitiveVerb ;
+    rdfs:label "frighten"^^xsd:string .
+
+parmenides:fry a parmenides:TransitiveVerb ;
+    rdfs:label "fry"^^xsd:string .
+
+parmenides:furnish a parmenides:TransitiveVerb ;
+    rdfs:label "furnish"^^xsd:string .
+
+parmenides:gather a parmenides:TransitiveVerb ;
+    rdfs:label "gather"^^xsd:string .
+
+parmenides:get a parmenides:TransitiveVerb ;
+    rdfs:label "get"^^xsd:string .
+
+parmenides:goeswith a parmenides:dependency ;
+    rdfs:label "goeswith"^^xsd:string .
+
+parmenides:grab a parmenides:TransitiveVerb ;
+    rdfs:label "grab"^^xsd:string .
+
+parmenides:grasp a parmenides:TransitiveVerb ;
+    rdfs:label "grasp"^^xsd:string .
+
+parmenides:grease a parmenides:TransitiveVerb ;
+    rdfs:label "grease"^^xsd:string .
+
+parmenides:grip a parmenides:TransitiveVerb ;
+    rdfs:label "grip"^^xsd:string .
+
+parmenides:handle a parmenides:TransitiveVerb ;
+    rdfs:label "handle"^^xsd:string .
+
+parmenides:hang a parmenides:TransitiveVerb ;
+    rdfs:label "hang"^^xsd:string .
+
+parmenides:hasAdjective a owl:ObjectProperty .
+
+parmenides:have a parmenides:TransitiveVerb ;
+    rdfs:label "have"^^xsd:string .
+
+parmenides:head a parmenides:TransitiveVerb ;
+    rdfs:label "head"^^xsd:string .
+
+parmenides:help a parmenides:TransitiveVerb ;
+    rdfs:label "help"^^xsd:string .
+
+parmenides:hide a parmenides:TransitiveVerb ;
+    rdfs:label "hide"^^xsd:string .
+
+parmenides:highlight a parmenides:TransitiveVerb ;
+    rdfs:label "highlight"^^xsd:string .
+
+parmenides:hit a parmenides:TransitiveVerb ;
+    rdfs:label "hit"^^xsd:string .
+
+parmenides:hoist a parmenides:TransitiveVerb ;
+    rdfs:label "hoist"^^xsd:string .
+
+parmenides:hold a parmenides:TransitiveVerb ;
+    rdfs:label "hold"^^xsd:string .
+
+parmenides:honour a parmenides:TransitiveVerb ;
+    rdfs:label "honour"^^xsd:string .
+
+parmenides:hug a parmenides:TransitiveVerb ;
+    rdfs:label "hug"^^xsd:string .
+
+parmenides:hump a parmenides:TransitiveVerb ;
+    rdfs:label "hump"^^xsd:string .
+
+parmenides:hurry a parmenides:TransitiveVerb ;
+    rdfs:label "hurry"^^xsd:string .
+
+parmenides:hurt a parmenides:TransitiveVerb ;
+    rdfs:label "hurt"^^xsd:string .
+
+parmenides:imitate a parmenides:TransitiveVerb ;
+    rdfs:label "imitate"^^xsd:string .
+
+parmenides:impress a parmenides:TransitiveVerb ;
+    rdfs:label "impress"^^xsd:string .
+
+parmenides:include a parmenides:TransitiveVerb ;
+    rdfs:label "include"^^xsd:string .
+
+parmenides:indulge a parmenides:TransitiveVerb ;
+    rdfs:label "indulge"^^xsd:string .
+
+parmenides:inform a parmenides:TransitiveVerb ;
+    rdfs:label "inform"^^xsd:string .
+
+parmenides:insert a parmenides:TransitiveVerb ;
+    rdfs:label "insert"^^xsd:string .
+
+parmenides:inspect a parmenides:TransitiveVerb ;
+    rdfs:label "inspect"^^xsd:string .
+
+parmenides:inspire a parmenides:TransitiveVerb ;
+    rdfs:label "inspire"^^xsd:string .
+
+parmenides:insure a parmenides:TransitiveVerb ;
+    rdfs:label "insure"^^xsd:string .
+
+parmenides:interest a parmenides:TransitiveVerb ;
+    rdfs:label "interest"^^xsd:string .
+
+parmenides:interrupt a parmenides:TransitiveVerb ;
+    rdfs:label "interrupt"^^xsd:string .
+
+parmenides:interview a parmenides:TransitiveVerb ;
+    rdfs:label "interview"^^xsd:string .
+
+parmenides:intimidate a parmenides:TransitiveVerb ;
+    rdfs:label "intimidate"^^xsd:string .
+
+parmenides:involve a parmenides:TransitiveVerb ;
+    rdfs:label "involve"^^xsd:string .
+
+parmenides:iobj a parmenides:dependency ;
+    rdfs:label "iobj"^^xsd:string .
+
+parmenides:irritate a parmenides:TransitiveVerb ;
+    rdfs:label "irritate"^^xsd:string .
+
+parmenides:join a parmenides:TransitiveVerb ;
+    rdfs:label "join"^^xsd:string .
+
+parmenides:jolt a parmenides:TransitiveVerb ;
+    rdfs:label "jolt"^^xsd:string .
+
+parmenides:judge a parmenides:TransitiveVerb ;
+    rdfs:label "judge"^^xsd:string .
+
+parmenides:keep a parmenides:TransitiveVerb ;
+    rdfs:label "keep"^^xsd:string .
+
+parmenides:key a parmenides:TransitiveVerb ;
+    rdfs:label "key"^^xsd:string .
+
+parmenides:kick a parmenides:TransitiveVerb ;
+    rdfs:label "kick"^^xsd:string .
+
+parmenides:kill a parmenides:TransitiveVerb ;
+    rdfs:label "kill"^^xsd:string .
+
+parmenides:kiss a parmenides:TransitiveVerb ;
+    rdfs:label "kiss"^^xsd:string .
+
+parmenides:knock a parmenides:TransitiveVerb ;
+    rdfs:label "knock"^^xsd:string .
+
+parmenides:lag a parmenides:TransitiveVerb ;
+    rdfs:label "lag"^^xsd:string .
+
+parmenides:lay a parmenides:TransitiveVerb ;
+    rdfs:label "lay"^^xsd:string .
+
+parmenides:lead a parmenides:TransitiveVerb ;
+    rdfs:label "lead"^^xsd:string .
+
+parmenides:lean a parmenides:TransitiveVerb ;
+    rdfs:label "lean"^^xsd:string .
+
+parmenides:leave a parmenides:TransitiveVerb ;
+    rdfs:label "leave"^^xsd:string .
+
+parmenides:let a parmenides:TransitiveVerb ;
+    rdfs:label "let"^^xsd:string .
+
+parmenides:lick a parmenides:TransitiveVerb ;
+    rdfs:label "lick"^^xsd:string .
+
+parmenides:lift a parmenides:TransitiveVerb ;
+    rdfs:label "lift"^^xsd:string .
+
+parmenides:light a parmenides:TransitiveVerb ;
+    rdfs:label "light"^^xsd:string .
+
+parmenides:lighten a parmenides:TransitiveVerb ;
+    rdfs:label "lighten"^^xsd:string .
+
+parmenides:limit a parmenides:TransitiveVerb ;
+    rdfs:label "limit"^^xsd:string .
+
+parmenides:link a parmenides:TransitiveVerb ;
+    rdfs:label "link"^^xsd:string .
+
+parmenides:list a parmenides:dependency ;
+    rdfs:label "list"^^xsd:string .
+
+parmenides:load a parmenides:TransitiveVerb ;
+    rdfs:label "load"^^xsd:string .
+
+parmenides:lock a parmenides:TransitiveVerb ;
+    rdfs:label "lock"^^xsd:string .
+
+parmenides:lose a parmenides:TransitiveVerb ;
+    rdfs:label "lose"^^xsd:string .
+
+parmenides:love a parmenides:TransitiveVerb ;
+    rdfs:label "love"^^xsd:string .
+
+parmenides:lower a parmenides:TransitiveVerb ;
+    rdfs:label "lower"^^xsd:string .
+
+parmenides:maintain a parmenides:TransitiveVerb ;
+    rdfs:label "maintain"^^xsd:string .
+
+parmenides:make a parmenides:TransitiveVerb ;
+    rdfs:label "make"^^xsd:string .
+
+parmenides:mark a parmenides:dependency ;
+    rdfs:label "mark"^^xsd:string .
+
+parmenides:marry a parmenides:TransitiveVerb ;
+    rdfs:label "marry"^^xsd:string .
+
+parmenides:massage a parmenides:TransitiveVerb ;
+    rdfs:label "massage"^^xsd:string .
+
+parmenides:melt a parmenides:TransitiveVerb ;
+    rdfs:label "melt"^^xsd:string .
+
+parmenides:mix a parmenides:TransitiveVerb ;
+    rdfs:label "mix"^^xsd:string .
+
+parmenides:mock a parmenides:TransitiveVerb ;
+    rdfs:label "mock"^^xsd:string .
+
+parmenides:move a parmenides:TransitiveVerb ;
+    rdfs:label "move"^^xsd:string .
+
+parmenides:munch a parmenides:TransitiveVerb ;
+    rdfs:label "munch"^^xsd:string .
+
+parmenides:murder a parmenides:TransitiveVerb ;
+    rdfs:label "murder"^^xsd:string .
+
+parmenides:mwe a parmenides:dependency ;
+    rdfs:label "mwe"^^xsd:string .
+
+parmenides:name a parmenides:dependency ;
+    rdfs:label "name"^^xsd:string .
+
+parmenides:neg a parmenides:dependency ;
+    rdfs:label "neg"^^xsd:string .
+
+parmenides:nmod a parmenides:dependency ;
+    rdfs:label "nmod"^^xsd:string .
+
+parmenides:nmod_npmod a parmenides:dependency ;
+    rdfs:label "nmod_npmod"^^xsd:string .
+
+parmenides:nmod_poss a parmenides:dependency ;
+    rdfs:label "nmod_poss"^^xsd:string .
+
+parmenides:nmod_tmod a parmenides:dependency ;
+    rdfs:label "nmod_tmod"^^xsd:string .
+
+parmenides:none a parmenides:dependency ;
+    rdfs:label "none"^^xsd:string .
+
+parmenides:notice a parmenides:TransitiveVerb ;
+    rdfs:label "notice"^^xsd:string .
+
+parmenides:nsubj a parmenides:dependency ;
+    rdfs:label "nsubj"^^xsd:string .
+
+parmenides:nsubjpass a parmenides:dependency ;
+    rdfs:label "nsubjpass"^^xsd:string .
+
+parmenides:number a parmenides:TransitiveVerb ;
+    rdfs:label "number"^^xsd:string .
+
+parmenides:nummod a parmenides:dependency ;
+    rdfs:label "nummod"^^xsd:string .
+
+parmenides:nurse a parmenides:TransitiveVerb ;
+    rdfs:label "nurse"^^xsd:string .
+
+parmenides:obj a parmenides:dependency ;
+    rdfs:label "obj"^^xsd:string .
+
+parmenides:obl a parmenides:dependency ;
+    rdfs:label "obl"^^xsd:string .
+
+parmenides:offend a parmenides:TransitiveVerb ;
+    rdfs:label "offend"^^xsd:string .
+
+parmenides:open a parmenides:TransitiveVerb ;
+    rdfs:label "open"^^xsd:string .
+
+parmenides:order a parmenides:TransitiveVerb ;
+    rdfs:label "order"^^xsd:string .
+
+parmenides:own a parmenides:TransitiveVerb ;
+    rdfs:label "own"^^xsd:string .
+
+parmenides:pack a parmenides:TransitiveVerb ;
+    rdfs:label "pack"^^xsd:string .
+
+parmenides:page a parmenides:TransitiveVerb ;
+    rdfs:label "page"^^xsd:string .
+
+parmenides:paralyze a parmenides:TransitiveVerb ;
+    rdfs:label "paralyze"^^xsd:string .
+
+parmenides:parataxis a parmenides:dependency ;
+    rdfs:label "parataxis"^^xsd:string .
+
+parmenides:park a parmenides:TransitiveVerb ;
+    rdfs:label "park"^^xsd:string .
+
+parmenides:pass a parmenides:TransitiveVerb ;
+    rdfs:label "pass"^^xsd:string .
+
+parmenides:pay a parmenides:TransitiveVerb ;
+    rdfs:label "pay"^^xsd:string .
+
+parmenides:persuade a parmenides:TransitiveVerb ;
+    rdfs:label "persuade"^^xsd:string .
+
+parmenides:petrify a parmenides:TransitiveVerb ;
+    rdfs:label "petrify"^^xsd:string .
+
+parmenides:pick a parmenides:TransitiveVerb ;
+    rdfs:label "pick"^^xsd:string .
+
+parmenides:pierce a parmenides:TransitiveVerb ;
+    rdfs:label "pierce"^^xsd:string .
+
+parmenides:pin a parmenides:TransitiveVerb ;
+    rdfs:label "pin"^^xsd:string .
+
+parmenides:place a parmenides:TransitiveVerb ;
+    rdfs:label "place"^^xsd:string .
+
+parmenides:play a parmenides:TransitiveVerb ;
+    rdfs:label "play"^^xsd:string .
+
+parmenides:please a parmenides:TransitiveVerb ;
+    rdfs:label "please"^^xsd:string .
+
+parmenides:poison a parmenides:TransitiveVerb ;
+    rdfs:label "poison"^^xsd:string .
+
+parmenides:poke a parmenides:TransitiveVerb ;
+    rdfs:label "poke"^^xsd:string .
+
+parmenides:possess a parmenides:TransitiveVerb ;
+    rdfs:label "possess"^^xsd:string .
+
+parmenides:post a parmenides:TransitiveVerb ;
+    rdfs:label "post"^^xsd:string .
+
+parmenides:pour a parmenides:TransitiveVerb ;
+    rdfs:label "pour"^^xsd:string .
+
+parmenides:prepare a parmenides:TransitiveVerb ;
+    rdfs:label "prepare"^^xsd:string .
+
+parmenides:press a parmenides:TransitiveVerb ;
+    rdfs:label "press"^^xsd:string .
+
+parmenides:print a parmenides:TransitiveVerb ;
+    rdfs:label "print"^^xsd:string .
+
+parmenides:promise a parmenides:TransitiveVerb ;
+    rdfs:label "promise"^^xsd:string .
+
+parmenides:protect a parmenides:TransitiveVerb ;
+    rdfs:label "protect"^^xsd:string .
+
+parmenides:pull a parmenides:TransitiveVerb ;
+    rdfs:label "pull"^^xsd:string .
+
+parmenides:punch a parmenides:TransitiveVerb ;
+    rdfs:label "punch"^^xsd:string .
+
+parmenides:punct a parmenides:dependency ;
+    rdfs:label "punct"^^xsd:string .
+
+parmenides:punish a parmenides:TransitiveVerb ;
+    rdfs:label "punish"^^xsd:string .
+
+parmenides:purchase a parmenides:TransitiveVerb ;
+    rdfs:label "purchase"^^xsd:string .
+
+parmenides:push a parmenides:TransitiveVerb ;
+    rdfs:label "push"^^xsd:string .
+
+parmenides:puzzle a parmenides:TransitiveVerb ;
+    rdfs:label "puzzle"^^xsd:string .
+
+parmenides:question a parmenides:TransitiveVerb ;
+    rdfs:label "question"^^xsd:string .
+
+parmenides:quit a parmenides:TransitiveVerb ;
+    rdfs:label "quit"^^xsd:string .
+
+parmenides:raid a parmenides:TransitiveVerb ;
+    rdfs:label "raid"^^xsd:string .
+
+parmenides:raise a parmenides:TransitiveVerb ;
+    rdfs:label "raise"^^xsd:string .
+
+parmenides:read a parmenides:TransitiveVerb ;
+    rdfs:label "read"^^xsd:string .
+
+parmenides:reassure a parmenides:TransitiveVerb ;
+    rdfs:label "reassure"^^xsd:string .
+
+parmenides:recognize a parmenides:TransitiveVerb ;
+    rdfs:label "recognize"^^xsd:string .
+
+parmenides:reenter a parmenides:TransitiveVerb ;
+    rdfs:label "reenter"^^xsd:string .
+
+parmenides:refill a parmenides:TransitiveVerb ;
+    rdfs:label "refill"^^xsd:string .
+
+parmenides:relax a parmenides:TransitiveVerb ;
+    rdfs:label "relax"^^xsd:string .
+
+parmenides:remind a parmenides:TransitiveVerb ;
+    rdfs:label "remind"^^xsd:string .
+
+parmenides:remnant a parmenides:dependency ;
+    rdfs:label "remnant"^^xsd:string .
+
+parmenides:remove a parmenides:TransitiveVerb ;
+    rdfs:label "remove"^^xsd:string .
+
+parmenides:reparandum a parmenides:dependency ;
+    rdfs:label "reparandum"^^xsd:string .
+
+parmenides:repel a parmenides:TransitiveVerb ;
+    rdfs:label "repel"^^xsd:string .
+
+parmenides:replace a parmenides:TransitiveVerb ;
+    rdfs:label "replace"^^xsd:string .
+
+parmenides:research a parmenides:TransitiveVerb ;
+    rdfs:label "research"^^xsd:string .
+
+parmenides:retard a parmenides:TransitiveVerb ;
+    rdfs:label "retard"^^xsd:string .
+
+parmenides:retire a parmenides:TransitiveVerb ;
+    rdfs:label "retire"^^xsd:string .
+
+parmenides:reveal a parmenides:TransitiveVerb ;
+    rdfs:label "reveal"^^xsd:string .
+
+parmenides:ride a parmenides:TransitiveVerb ;
+    rdfs:label "ride"^^xsd:string .
+
+parmenides:ring a parmenides:TransitiveVerb ;
+    rdfs:label "ring"^^xsd:string .
+
+parmenides:rip a parmenides:TransitiveVerb ;
+    rdfs:label "rip"^^xsd:string .
+
+parmenides:rob a parmenides:TransitiveVerb ;
+    rdfs:label "rob"^^xsd:string .
+
+parmenides:root a parmenides:dependency ;
+    rdfs:label "root"^^xsd:string .
+
+parmenides:rub a parmenides:TransitiveVerb ;
+    rdfs:label "rub"^^xsd:string .
+
+parmenides:run a parmenides:TransitiveVerb ;
+    rdfs:label "run"^^xsd:string .
+
+parmenides:satisfy a parmenides:TransitiveVerb ;
+    rdfs:label "satisfy"^^xsd:string .
+
+parmenides:save a parmenides:TransitiveVerb ;
+    rdfs:label "save"^^xsd:string .
+
+parmenides:scan a parmenides:TransitiveVerb ;
+    rdfs:label "scan"^^xsd:string .
+
+parmenides:scare a parmenides:TransitiveVerb ;
+    rdfs:label "scare"^^xsd:string .
+
+parmenides:scold a parmenides:TransitiveVerb ;
+    rdfs:label "scold"^^xsd:string .
+
+parmenides:scoop a parmenides:TransitiveVerb ;
+    rdfs:label "scoop"^^xsd:string .
+
+parmenides:scrub a parmenides:TransitiveVerb ;
+    rdfs:label "scrub"^^xsd:string .
+
+parmenides:seat a parmenides:TransitiveVerb ;
+    rdfs:label "seat"^^xsd:string .
+
+parmenides:see a parmenides:TransitiveVerb ;
+    rdfs:label "see"^^xsd:string .
+
+parmenides:select a parmenides:TransitiveVerb ;
+    rdfs:label "select"^^xsd:string .
+
+parmenides:sell a parmenides:TransitiveVerb ;
+    rdfs:label "sell"^^xsd:string .
+
+parmenides:send a parmenides:TransitiveVerb ;
+    rdfs:label "send"^^xsd:string .
+
+parmenides:set a parmenides:TransitiveVerb ;
+    rdfs:label "set"^^xsd:string .
+
+parmenides:sew a parmenides:TransitiveVerb ;
+    rdfs:label "sew"^^xsd:string .
+
+parmenides:shake a parmenides:TransitiveVerb ;
+    rdfs:label "shake"^^xsd:string .
+
+parmenides:shame a parmenides:TransitiveVerb ;
+    rdfs:label "shame"^^xsd:string .
+
+parmenides:shift a parmenides:TransitiveVerb ;
+    rdfs:label "shift"^^xsd:string .
+
+parmenides:shoot a parmenides:TransitiveVerb ;
+    rdfs:label "shoot"^^xsd:string .
+
+parmenides:shove a parmenides:TransitiveVerb ;
+    rdfs:label "shove"^^xsd:string .
+
+parmenides:shut a parmenides:TransitiveVerb ;
+    rdfs:label "shut"^^xsd:string .
+
+parmenides:sink a parmenides:TransitiveVerb ;
+    rdfs:label "sink"^^xsd:string .
+
+parmenides:slam a parmenides:TransitiveVerb ;
+    rdfs:label "slam"^^xsd:string .
+
+parmenides:slap a parmenides:TransitiveVerb ;
+    rdfs:label "slap"^^xsd:string .
+
+parmenides:slice a parmenides:TransitiveVerb ;
+    rdfs:label "slice"^^xsd:string .
+
+parmenides:smell a parmenides:TransitiveVerb ;
+    rdfs:label "smell"^^xsd:string .
+
+parmenides:smoke a parmenides:TransitiveVerb ;
+    rdfs:label "smoke"^^xsd:string .
+
+parmenides:snap a parmenides:TransitiveVerb ;
+    rdfs:label "snap"^^xsd:string .
+
+parmenides:soak a parmenides:TransitiveVerb ;
+    rdfs:label "soak"^^xsd:string .
+
+parmenides:soften a parmenides:TransitiveVerb ;
+    rdfs:label "soften"^^xsd:string .
+
+parmenides:solve a parmenides:TransitiveVerb ;
+    rdfs:label "solve"^^xsd:string .
+
+parmenides:sound a parmenides:TransitiveVerb ;
+    rdfs:label "sound"^^xsd:string .
+
+parmenides:specify a parmenides:TransitiveVerb ;
+    rdfs:label "specify"^^xsd:string .
+
+parmenides:speed a parmenides:TransitiveVerb ;
+    rdfs:label "speed"^^xsd:string .
+
+parmenides:spell a parmenides:TransitiveVerb ;
+    rdfs:label "spell"^^xsd:string .
+
+parmenides:spend a parmenides:TransitiveVerb ;
+    rdfs:label "spend"^^xsd:string .
+
+parmenides:spill a parmenides:TransitiveVerb ;
+    rdfs:label "spill"^^xsd:string .
+
+parmenides:spit a parmenides:TransitiveVerb ;
+    rdfs:label "spit"^^xsd:string .
+
+parmenides:split a parmenides:TransitiveVerb ;
+    rdfs:label "split"^^xsd:string .
+
+parmenides:spoon a parmenides:TransitiveVerb ;
+    rdfs:label "spoon"^^xsd:string .
+
+parmenides:spread a parmenides:TransitiveVerb ;
+    rdfs:label "spread"^^xsd:string .
+
+parmenides:squash a parmenides:TransitiveVerb ;
+    rdfs:label "squash"^^xsd:string .
+
+parmenides:stab a parmenides:TransitiveVerb ;
+    rdfs:label "stab"^^xsd:string .
+
+parmenides:stain a parmenides:TransitiveVerb ;
+    rdfs:label "stain"^^xsd:string .
+
+parmenides:stake a parmenides:TransitiveVerb ;
+    rdfs:label "stake"^^xsd:string .
+
+parmenides:start a parmenides:TransitiveVerb ;
+    rdfs:label "start"^^xsd:string .
+
+parmenides:startle a parmenides:TransitiveVerb ;
+    rdfs:label "startle"^^xsd:string .
+
+parmenides:stay a parmenides:TransitiveVerb ;
+    rdfs:label "stay"^^xsd:string .
+
+parmenides:steer a parmenides:TransitiveVerb ;
+    rdfs:label "steer"^^xsd:string .
+
+parmenides:stir a parmenides:TransitiveVerb ;
+    rdfs:label "stir"^^xsd:string .
+
+parmenides:stop a parmenides:TransitiveVerb ;
+    rdfs:label "stop"^^xsd:string .
+
+parmenides:store a parmenides:TransitiveVerb ;
+    rdfs:label "store"^^xsd:string .
+
+parmenides:strike a parmenides:TransitiveVerb ;
+    rdfs:label "strike"^^xsd:string .
+
+parmenides:study a parmenides:TransitiveVerb ;
+    rdfs:label "study"^^xsd:string .
+
+parmenides:stuff a parmenides:TransitiveVerb ;
+    rdfs:label "stuff"^^xsd:string .
+
+parmenides:subject a owl:ObjectProperty .
+
+parmenides:suck a parmenides:TransitiveVerb ;
+    rdfs:label "suck"^^xsd:string .
+
+parmenides:surprise a parmenides:TransitiveVerb ;
+    rdfs:label "surprise"^^xsd:string .
+
+parmenides:survey a parmenides:TransitiveVerb ;
+    rdfs:label "survey"^^xsd:string .
+
+parmenides:swallow a parmenides:TransitiveVerb ;
+    rdfs:label "swallow"^^xsd:string .
+
+parmenides:switch a parmenides:TransitiveVerb ;
+    rdfs:label "switch"^^xsd:string .
+
+parmenides:tape a parmenides:TransitiveVerb ;
+    rdfs:label "tape"^^xsd:string .
+
+parmenides:taste a parmenides:TransitiveVerb ;
+    rdfs:label "taste"^^xsd:string .
+
+parmenides:teach a parmenides:TransitiveVerb ;
+    rdfs:label "teach"^^xsd:string .
+
+parmenides:tease a parmenides:TransitiveVerb ;
+    rdfs:label "tease"^^xsd:string .
+
+parmenides:tell a parmenides:TransitiveVerb ;
+    rdfs:label "tell"^^xsd:string .
+
+parmenides:tend a parmenides:TransitiveVerb ;
+    rdfs:label "tend"^^xsd:string .
+
+parmenides:terrify a parmenides:TransitiveVerb ;
+    rdfs:label "terrify"^^xsd:string .
+
+parmenides:test a parmenides:TransitiveVerb ;
+    rdfs:label "test"^^xsd:string .
+
+parmenides:thank a parmenides:TransitiveVerb ;
+    rdfs:label "thank"^^xsd:string .
+
+parmenides:threaten a parmenides:TransitiveVerb ;
+    rdfs:label "threaten"^^xsd:string .
+
+parmenides:throw a parmenides:TransitiveVerb ;
+    rdfs:label "throw"^^xsd:string .
+
+parmenides:tickle a parmenides:TransitiveVerb ;
+    rdfs:label "tickle"^^xsd:string .
+
+parmenides:tie a parmenides:TransitiveVerb ;
+    rdfs:label "tie"^^xsd:string .
+
+parmenides:tighten a parmenides:TransitiveVerb ;
+    rdfs:label "tighten"^^xsd:string .
+
+parmenides:tip a parmenides:TransitiveVerb ;
+    rdfs:label "tip"^^xsd:string .
+
+parmenides:tire a parmenides:TransitiveVerb ;
+    rdfs:label "tire"^^xsd:string .
+
+parmenides:toast a parmenides:TransitiveVerb ;
+    rdfs:label "toast"^^xsd:string .
+
+parmenides:toss a parmenides:TransitiveVerb ;
+    rdfs:label "toss"^^xsd:string .
+
+parmenides:touch a parmenides:TransitiveVerb ;
+    rdfs:label "touch"^^xsd:string .
+
+parmenides:tow a parmenides:TransitiveVerb ;
+    rdfs:label "tow"^^xsd:string .
+
+parmenides:transform a parmenides:TransitiveVerb ;
+    rdfs:label "transform"^^xsd:string .
+
+parmenides:try a parmenides:TransitiveVerb ;
+    rdfs:label "try"^^xsd:string .
+
+parmenides:turn a parmenides:TransitiveVerb ;
+    rdfs:label "turn"^^xsd:string .
+
+parmenides:tweak a parmenides:TransitiveVerb ;
+    rdfs:label "tweak"^^xsd:string .
+
+parmenides:twist a parmenides:TransitiveVerb ;
+    rdfs:label "twist"^^xsd:string .
+
+parmenides:underestimate a parmenides:TransitiveVerb ;
+    rdfs:label "underestimate"^^xsd:string .
+
+parmenides:understand a parmenides:TransitiveVerb ;
+    rdfs:label "understand"^^xsd:string .
+
+parmenides:unload a parmenides:TransitiveVerb ;
+    rdfs:label "unload"^^xsd:string .
+
+parmenides:unlock a parmenides:TransitiveVerb ;
+    rdfs:label "unlock"^^xsd:string .
+
+parmenides:untie a parmenides:TransitiveVerb ;
+    rdfs:label "untie"^^xsd:string .
+
+parmenides:upgrade a parmenides:TransitiveVerb ;
+    rdfs:label "upgrade"^^xsd:string .
+
+parmenides:use a parmenides:TransitiveVerb ;
+    rdfs:label "use"^^xsd:string .
+
+parmenides:vacate a parmenides:TransitiveVerb ;
+    rdfs:label "vacate"^^xsd:string .
+
+parmenides:videotape a parmenides:TransitiveVerb ;
+    rdfs:label "videotape"^^xsd:string .
+
+parmenides:vilify a parmenides:TransitiveVerb ;
+    rdfs:label "vilify"^^xsd:string .
+
+parmenides:violate a parmenides:TransitiveVerb ;
+    rdfs:label "violate"^^xsd:string .
+
+parmenides:vocative a parmenides:dependency ;
+    rdfs:label "vocative"^^xsd:string .
+
+parmenides:wake a parmenides:TransitiveVerb ;
+    rdfs:label "wake"^^xsd:string .
+
+parmenides:want a parmenides:TransitiveVerb ;
+    rdfs:label "want"^^xsd:string .
+
+parmenides:warm a parmenides:TransitiveVerb ;
+    rdfs:label "warm"^^xsd:string .
+
+parmenides:warn a parmenides:TransitiveVerb ;
+    rdfs:label "warn"^^xsd:string .
+
+parmenides:wash a parmenides:TransitiveVerb ;
+    rdfs:label "wash"^^xsd:string .
+
+parmenides:watch a parmenides:TransitiveVerb ;
+    rdfs:label "watch"^^xsd:string .
+
+parmenides:wear a parmenides:TransitiveVerb ;
+    rdfs:label "wear"^^xsd:string .
+
+parmenides:widen a parmenides:TransitiveVerb ;
+    rdfs:label "widen"^^xsd:string .
+
+parmenides:win a parmenides:TransitiveVerb ;
+    rdfs:label "win"^^xsd:string .
+
+parmenides:wipe a parmenides:TransitiveVerb ;
+    rdfs:label "wipe"^^xsd:string .
+
+parmenides:wrack a parmenides:TransitiveVerb ;
+    rdfs:label "wrack"^^xsd:string .
+
+parmenides:wrap a parmenides:TransitiveVerb ;
+    rdfs:label "wrap"^^xsd:string .
+
+parmenides:wreck a parmenides:TransitiveVerb ;
+    rdfs:label "wreck"^^xsd:string .
+
+parmenides:xcomp a parmenides:dependency ;
+    rdfs:label "xcomp"^^xsd:string .
+
+parmenides:GPE a owl:Class ;
+    rdfs:subClassOf parmenides:Dimensions,
+        parmenides:LOC .
+
+parmenides:GraphParse a owl:Class .
+
+parmenides:Newcastle a parmenides:GPE ;
+    rdfs:label "Newcastle"^^xsd:string ;
+    parmenides:entryPoint parmenides:Newcastle ;
+    parmenides:isA parmenides:city .
+
+parmenides:Rejectable a owl:Class ;
+    rdfs:subClassOf parmenides:GraphParse .
+
+<https://lo-ds.github.io/parmenides#busy+city> a parmenides:Noun ;
+    rdfs:label "busy city"^^xsd:string ;
+    parmenides:entryPoint parmenides:city ;
+    parmenides:hasAdjective parmenides:busy ;
+    parmenides:relatedTo parmenides:crowd%23n .
+
+parmenides:flow%23n a parmenides:Noun ;
+    rdfs:label "flow"^^xsd:string ;
+    parmenides:entryPoint parmenides:flow%23n .
+
+parmenides:slow a parmenides:TransitiveVerb ;
+    rdfs:label "slow"^^xsd:string .
+
+parmenides:slow%23v a parmenides:Verb ;
+    rdfs:label "slow"^^xsd:string ;
+    parmenides:adjectivalForm parmenides:slow%23adj ;
+    parmenides:entryPoint parmenides:slow%23v .
+
+parmenides:traffic%23v a parmenides:Verb ;
+    rdfs:label "traffic"^^xsd:string ;
+    parmenides:entryPoint parmenides:traffic%23v .
+
+<https://lo-ds.github.io/parmenides#traffic+jam+can+slow+traffic> a parmenides:CompoundForm ;
+    rdfs:label "traffic jam can slow traffic"^^xsd:string ;
+    parmenides:d_object parmenides:traffic%23n ;
+    parmenides:entryPoint parmenides:slow ;
+    parmenides:subject <https://lo-ds.github.io/parmenides#traffic+jam> .
+
+parmenides:CompoundForm a owl:Class ;
+    rdfs:subClassOf parmenides:GrammaticalFunction .
+
+parmenides:Dimensions a owl:Class .
+
+parmenides:MetaGrammaticalFunction a owl:Class .
+
+parmenides:crowd%23v a parmenides:Verb ;
+    rdfs:label "crowd"^^xsd:string ;
+    parmenides:entryPoint parmenides:crowd%23v ;
+    parmenides:relatedTo parmenides:crowded .
+
+<https://lo-ds.github.io/parmenides#flow+in> a parmenides:Verb ;
+    rdfs:label "flow in"^^xsd:string ;
+    parmenides:entryPoint <https://lo-ds.github.io/parmenides#flow+in> ;
+    parmenides:eqTo parmenides:flow%23v .
+
+parmenides:jam a parmenides:Noun ;
+    rdfs:label "jam"^^xsd:string ;
+    parmenides:entryPoint parmenides:jam .
+
+<https://lo-ds.github.io/parmenides#traffic+congestion> a parmenides:Noun ;
+    rdfs:label "traffic congestion"^^xsd:string ;
+    parmenides:composite_form_with parmenides:congestion,
+        parmenides:traffic%23n ;
+    parmenides:entryPoint parmenides:traffic%23n ;
+    parmenides:eqTo <https://lo-ds.github.io/parmenides#traffic+jam> ;
+    parmenides:relatedTo parmenides:congestion .
+
+<https://lo-ds.github.io/parmenides#traffic+jam> a parmenides:Noun ;
+    rdfs:label "traffic jam"^^xsd:string ;
+    parmenides:capableOf <https://lo-ds.github.io/parmenides#traffic+jam+can+slow+traffic> ;
+    parmenides:composite_form_with parmenides:jam,
+        parmenides:traffic%23n ;
+    parmenides:entryPoint parmenides:traffic%23n ;
+    parmenides:eqTo <https://lo-ds.github.io/parmenides#traffic+congestion> .
+
+<https://lo-ds.github.io/parmenides#city+center> a parmenides:LOC ;
+    rdfs:label "city center"^^xsd:string ;
+    parmenides:entryPoint parmenides:city ;
+    parmenides:eqTo <https://lo-ds.github.io/parmenides#city+centers>,
+        <https://lo-ds.github.io/parmenides#city+centre>,
+        <https://lo-ds.github.io/parmenides#city+centres> ;
+    parmenides:hasAdjective parmenides:center ;
+    parmenides:partOf parmenides:city .
+
+<https://lo-ds.github.io/parmenides#city+centers> a parmenides:LOC ;
+    rdfs:label "city centers"^^xsd:string ;
+    parmenides:entryPoint parmenides:city ;
+    parmenides:eqTo <https://lo-ds.github.io/parmenides#city+center>,
+        <https://lo-ds.github.io/parmenides#city+centre>,
+        <https://lo-ds.github.io/parmenides#city+centres> ;
+    parmenides:hasAdjective parmenides:center ;
+    parmenides:partOf parmenides:city .
+
+<https://lo-ds.github.io/parmenides#city+centre> a parmenides:LOC ;
+    rdfs:label "city centre"^^xsd:string ;
+    parmenides:entryPoint parmenides:city ;
+    parmenides:eqTo <https://lo-ds.github.io/parmenides#city+center>,
+        <https://lo-ds.github.io/parmenides#city+centers>,
+        <https://lo-ds.github.io/parmenides#city+centres> ;
+    parmenides:hasAdjective parmenides:centre ;
+    parmenides:partOf parmenides:city .
+
+<https://lo-ds.github.io/parmenides#city+centres> a parmenides:LOC ;
+    rdfs:label "city centres"^^xsd:string ;
+    parmenides:entryPoint parmenides:city ;
+    parmenides:eqTo <https://lo-ds.github.io/parmenides#city+center>,
+        <https://lo-ds.github.io/parmenides#city+centers>,
+        <https://lo-ds.github.io/parmenides#city+centre> ;
+    parmenides:hasAdjective parmenides:centre ;
+    parmenides:partOf parmenides:city .
+
+parmenides:crowded a parmenides:Adjective ;
+    rdfs:label "crowded"^^xsd:string ;
+    parmenides:entryPoint parmenides:crowded ;
+    parmenides:relatedTo parmenides:crowd%23n,
+        parmenides:crowd%23v .
+
+parmenides:flow%23v a parmenides:Verb ;
+    rdfs:label "flow"^^xsd:string ;
+    parmenides:adjectivalForm parmenides:fast ;
+    parmenides:entryPoint parmenides:flow%23v ;
+    parmenides:eqTo <https://lo-ds.github.io/parmenides#flow+in> .
+
+parmenides:slow%23adj a parmenides:Adjective ;
+    rdfs:label "slow"^^xsd:string ;
+    parmenides:entryPoint parmenides:slow%23adj ;
+    parmenides:neqTo parmenides:fast .
+
+parmenides:busy a parmenides:Adjective ;
+    rdfs:label "busy"^^xsd:string ;
+    parmenides:entryPoint parmenides:busy ;
+    parmenides:hasProperty parmenides:city ;
+    parmenides:relatedTo parmenides:crowd%23n .
+
+parmenides:center a parmenides:Adjective ;
+    rdfs:label "center"^^xsd:string ;
+    parmenides:entryPoint parmenides:center ;
+    parmenides:eqTo parmenides:centre .
+
+parmenides:centre a parmenides:Adjective ;
+    rdfs:label "centre"^^xsd:string ;
+    parmenides:entryPoint parmenides:centre ;
+    parmenides:eqTo parmenides:center .
+
+parmenides:congestion a parmenides:Noun ;
+    rdfs:label "congestion"^^xsd:string ;
+    parmenides:entryPoint parmenides:congestion ;
+    parmenides:relatedTo parmenides:crowd%23n,
+        <https://lo-ds.github.io/parmenides#traffic+congestion> .
+
+parmenides:fast a parmenides:Adjective ;
+    rdfs:label "fast"^^xsd:string ;
+    parmenides:entryPoint parmenides:fast ;
+    parmenides:neqTo parmenides:slow%23adj .
+
+parmenides:GrammaticalFunction a owl:Class ;
+    rdfs:subClassOf parmenides:MetaGrammaticalFunction .
+
+parmenides:crowd%23n a parmenides:Noun ;
+    rdfs:label "crowd"^^xsd:string ;
+    parmenides:entryPoint parmenides:crowd%23n ;
+    parmenides:relatedTo parmenides:busy,
+        <https://lo-ds.github.io/parmenides#busy+city>,
+        parmenides:congestion,
+        parmenides:crowded .
+
+parmenides:Adjective a owl:Class ;
+    rdfs:subClassOf parmenides:GrammaticalFunction .
+
+parmenides:LOC a owl:Class ;
+    rdfs:subClassOf parmenides:Dimensions .
+
+parmenides:traffic%23n a parmenides:Noun ;
+    rdfs:label "traffic"^^xsd:string ;
+    parmenides:entryPoint parmenides:traffic%23n .
+
+parmenides:Verb a owl:Class ;
+    rdfs:subClassOf parmenides:GrammaticalFunction .
+
+parmenides:Noun a owl:Class ;
+    rdfs:subClassOf parmenides:GrammaticalFunction .
+
+parmenides:city a parmenides:LOC ;
+    rdfs:label "city"^^xsd:string ;
+    parmenides:entryPoint parmenides:city ;
+    parmenides:hasProperty parmenides:busy .
+
+parmenides:dependency a owl:Class ;
+    rdfs:subClassOf parmenides:MetaGrammaticalFunction .
+
+parmenides:TransitiveVerb a owl:Class ;
+    rdfs:subClassOf parmenides:Verb .
+

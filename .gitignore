@@ -1,0 +1,7 @@
+/.venv/
+/catabolites/
+/extra/*.html
+/extra/*.txt
+/myeasylog.log
+/.idea/
+*.pyc
