@@ -1,6 +1,6 @@
 __author__ = "Oliver R. Fox, Giacomo Bergami"
 __copyright__ = "Copyright 2024, Oliver R. Fox, Giacomo Bergami"
-__credits__ = ["Oliver R. Fox, Giacomo Bergami"]
+__credits__ = ["Oliver R. Fox"]
 __license__ = "GPL"
 __version__ = "2.0"
 __maintainer__ = "Oliver R. Fox, Giacomo Bergami"
@@ -28,7 +28,7 @@ class AssignTypeToSingleton:
         self.meu_entities.clear()
         self.nodes.clear()
 
-    def assign_type_to_singleton_1(self, item, stanza_row:MeuDB):
+    def associteNodeToBestMeuMatches(self, item, stanza_row:MeuDB):
         # Loop over Stanza MEU and GSM result and evaluate overlapping words from chars
         for meu in stanza_row.multi_entity_unit:
             start_meu = meu.start_char
@@ -44,19 +44,14 @@ class AssignTypeToSingleton:
                     self.associations.add(item)
 
 
-    def associate_to_container(self, key):
+    def ConfidenceAndEntityExpand(self, key):
         from LaSSI.structures.internal_graph.EntityRelationship import SetOfSingletons
         item = self.nodes[key]
         if isinstance(item, SetOfSingletons):
-            # if isinstance(item, SetOfSingletons):
-            #     set_item = item
-            # else:
-            #     new_set = []
             confidence = 1.0
-            new_set = list(map(lambda x: self.associate_to_container(x.id), item.entities))
-            for entity in new_set:  # nodes_key.entities:
+            new_set = list(map(lambda x: self.ConfidenceAndEntityExpand(x.id), item.entities))
+            for entity in new_set:
                 confidence *= entity.confidence
-
             set_item = SetOfSingletons(
                 id=item.id,
                 type=item.type,
@@ -66,8 +61,6 @@ class AssignTypeToSingleton:
                 confidence=confidence
             )
             self.nodes[key] = set_item
-        # nodes[key] = set_item
-        # return set_item.confidence
         else:
             if item.id not in self.nodes:
                 self.nodes[item.id] = item
@@ -75,9 +68,9 @@ class AssignTypeToSingleton:
             else:
                 return self.nodes[item.id]
 
-    def _assign_type_to_all_singletons(self):
-        if len(self.nodes) > 0:
-            return self.nodes
+    def singletonTypeResolution(self):
+        # if len(self.nodes) > 0:
+        #     return self.nodes
         for item in self.associations:
             # for association in associations:
             if len(self.meu_entities[item]) > 0:
@@ -119,41 +112,41 @@ class AssignTypeToSingleton:
                     type=best_type,
                     confidence=best_score
                 )
-                # if isinstance(association, Singleton):
-                #
-                # else:
-                #     self.final_assigment[item] = association
-        return None
 
-        return ''
-
-    def _associate_type_to_item(self, item, stanza_row):
+    def associateNodeToMeuMatches(self, item, stanza_row):
         # If key is SetOfSingletons, loop over each Singleton and make association to type
         # Giacomo: FIX, but only if they are not logical predicates
         from LaSSI.structures.internal_graph.EntityRelationship import SetOfSingletons
         if isinstance(item,
                       SetOfSingletons):  # and ((nodes[key].type == Grouping.NONE) or (nodes[key].type == Grouping.GROUPING)):
             for entity in item.entities:
-                self._associate_type_to_item(entity, stanza_row)
+                self.associateNodeToMeuMatches(entity, stanza_row)
         else:
             # assign_type_to_singleton(item, stanza_row, nodes, key)
-            self.assign_type_to_singleton_1(item, stanza_row)
+            self.associteNodeToBestMeuMatches(item, stanza_row)
 
-    def group_nodes(self, parsed_json, simplsitic, parmenides, stanza_row):
+    def freshId(self):
+        v = self.maxId
+        self.maxId += 1
+        return v
+
+    def groupGraphNodes(self, parsed_json, simplsitic, parmenides, stanza_row):
+        self.maxId = max(map(lambda x: int(x["id"]), parsed_json))+1
+
         # Phase 1
-        self.phase1(parmenides, parsed_json, simplsitic)
+        self.extractLogicalConnectorsAsGroups(parmenides, parsed_json, simplsitic)
 
         #Phase 2
         for key in self.nodes:
-            self._associate_type_to_item(self.nodes[key], stanza_row)
+            self.associateNodeToMeuMatches(self.nodes[key], stanza_row)
 
         #Phase 3
-        self._assign_type_to_all_singletons()
+        self.singletonTypeResolution()
 
         #Phase 4
-        self._to_internal_graph(simplsitic, parmenides, stanza_row)
+        self.resolveGraphNERs(simplsitic, parmenides, stanza_row)
 
-    def phase1(self, parmenides, parsed_json, simplsitic):
+    def extractLogicalConnectorsAsGroups(self, parmenides, parsed_json, simplsitic):
         # Get all nodes from resulting graph and create list of Singletons
         number_of_nodes = range(len(parsed_json))
         for row in number_of_nodes:
@@ -269,8 +262,9 @@ class AssignTypeToSingleton:
                     )
                 elif is_compound:
                     grouped_nodes.insert(0, self.nodes[item['id']])
-                    self.nodes[item['id']] = SetOfSingletons(
-                        id=item['id'],
+                    neu_id = self.freshId()
+                    self.nodes[neu_id] = SetOfSingletons(
+                        id=neu_id,
                         type=Grouping.GROUPING,
                         entities=tuple(grouped_nodes),
                         min=min(grouped_nodes, key=lambda x: x.min).min,
@@ -287,45 +281,45 @@ class AssignTypeToSingleton:
                         confidence=norm_confidence
                     )
 
-    def _to_internal_graph(self, simplistic, parmenides, stanza_row):
+    def resolveGraphNERs(self, simplistic, parmenides, stanza_row):
         ## Phase 4
         for key in self.nodes:
             item = self.nodes[key]
             # association = nbb[item]
             # best_score = association.confidence
             if not isinstance(item, SetOfSingletons):
-                self.associate_to_container(key)
+                self.ConfidenceAndEntityExpand(key)
 
         for key in self.nodes:
             item = self.nodes[key]
             # association = nbb[item]
             # best_score = association.confidence
             if isinstance(item, SetOfSingletons):
-                self.associate_to_container(key)
+                self.ConfidenceAndEntityExpand(key)
 
         # With types assigned, merge SetOfSingletons into Singleton
         for key in self.nodes:
             item = self.nodes[key]
             if isinstance(item, SetOfSingletons):
-                from LaSSI.ner.MergeSetOfSingletons import merge_set_of_singletons
+                from LaSSI.ner.MergeSetOfSingletons import GraphNER_withProperties
                 if item.type == Grouping.MULTIINDIRECT:
                     # If entities is only 1 item, then we can simply replace the item.id
                     if len(item.entities) == 1:
                         entity = item.entities[0]
                         if isinstance(entity, SetOfSingletons):
-                            self.nodes[item.id] = merge_set_of_singletons(entity, simplistic, stanza_row, parmenides)
+                            self.nodes[item.id] = GraphNER_withProperties(entity, simplistic, stanza_row, parmenides)
                         else:
-                            self.nodes[item.id] = self.associate_to_container(entity.id)
+                            self.nodes[item.id] = self.ConfidenceAndEntityExpand(entity.id)
                     # If more than 1 item, then we replace the entity.id for each orig of the 'multiindirectobj'
                     else:
                         # nodes[item.id] = associate_to_container(item, nbb)
                         for entity in item.entities:
                             if isinstance(entity, SetOfSingletons):
-                                self.nodes[entity.id] = merge_set_of_singletons(entity, simplistic, stanza_row, parmenides)
+                                self.nodes[entity.id] = GraphNER_withProperties(entity, simplistic, stanza_row, parmenides)
                             else:
-                                self.associate_to_container(entity.id)
+                                self.ConfidenceAndEntityExpand(entity.id)
                 if item.type == Grouping.GROUPING:
-                        self.nodes[key] = merge_set_of_singletons(item, simplistic, stanza_row, parmenides)
+                        self.nodes[key] = GraphNER_withProperties(item, simplistic, stanza_row, parmenides)
 
     def checkForNegation(self, parsed_json):
         # Check for negation in node 'xi' and 'properties

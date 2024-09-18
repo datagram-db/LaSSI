@@ -1,3 +1,4 @@
+from collections import defaultdict
 from itertools import repeat
 
 
@@ -5,24 +6,25 @@ def score_from_meu(min_value, max_value, item_type, stanza_row, parmenides):
     max_value = max_value
     matched_meus = []
 
-    for meu in stanza_row['multi_entity_unit']:
-        start_meu = meu['start_char']
-        end_meu = meu['end_char']
+    for meu in stanza_row.multi_entity_unit:
+        start_meu = meu.start_char
+        end_meu = meu.end_char
         if min_value == start_meu and end_meu == max_value:
             # TODO: mgu or its opposite...
-            if (parmenides.most_specific_type([item_type, meu['type']]) == meu['type'] or
-                    item_type == meu['type'] or
+            if (parmenides.most_specific_type([item_type, meu.type]) == meu.type or
+                    item_type == meu.type or
                     item_type == "None"):
                 matched_meus.append(meu)
 
     if len(matched_meus) == 0:
         return 0, "None"
     else:
-        max_score = max(map(lambda x: x['confidence'], matched_meus))
+        max_score = max(map(lambda x: x.confidence, matched_meus))
         return max_score, parmenides.most_specific_type(
-            list(map(lambda x: x['type'], filter(lambda x: x['confidence'] == max_score, matched_meus))))
+            list(map(lambda x: x.type, filter(lambda x: x.confidence == max_score, matched_meus))))
 
-def merge_set_of_singletons(item, simplistic, stanza_row, parmenides):
+
+def GraphNER_withProperties(item, simplistic, stanza_row, parmenides):
     from LaSSI.structures.internal_graph.EntityRelationship import Singleton
     from LaSSI.utils.allChunks import allChunks
     import numpy
@@ -38,35 +40,52 @@ def merge_set_of_singletons(item, simplistic, stanza_row, parmenides):
     sorted_entity_names = list(map(getattr, sorted_entities, repeat('named_entity')))
     d = dict(zip(range(len(sorted_entity_names)), sorted_entity_names))  # dictionary for storing the replacing elements
 
+    layeredAlternatives = defaultdict(list)
     for x in allChunks(list(d.keys())):
-        if all(y in d for y in x):
-            exp = " ".join(map(lambda z: sorted_entity_names[z], x))
-            min_value = min(map(lambda z: sorted_entities[z].min, x))
-            max_value = max(map(lambda z: sorted_entities[z].max, x))
-            # max_value = min_value + len(exp)
+        layeredAlternatives[len(x)].append(x)
 
-            all_types = [sorted_entities[z].type for z in x]
-            specific_type = parmenides.most_specific_type(all_types)
-            candidate_meu_score, candidate_meu_type = score_from_meu(min_value, max_value, specific_type, stanza_row)
-            allProd = numpy.prod(list(map(lambda z: sorted_entities[z].confidence, x)))
+    for layer in layeredAlternatives.values():
+        maxScore = -1
+        alternatives = []
+        for x in layer:
+            if all(y in d for y in x):
+                exp = " ".join(map(lambda z: sorted_entity_names[z], x))
+                min_value = min(map(lambda z: sorted_entities[z].min, x))
+                max_value = max(map(lambda z: sorted_entities[z].max, x))
+                # max_value = min_value + len(exp)
 
-            # if (score_from_meu(exp, min_value, max_value, specific_type, stanza_row) >=
-            #         numpy.prod(list(map(lambda z: score_from_meu(sorted_entities[z].named_entity, sorted_entities[z].min, max_value, sorted_entities[z].type, stanza_row), x)))):
-            if ((candidate_meu_score >= allProd) or
-                    ((specific_type != candidate_meu_type) and (
-                            parmenides.most_specific_type([specific_type, candidate_meu_type]) == candidate_meu_type))):
-                candidate_delete = set()
-                for k, v in d.items():
-                    if isinstance(k, int):
-                        if k in x:
-                            candidate_delete.add(k)
+                all_types = [sorted_entities[z].type for z in x]
+                specific_type = parmenides.most_specific_type(all_types)
+                candidate_meu_score, candidate_meu_type = score_from_meu(min_value, max_value, specific_type,
+                                                                         stanza_row, parmenides)
+                allProd = numpy.prod(list(map(lambda z: sorted_entities[z].confidence, x)))
+
+                # if (score_from_meu(exp, min_value, max_value, specific_type, stanza_row) >=
+                #         numpy.prod(list(map(lambda z: score_from_meu(sorted_entities[z].named_entity, sorted_entities[z].min, max_value, sorted_entities[z].type, stanza_row), x)))):
+                if ((candidate_meu_score >= allProd) or
+                        ((specific_type != candidate_meu_type) and (
+                                parmenides.most_specific_type(
+                                    [specific_type, candidate_meu_type]) == candidate_meu_type))):
+                    if (candidate_meu_score > maxScore):
+                        alternatives = [(x, allProd, exp)]
+                        maxScore = candidate_meu_score
+
+        if len(alternatives) > 0:
+            alternatives.sort(key=lambda x: x[1])
+            candidate_delete = set()
+            x = alternatives[-1]
+            for k, v in d.items():
+                if isinstance(k, int):
+                    if k in x[0]:
+                        candidate_delete.add(k)
                     elif isinstance(k, tuple):
-                        if len(set(x).intersection(set(k))) > 0:
+                        if len(set(x[0]).intersection(set(k))) > 0:
                             candidate_delete.add(k)
-                for z in candidate_delete:
-                    d.pop(z)
-                d[x] = exp
+            for z in candidate_delete:
+                d.pop(z)
+            d[x[0]] = x[2]
     print(d)
+    print("OK")
 
     # for entity in sorted_entities:
     #     norm_confidence *= entity.confidence

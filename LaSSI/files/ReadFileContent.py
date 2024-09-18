@@ -49,14 +49,17 @@ class ReadFileContent:
             self.fd = open(self.tmp.name, "r")
         return self
 
-    def read(self):
-        self.fd.read()
+    def read(self, n=-1):
+        return self.fd.read(n)
 
     def readlines(self):
-        self.fd.readlines()
+        return self.fd.readlines()
 
     def readline(self):
-        self.fd.readline()
+        return self.fd.readline()
+
+    def getFile(self):
+        return self.fd
 
     def __iter__(self):
         return self

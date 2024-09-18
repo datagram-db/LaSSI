@@ -20,7 +20,7 @@ class GraphProvenance:
 
     def internal_graph(self):
         # from LaSSI.structures.internal_graph.from_raw_json_graph import group_nodes
-        self.atts_global.group_nodes(self.raw_json_graph, self.simplistic, self.parmenides, self.stanza_row)
+        self.atts_global.groupGraphNodes(self.raw_json_graph, self.simplistic, self.parmenides, self.stanza_row)
         self.atts_global.checkForNegation(self.raw_json_graph)
         rejected_edges = self.parmenides.getRejectedVerbs()
         non_verbs = self.parmenides.getNonVerbs()

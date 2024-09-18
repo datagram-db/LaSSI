@@ -1,4 +1,5 @@
 # This is a sample Python script.
+import signal
 from dataclasses import asdict
 
 from LaSSI.LaSSI import LaSSI
@@ -15,6 +16,18 @@ def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
 
+# import atexit
+# def exit_handler():
+#     import jpype
+#     jpype.shutdownJVM()
+# atexit.register(exit_handler)
+# def handler(signum, frame):
+#     import jpype
+#     jpype.shutdownJVM()
+#     print('Signal handler called with signal', signum)
+# signal.signal(signal.SIGINT, handler)
+# signal.signal(signal.SIGKILL, handler)
+# signal.signal(signal.SIGSEGV, handler)
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
@@ -33,7 +46,7 @@ if __name__ == '__main__':
     # db_conf = DatabaseConfiguration(uname="giacomo", pw="omocaig", host="localhost", port=5432, db="conceptnet", fuzzy_dbs={"conceptnet": "https://osf.io/download/a6yn8/",
     #                                                                                                                         "geonames": "https://osf.io/download/dprm3"})
     # serialize_configuration("connection.yaml", db_conf)
-    pipeline = LaSSI("ab.yaml", "connection.yaml")
+    pipeline = LaSSI("permutated.yaml", "connection.yaml")
     pipeline.run()
     pipeline.close()
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

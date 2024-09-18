@@ -8,6 +8,7 @@ __email__ = "bergamigiacomo@gmail.com"
 __status__ = "Production"
 
 import copy
+import io
 import os.path
 import pickle
 import re
@@ -46,17 +47,22 @@ class Parmenides():
          self.non_verbs = set(self.get_universal_dependencies())
 
      def most_specific_type(self, types):
-         ### TODO: within .ttl
-         if "GPE" in types:
+         types = list(map(lambda x: str(x).lower(), types))
+         ### TODO: within .ttl and type inference
+         if "gpe" in types:
              return "GPE"
-         elif "LOC" in types:
+         elif "loc" in types:
              return "LOC"
-         elif "ORG" in types:
+         elif "org" in types:
              return "ORG"
          elif "noun" in types:
              return "noun"
-         elif "ENTITY" in types:
+         elif "entity" in types:
              return "ENTITY"
+         elif any(map(lambda x: "verb" in x, types)):
+             return "VERB"
+         elif "adjective" in types:
+             return "JJ"
          else:
              return "None"
 
@@ -213,6 +219,36 @@ class Parmenides():
          for x in qres:
             s.add(str(x.dst))
          return s
+
+     def getTypedObjects(self):
+         typing = """
+         SELECT DISTINCT ?s ?src_label ?dst
+WHERE {
+   ?s a ?dst .
+   ?s rdfs:label ?src_label.
+} """
+         qres = self.g.query(typing)
+         d = defaultdict(set)
+         for x in qres:
+             d[str(x.src_label)].add(str(x.dst)[len(Parmenides.parmenides_ns):])
+         return d
+
+     def dumpTypedObjectsToTAB(self, filename:str|io.IOBase):
+         l = self.getTypedObjects()
+         n = len(l)
+         f = None
+         if isinstance(filename, io.IOBase):
+             f = filename
+         else:
+             f = open(str(filename), "w")
+         count = 1
+         for k, v in l.items():
+                 k, t = k, self.most_specific_type(v)
+                 f.write(f"{count}\t{k}\t{k}\t{t}")
+                 count += 1
+                 if count <= n:
+                     f.write(os.linesep)
+         return f
 
      def isA(self, src, type):
          knows_query = """
@@ -498,7 +534,13 @@ class Parmenides():
 
 
 if __name__ == "__main__":
-    g =  Parmenides("/home/giacomo/projects/similarity-pipeline/submodules/news-crawler/Parmenides/turtle.ttl")
+    g =  Parmenides()
+    l = g.dumpTypedObjectsToTAB("tabby.tab")
+    count=1
+    for k,v in l.items():
+            k, t = k, g.most_specific_type(v)
+            print(f"{count}\t{k}\t{t}")
+            count+=1
     # knows_query = """
     # SELECT DISTINCT ?c
     # WHERE {

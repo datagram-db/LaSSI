@@ -23,9 +23,12 @@ class ResolveBasicTypes():
         for idx, (sentence, withTime) in enumerate(zip(list_sentences, self.services.resolveTimeUnits(list_sentences))):
             entities = []
             multi_entity_unit = []
+            for x in self.services.getFuzzyParmenides().resolve_u(self.recall_threshold, self.precision_threshold, sentence):
+                multi_entity_unit.append(x)
 
             ## 1) Time Parsing
             for time in withTime:
+                time = MeuDBEntry.from_dict_with_src(time, "SUTime")
                 multi_entity_unit.append(time)
 
             for x in self.services.getGeoNames().resolve_u(self.recall_threshold, self.precision_threshold, sentence, "GPE"):
@@ -42,18 +45,8 @@ class ResolveBasicTypes():
                 monad = entity.replace(" ", "")
                 if ent.type == "ORG":  # Remove spaces to create one word 'ORG' entities
                     entities.append([entity, monad])
-                # Possible alternative to keep one single entity:
-                # meu.add_entity(sentence_id, ent.text, ent.type, ent.start_char, ent.end_char, monad, 1)
                 from LaSSI.similarities.levenshtein import lev
-                # result = {
-                #     "text": ent.text,
-                #     "type": ent.type,
-                #     "start_char": ent.start_char,
-                #     "end_char": ent.end_char,
-                #     "monad": monad,
-                #     "confidence": lev(monad.lower(), ent.text.lower())
-                # }
-                multi_entity_unit.append(MeuDBEntry(ent.text,ent.type,ent.start_char,ent.end_char,monad,lev(monad.lower(), ent.text.lower())))
+                multi_entity_unit.append(MeuDBEntry(ent.text,ent.type,ent.start_char,ent.end_char,monad,lev(monad.lower(), ent.text.lower()),"Stanza"))
 
             # Loop through all entities and replace in sentence before passing to NLP server
             for entity in entities:

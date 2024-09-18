@@ -1253,10 +1253,7 @@ parmenides:flow%23n a parmenides:Noun ;
     rdfs:label "flow"^^xsd:string ;
     parmenides:entryPoint parmenides:flow%23n .
 
-parmenides:slow a parmenides:TransitiveVerb ;
-    rdfs:label "slow"^^xsd:string .
-
-parmenides:slow%23v a parmenides:Verb ;
+parmenides:slow%23v a parmenides:TransitiveVerb ;
     rdfs:label "slow"^^xsd:string ;
     parmenides:adjectivalForm parmenides:slow%23adj ;
     parmenides:entryPoint parmenides:slow%23v .
@@ -1366,6 +1363,12 @@ parmenides:busy a parmenides:Adjective ;
     parmenides:entryPoint parmenides:busy ;
     parmenides:hasProperty parmenides:city ;
     parmenides:relatedTo parmenides:crowd%23n .
+
+parmenides:hectic a parmenides:Adjective ;
+    rdfs:label "hectic"^^xsd:string ;
+    parmenides:entryPoint parmenides:hectic ;
+    parmenides:hasProperty parmenides:traffic%23n ;
+    parmenides:eqTo parmenides:busy .
 
 parmenides:center a parmenides:Adjective ;
     rdfs:label "center"^^xsd:string ;

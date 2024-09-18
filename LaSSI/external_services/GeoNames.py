@@ -82,48 +82,8 @@ class GeoNamesService():
     def __init__(self, psql, nlp):
         self.s = DBFuzzyStringMatching(psql, "geonames")
         self.nlp = nlp
-        #from LaSSI.external_services.Stanza import StanzaService
-        # self.s = SimplifiedFuzzyStringMatching()
-        # self.name_to_id = dict()
-        # if file is not None and os.path.exists(file):
-        #     with open(file) as f:
-        #         for line in f.readlines():
-        #             g = GeoNameField(line)
-        #             self.no_file_init(g.name, g.geonameid)
-        #             self.no_file_init(g.ascii, g.geonameid)
-        #             for x in g.others:
-        #                 self.no_file_init(x, g.geonameid)
-
-    # def no_file_init(self, x, id):
-    #     if x not in self.name_to_id:
-    #         self.name_to_id[x.lower()] = set()
-    #     self.name_to_id[x.lower()].add(id)
-    #     self.s.put(x)
-    #
-    # def get_value(self, x):
-    #     return self.name_to_id[x]
 
     def resolve_u(self, recallThreshold, precisionThreshold, s, type):
         from LaSSI.ner.resolve_multi_entity import ResolveMultiNamedEntity
-        # if self.nlp is None:
-        #     from LaSSI.external_services.Services import Services
-        #     self.nlp = Services.getInstance().getStanzaNLPToken().nlp_token
-        ar = ResolveMultiNamedEntity(recallThreshold, precisionThreshold)
+        ar = ResolveMultiNamedEntity(recallThreshold, precisionThreshold, "geonames", trustworthiness_source=0.8)
         return ar.start(s, self.s, self, self.nlp, type)
-
-    # def __new__(cls):
-    #     if cls._instance is None:
-    #         # write_to_log(None, "Initialising GeoNames...")
-    #         cls._instance = super(GeoNamesService, cls).__new__(cls)
-    #
-    #     return cls._instance
-
-
-# if __name__ == "__main__":
-#     stringa = "Newcastle city centre is trafficked"
-#     s = GeoNamesService()
-#     s.no_file_init("Newcastle Upon Tyne", "n/t/uk/e/w")
-#     s.no_file_init("Tyne and Wear", "t/uk/e/w")
-#     s.no_file_init("London", "l/uk/e/w")
-#     s.no_file_init("Rome", "r/l/i/e/w")
-#     print(s.resolve_u(0.1, 0.6, stringa))

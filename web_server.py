@@ -6,8 +6,13 @@ import uvicorn
 import yaml
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
-
 from LaSSI.Configuration import SentenceRepresentation
+
+import atexit
+def exit_handler():
+    import jpype
+    jpype.shutdownJVM()
+atexit.register(exit_handler)
 
 app = FastAPI()
 
@@ -100,10 +105,11 @@ async def websocket_endpoint(websocket: WebSocket):
     thread.start()
     while True:
         msg = logger.q.get()
+        if msg == "~~DONE~~":
+            logger.q.task_done()
+            break
         await websocket.send_text(msg)
         logger.q.task_done()
-        if msg == "~~DONE~~":
-            break
     thread.join()
     websocket.close()
 

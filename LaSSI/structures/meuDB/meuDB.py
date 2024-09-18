@@ -11,6 +11,7 @@ class MeuDBEntry:
     monad: str
     confidence: float
     id: str = None
+    source: str = None
 
     @classmethod
     def from_dict(cls, data):
@@ -21,7 +22,21 @@ class MeuDBEntry:
             end_char=data.get('end_char'),
             monad=data.get('monad'),
             confidence=data.get('confidence', 1.0),
-            id= data.get("id")
+            id= data.get("id"),
+            source= data.get("source")
+        )
+
+    @classmethod
+    def from_dict_with_src(cls, data, src):
+        return cls(
+            text = data.get('text'),
+            type = data.get('type'),
+            start_char = data.get('start_char'),
+            end_char=data.get('end_char'),
+            monad=data.get('monad'),
+            confidence=data.get('confidence', 1.0),
+            id= data.get("id"),
+            source= str(src)
         )
 
 @dataclasses.dataclass

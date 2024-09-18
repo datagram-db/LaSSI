@@ -40,17 +40,30 @@ class LaSSI():
         if logger is None:
             logger = lambda x: print(x)
         self.logger = logger
+
         self.logger("init postgres")
         if not isinstance(fuzzyDBs, DatabaseConfiguration):
             fuzzyDBs = str(fuzzyDBs)
             fuzzyDBs = load_db_configuration(fuzzyDBs)
+
+        self.logger("init non-postgres services and the wrapper for the former...")
+        self.initServices = Services.getInstance(self.logger)
+
+        self.logger("init postgres services...")
+        self.logger(" - Initialising the connection to the database")
         (FuzzyStringMatchDatabase
          .instance()
          .init(fuzzyDBs.db, fuzzyDBs.uname, fuzzyDBs.pw, fuzzyDBs.host, fuzzyDBs.port))
+
+        self.logger(" - Loading the tab files or streaming those remotely, if required.")
+        import tempfile
+        with tempfile.NamedTemporaryFile() as parmenides_tab:
+            with open(parmenides_tab.name, 'w') as f:
+                self.initServices.getParmenides().dumpTypedObjectsToTAB(f)
+            FuzzyStringMatchDatabase.instance().create_typed_table("parmenides", parmenides_tab.name)
         for k, v in fuzzyDBs.fuzzy_dbs.items():
+            self.logger(f" - Loading {k}.")
             FuzzyStringMatchDatabase.instance().create(k, v)
-        self.logger("init remaining services...")
-        self.initServices = Services.getInstance(self.logger)
 
         if sentences is None:
             sentences = open(self.dataset_name, "r")
@@ -96,12 +109,15 @@ class LaSSI():
         return L
 
     def _internal_graph(self, meuDBs, graph_list):
+        internal_graphs = []
+        sentences = []
         for graph, meuDB in zip(graph_list, meuDBs):
             from LaSSI.structures.provenance.GraphProvenance import GraphProvenance
             g = GraphProvenance(graph, meuDB, self.transformation == SentenceRepresentation.SimpleGraph)
             internal_graph = g.internal_graph()
             sentence = g.sentence()
-            yield (internal_graph, sentence)
+            internal_graphs.append(internal_graph)
+            sentences.append(sentence)
 
 
 
