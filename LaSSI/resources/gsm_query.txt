@@ -1,3 +1,5 @@
+
+
        // Case matching the sentences having no subject!
 p4 = (>> V)<-[∀ ? w:]--(B)
         --[∀l:dobj||ccomp||nmod||dep||obj||xcomp]->(Z)
@@ -42,7 +44,21 @@ p1 = (X)--[l:det||nmod_poss||amod||mark||case||punct||advmod||advcl||cc||dep||pu
        del Y                                             // Removing a node
 
        (X);                                              // Instance of reference to be returned
-
+docop = (target)--[cop]->(V)
+                --[l:nsubj||csubj||nsubj]->(subject)
+        where ((V unmatched p3 . V) ∧ ((V unmatched p3pass . V) ∧ ((V unmatched p3expl3 . V) ∧ ((V unmatched p3expl3 . V) ∧ (V unmatched p4 . V)))))
+       ↪  new a
+          new b
+          set (φ (𝜉 0 @ V) , a) as b
+          set (𝜉 0 @ a) as (𝜉 0 @ subject)
+          set (𝜉 0 @ b) as (𝜉 0 @ target)
+          set (ℓ 0 @ a) as (ℓ 0 @ subject)
+          set (ℓ 0 @ b) as (ℓ 0 @ target)
+          set (φ inherit , a) as subject
+          set (φ inherit , b) as target
+          del l
+          del V
+          (a);
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 p2 = (>> H)<-[∀l:]--(X)                                   // Graph matching, Second pattern
