@@ -87,11 +87,14 @@ class Logger():
         self.q.put(msg)
 
 def threaded_function(dataset_name, yaml_request, transformation, logger):
-    with io.StringIO(yaml_request) as f:
-        from LaSSI.LaSSI import LaSSI
-        pipeline = LaSSI(dataset_name, "connection.yaml", transformation, f, logger)
-        pipeline.run()
-        pipeline.close()
+    try:
+        with io.StringIO(yaml_request) as f:
+            from LaSSI.LaSSI import LaSSI
+            pipeline = LaSSI(dataset_name, "connection.yaml", transformation, f, logger)
+            pipeline.run()
+            pipeline.close()
+    except:
+        logger("~~DONE~~")
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
