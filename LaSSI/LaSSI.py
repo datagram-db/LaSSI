@@ -16,12 +16,17 @@ import pkg_resources
 
 from LaSSI.Configuration import SentenceRepresentation
 from LaSSI.external_services.Services import Services
-from LaSSI.external_services.utilities.DatabaseConfiguration import DatabaseConfiguration, load_db_configuration
+from LaSSI.external_services.utilities.DatabaseConfiguration import DatabaseConfiguration, load_db_configuration, \
+    load_list_configuration
 from LaSSI.external_services.utilities.FuzzyStringMatchDatabase import FuzzyStringMatchDatabase
 from LaSSI.external_services.web_cralwer.ScraperConfiguration import ScraperConfiguration
 from LaSSI.files.JSONDump import json_dumps
-from LaSSI.ner.ResolveBasicTypes import ResolveBasicTypes
+from LaSSI.phases.ApplyGraphGramamrs import ApplyGraphGrammars
+from LaSSI.phases.GetGSMString import GetGSMString
+from LaSSI.phases.ResolveBasicTypes import ResolveBasicTypes, ExplainTextWithNER
+from LaSSI.structures.internal_graph.InternalData import InternalRepresentation
 from LaSSI.structures.meuDB.meuDB import MeuDB
+from LaSSI.utils.serialization import conf_to_yaml_string, listconf_to_yaml_string
 
 
 class LaSSI():
@@ -76,9 +81,7 @@ class LaSSI():
         from pathlib import Path
         self.catabolites = os.path.join("catabolites", self.dataset_name)
         self.catabolites_viz = os.path.join(self.catabolites, "viz")
-        self.internals = os.path.join(self.catabolites, "internals")
-        self.internal_graphs_path = os.path.join(self.internals, "graphs")
-        self.internal_kernels_path = os.path.join(self.internals, "kernels")
+        self.internals = os.path.join(self.catabolites, "internals.json")
         Path(self.catabolites).mkdir(parents=True, exist_ok=True)
         Path(self.catabolites_viz).mkdir(parents=True, exist_ok=True)
         self.meuDB = os.path.join(self.catabolites, "meuDBs.json")
@@ -109,52 +112,60 @@ class LaSSI():
         return L
 
     def _internal_graph(self, meuDBs, graph_list):
-        internal_graphs = []
-        sentences = []
+        internal_representations = []
         for graph, meuDB in zip(graph_list, meuDBs):
             from LaSSI.structures.provenance.GraphProvenance import GraphProvenance
             g = GraphProvenance(graph, meuDB, self.transformation == SentenceRepresentation.SimpleGraph)
             internal_graph = g.internal_graph()
-            sentence = g.sentence()
-            internal_graphs.append(internal_graph)
-            sentences.append(sentence)
+            finalForm = internal_graph
+            if self.transformation == SentenceRepresentation.Logical:
+                finalForm = g.sentence()
+            internal_representations.append(InternalRepresentation(internal_graph, finalForm))
+        return internal_representations
 
 
 
     def sentence_transform(self, sentences):
-        if self.transformation != SentenceRepresentation.FullText:
-            # from LaSSI.ner.a_resolve_basic_types import ResolveBasicTypes
-            from LaSSI.files.FileDumpUtilities import target_file_dump
-            n = len(sentences)
-            self.logger("generating meuDB")
-            meuDB = target_file_dump(self.meuDB,
-                             lambda x: [MeuDB.from_dict(k) for k in json.load(x)],
-                             lambda: ResolveBasicTypes(self.recall_threshold, self.precision_threshold).resolve_basic_types(sentences),
-                             json_dumps,
-                             self.force)
-
-            self.logger("generating gsmDB")
-            gsmDB = target_file_dump(self.gsmDB,
-                                     lambda x: x.read(),
-                                     lambda : self.initServices.getGSMString(sentences),
-                                     lambda x: x,
-                                     self.force)
-
-            self.logger("generating rewritten graphs")
-            rewrittenGraphs = target_file_dump(self.datagramdb_output,
-                                               json.load,
-                                               lambda: self.apply_graph_grammars(n),
-                                               json_dumps,
-                                               self.force)
-
-            self.logger("rewriting graphs")
-            self._internal_graph(meuDB, rewrittenGraphs)
-            return []
-        else:
+        if self.transformation == SentenceRepresentation.FullText:
             return sentences
 
+        from LaSSI.files.FileDumpUtilities import target_file_dump
+        n = len(sentences)
+        self.logger("generating meuDB")
+        meuDB = target_file_dump(self.meuDB,
+                         lambda x: [MeuDB.from_dict(k) for k in json.load(x)],
+                         lambda: ExplainTextWithNER(self, sentences),
+                         json_dumps,
+                         self.force)
+
+        self.logger("generating gsmDB")
+        gsmDB = target_file_dump(self.gsmDB,
+                                 lambda x: x.read(),
+                                 lambda : GetGSMString(self, sentences),
+                                 lambda x: x,
+                                 self.force)
+
+        self.logger("generating rewritten graphs")
+        rewrittenGraphs = target_file_dump(self.datagramdb_output,
+                                           json.load,
+                                           lambda: ApplyGraphGrammars(self, n),
+                                           json_dumps,
+                                           self.force)
+
+        self.logger("generating intermediate representation (before final logical form in eFOL)")
+        intermediate_representation = target_file_dump(self.internals,
+                                                       lambda x: [InternalRepresentation.from_dict(k) for k in json.load(x)],
+                                                       lambda: self._internal_graph(meuDB, rewrittenGraphs),
+                                                       json_dumps,
+                                                       self.force)
+
+        if self.transformation == SentenceRepresentation.Logical:
+            self.logger("[TODO]")
+        self.logger("rewriting graphs")
+
+
     def run(self):
-        from LaSSI.SentenceLoader import SentenceLoader
+        from LaSSI.phases.SentenceLoader import SentenceLoader
         sentences = SentenceLoader(self.sentences)
         result = self.sentence_transform(sentences)
 

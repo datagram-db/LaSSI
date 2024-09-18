@@ -14,9 +14,9 @@ from dataclasses import dataclass, field
 from typing import List
 
 from LaSSI.external_services.Services import Services
-from LaSSI.files.JSONDump import EnhancedJSONEncoder
+from LaSSI.files.JSONDump import EnhancedJSONEncoder, json_dumps
 from LaSSI.structures.internal_graph.EntityRelationship import Relationship, NodeEntryPoint, Singleton, SetOfSingletons, \
-    Grouping
+    Grouping, deserialize_NodeEntryPoint
 
 
 @dataclass(order=True, frozen=True, eq=True)
@@ -26,6 +26,12 @@ class Sentence:
         'time': List[NodeEntryPoint],
         'loc': List[NodeEntryPoint]
     })
+
+    @classmethod
+    def from_dict(cls, c):
+        return cls(kernel=Relationship.from_dict(c.get('kernel')),
+                   properties={k: [deserialize_NodeEntryPoint(x) for x in v] for k, v in c.get('properties').items()}
+                   )
 
 
 def replaceNamed(entity: Singleton, s: str) -> Singleton:
@@ -70,7 +76,7 @@ def create_existential(edges, nodes):
 def create_cop(edge, kernel, targetOrSource):
     if targetOrSource == 'target':
         temp_prop = dict(copy(kernel.target.properties))
-        target_json = json.dumps(edge.target, cls=EnhancedJSONEncoder)
+        target_json = json_dumps(edge.target)
         target_dict = dict(json.loads(target_json))
         temp_prop['cop'] = target_dict
         new_target = Singleton(
@@ -90,7 +96,7 @@ def create_cop(edge, kernel, targetOrSource):
         )
     else:
         temp_prop = dict(copy(kernel.source.properties))
-        target_json = json.dumps(edge.source, cls=EnhancedJSONEncoder)
+        target_json = json_dumps(edge.source)
         target_dict = dict(json.loads(target_json))
         temp_prop['cop'] = target_dict
         new_source = Singleton(
@@ -110,7 +116,7 @@ def create_cop(edge, kernel, targetOrSource):
         )
     return kernel
 
-def create_sentence_obj(edges, nodes, transitive_verbs, negations):
+def create_sentence_obj(edges, nodes, transitive_verbs, negations) -> List[Sentence]:
     if len(edges) <= 0:
         create_existential(edges, nodes)
     # With graph created, make the 'Sentence' object
@@ -195,10 +201,12 @@ def create_sentence_obj(edges, nodes, transitive_verbs, negations):
 
     stNLP = Services.getInstance().getStanzaSTNLP()
     lemmatizer = Services.getInstance().getWTLemmatizer()
-    # from gsmtosimilarity.stanza_pipeline import StanzaService
+
     el = " ".join(map(lambda y: y["lemma"], filter(lambda x: x["upos"] != "AUX", stNLP(
         lemmatizer.lemmatize(kernel.edgeLabel.named_entity, 'v')).to_dict()[0])))
-    return Sentence(
+
+    ## TODO: this is done for future work, where a phrase might contain more than one sentence
+    return [Sentence(
         kernel=Relationship(
             source=kernel.source,
             target=kernel.target,
@@ -206,4 +214,4 @@ def create_sentence_obj(edges, nodes, transitive_verbs, negations):
             isNegated=kernel.isNegated
         ),
         properties=dict(properties)
-    )
+    )]

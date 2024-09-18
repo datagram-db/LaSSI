@@ -41,6 +41,7 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
     type: str
     confidence: float
 
+
 @dataclass(order=True, frozen=True, eq=True)
 class SingletonProperties():
     begin: str
@@ -70,9 +71,41 @@ class SetOfSingletons(NodeEntryPoint):  # Graph node representing conjunction/di
     confidence: float
 
 
+def deserialize_NodeEntryPoint(data: dict) -> NodeEntryPoint:
+    if data is None:
+        return data
+    if data['type'] == 'SetOfSingletons':
+        return SetOfSingletons(id=int(data.get('id')),
+                               type=Grouping(int(data.get('type'))),
+                               entities =tuple(map(deserialize_NodeEntryPoint, data.get('entities'))),
+            min=int(data.get('min')),
+            max=int(data.get('max')),
+            confidence=float(data.get('confidence')
+                                             ))
+    elif data['type'] == 'Singleton':
+        return Singleton(
+            id=int(data.get('id')),
+            named_entity=data.get('named_entity'),
+            properties=frozenset(data.get('properties').items()),
+            min=int(data.get('min')),
+            max=int(data.get('max')),
+            confidence=float(data.get('confidence')),
+                             type=data.get('type'),
+                             )
+
+
+
 @dataclass(order=True, frozen=True, eq=True)
 class Relationship:  # Representation of an edge
     source: NodeEntryPoint  # Source node
     target: NodeEntryPoint  # Target node
     edgeLabel: Singleton  # Edge label, also represented as an entity with properties
     isNegated: bool = False  # Whether the edge expresses a negated action
+
+    @classmethod
+    def from_dict(cls, c):
+        return cls(source=deserialize_NodeEntryPoint(c.get('source')),
+                   target=deserialize_NodeEntryPoint(c.get('target')),
+                   edgeLabel=deserialize_NodeEntryPoint(c.get('edgeLabel')),
+                   isNegated=bool(c.get('Singleton', False))
+                   )

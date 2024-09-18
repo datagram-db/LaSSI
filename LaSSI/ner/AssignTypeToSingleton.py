@@ -8,10 +8,12 @@ __status__ = "Production"
 
 from collections import defaultdict
 from itertools import repeat
+from typing import List
 
 from LaSSI.structures.internal_graph.EntityRelationship import Singleton, Grouping, SetOfSingletons, Relationship
+from LaSSI.structures.kernels.Sentence import Sentence
 from LaSSI.structures.meuDB.meuDB import MeuDB
-
+from LaSSI.structures.internal_graph.Graph import Graph
 
 class AssignTypeToSingleton:
     def __init__(self, negations=None):
@@ -364,7 +366,7 @@ class AssignTypeToSingleton:
     def getCurrentStateNodes(self):
         return self.nodes
 
-    def constructIntermediateGraph(self, parsed_json, rejected_edges, non_verbs):
+    def constructIntermediateGraph(self, parsed_json, rejected_edges, non_verbs) -> Graph:
         self.edges = []
         for row in range(len(parsed_json)):
             item = parsed_json[row]
@@ -411,10 +413,10 @@ class AssignTypeToSingleton:
                                                     confidence=self.nodes[item['id']].confidence),
                                 isNegated=has_negations
                             ))
-        from LaSSI.structures.internal_graph.Graph import Graph
+
         return Graph(self.edges)
         # return edges
 
-    def constructSentence(self, transitive_verbs):
+    def constructSentence(self, transitive_verbs) -> List[Sentence]:
         from LaSSI.structures.kernels.Sentence import create_sentence_obj
         return create_sentence_obj(self.edges, self.nodes, transitive_verbs, self.negations)

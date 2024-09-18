@@ -1,6 +1,8 @@
 import dataclasses
 import json
 from collections import defaultdict
+from enum import Enum
+
 
 def isGoodKey(x):
     return x is None or isinstance(x, str) or isinstance(x, int) or isinstance(x, float) or isinstance(x, bool)
@@ -32,8 +34,8 @@ class EnhancedJSONEncoder(json.JSONEncoder):
             return self.default(dataclasses.asdict(o))
         elif isinstance(o, frozenset):
             return dict(o)
-        elif isinstance(o, Grouping):
-            return o.name
+        elif isinstance(o, Enum):
+            return o.value
         return super().default(o)
 
 def json_dumps(obj):

@@ -41,11 +41,3 @@ class ScraperConfiguration:
     """Stops from crawling back in time when you hit some day were some articles were already dowloaded"""
 
 
-def serialize_configuration(filepath:str, conf):
-    if (not isinstance(conf, str)) and (not isinstance(conf, list)):
-        w = dataclasses.asdict(conf)
-    else:
-        w = conf
-    with open(str(filepath), 'w') as outfile:
-        import yaml
-        yaml.dump(w, outfile, default_flow_style=False)
