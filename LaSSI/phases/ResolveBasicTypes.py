@@ -56,4 +56,4 @@ class ResolveBasicTypes():
         return db
 
 def ExplainTextWithNER(self, sentences):
-    ResolveBasicTypes(self.recall_threshold, self.precision_threshold).resolve_basic_types(sentences)
+    return ResolveBasicTypes(self.recall_threshold, self.precision_threshold).resolve_basic_types(sentences)

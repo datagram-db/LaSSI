@@ -24,6 +24,7 @@ from LaSSI.files.JSONDump import json_dumps
 from LaSSI.phases.ApplyGraphGramamrs import ApplyGraphGrammars
 from LaSSI.phases.GetGSMString import GetGSMString
 from LaSSI.phases.ResolveBasicTypes import ResolveBasicTypes, ExplainTextWithNER
+from LaSSI.phases.SemanticGraphRewriting import SemanticGraphRewriting
 from LaSSI.structures.internal_graph.InternalData import InternalRepresentation
 from LaSSI.structures.meuDB.meuDB import MeuDB
 from LaSSI.utils.serialization import conf_to_yaml_string, listconf_to_yaml_string
@@ -155,7 +156,7 @@ class LaSSI():
         self.logger("generating intermediate representation (before final logical form in eFOL)")
         intermediate_representation = target_file_dump(self.internals,
                                                        lambda x: [InternalRepresentation.from_dict(k) for k in json.load(x)],
-                                                       lambda: self._internal_graph(meuDB, rewrittenGraphs),
+                                                       lambda: SemanticGraphRewriting(self, meuDB, rewrittenGraphs),
                                                        json_dumps,
                                                        self.force)
 
