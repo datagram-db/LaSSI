@@ -1,5 +1,5 @@
 [build-system]
-requires = ["flit_core >=3.2,<4",  "requests==2.31.0"]
+requires = ["flit_core >=3.2,<4",  "requests==2.32.2"]
 build-backend = "flit_core.buildapi"
 
 [project]
@@ -13,7 +13,7 @@ requires-python = "3.10"
 #classifiers = ["License :: OSI Approved :: MIT License"]
 dynamic = ["version", "description"]
 dependencies = [
-    "requests==2.31.0",
+    "requests==2.32.2",
     "psycopg2-binary==2.9.9",
     "psycopg2==2.9.9",
     "stanza==1.8.1",
