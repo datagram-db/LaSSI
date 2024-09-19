@@ -24,7 +24,7 @@ dependencies = [
 "feedparser==6.0.10",
     "dateparser==1.1.8",
     "python-dateutil==2.8.2",
-    "certifi==2023.11.17",
+    "certifi==2024.7.4",
     "lxml==4.9.3",
     "colorama==0.4.6",
     "pytz==2023.3.post1",
