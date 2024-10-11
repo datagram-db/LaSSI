@@ -11,8 +11,8 @@ from LaSSI.external_services.Services import Services
 from LaSSI.structures.meuDB.meuDB import MeuDBEntry, MeuDB
 
 
-class ResolveBasicTypes():
-    def __init__(self, recall_threshold:float, precision_threshold:float):
+class ResolveBasicTypes:
+    def __init__(self, recall_threshold: float, precision_threshold: float):
         self.recall_threshold = recall_threshold
         self.precision_threshold = precision_threshold
         self.services = Services.getInstance()
@@ -23,7 +23,8 @@ class ResolveBasicTypes():
         for idx, (sentence, withTime) in enumerate(zip(list_sentences, self.services.resolveTimeUnits(list_sentences))):
             entities = []
             multi_entity_unit = []
-            for x in self.services.getFuzzyParmenides().resolve_u(self.recall_threshold, self.precision_threshold, sentence):
+            for x in self.services.getFuzzyParmenides().resolve_u(self.recall_threshold, self.precision_threshold,
+                                                                  sentence):
                 multi_entity_unit.append(x)
 
             ## 1) Time Parsing
@@ -31,10 +32,12 @@ class ResolveBasicTypes():
                 time = MeuDBEntry.from_dict_with_src(time, "SUTime")
                 multi_entity_unit.append(time)
 
-            for x in self.services.getGeoNames().resolve_u(self.recall_threshold, self.precision_threshold, sentence, "GPE"):
+            for x in self.services.getGeoNames().resolve_u(self.recall_threshold, self.precision_threshold, sentence,
+                                                           "GPE"):
                 multi_entity_unit.append(x)
 
-            for x in self.services.getConcepts().resolve_u(self.recall_threshold, self.precision_threshold, sentence, "ENTITY"):
+            for x in self.services.getConcepts().resolve_u(self.recall_threshold, self.precision_threshold, sentence,
+                                                           "ENTITY"):
                 multi_entity_unit.append(x)
 
             ## 2) Typed entity parsing
@@ -46,7 +49,8 @@ class ResolveBasicTypes():
                 if ent.type == "ORG":  # Remove spaces to create one word 'ORG' entities
                     entities.append([entity, monad])
                 from LaSSI.similarities.levenshtein import lev
-                multi_entity_unit.append(MeuDBEntry(ent.text,ent.type,ent.start_char,ent.end_char,monad,lev(monad.lower(), ent.text.lower()),"Stanza"))
+                multi_entity_unit.append(MeuDBEntry(ent.text, ent.type, ent.start_char, ent.end_char, monad,
+                                                    lev(monad.lower(), ent.text.lower()), "Stanza"))
 
             # Loop through all entities and replace in sentence before passing to NLP server
             for entity in entities:
@@ -54,6 +58,7 @@ class ResolveBasicTypes():
 
             db.append(MeuDB(sentence, multi_entity_unit))
         return db
+
 
 def ExplainTextWithNER(self, sentences):
     return ResolveBasicTypes(self.recall_threshold, self.precision_threshold).resolve_basic_types(sentences)

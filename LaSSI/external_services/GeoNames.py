@@ -1,7 +1,6 @@
 import csv
 import os
 
-
 from LaSSI.external_services.utilities.FuzzyStringMatchDatabase import DBFuzzyStringMatching, FuzzyStringMatchDatabase
 
 
@@ -84,6 +83,6 @@ class GeoNamesService():
         self.nlp = nlp
 
     def resolve_u(self, recallThreshold, precisionThreshold, s, type):
-        from LaSSI.ner.resolve_multi_entity import ResolveMultiNamedEntity
+        from LaSSI.ner.ResolveMultiEntity import ResolveMultiNamedEntity
         ar = ResolveMultiNamedEntity(recallThreshold, precisionThreshold, "geonames", trustworthiness_source=0.8)
         return ar.start(s, self.s, self, self.nlp, type)

@@ -34,7 +34,7 @@ dependencies = [
     "PyDatagramDB @ git+https://github.com/datagram-db/datagram-db.git#egg=PyDatagramDB&subdirectory=DatagramDB",
     "rdflib==7.0.0",
     "pandas==2.1.4",
-    "dacite==1.1.4",
+    "dacite",
     "websockets==13.0.1",
     "fastapi==0.115.0",
     "uvicorn==0.30.6"

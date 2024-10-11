@@ -1,8 +1,8 @@
-db: conceptnet
+db: ideas #conceptnet
 fuzzy_dbs:
   conceptnet: https://osf.io/download/a6yn8/
-  geonames: /home/giacomo/projects/similarity-pipeline/submodules/stanfordnlp_dg_server/allCountries.txt_sql_input.txt #https://osf.io/download/dprm3
+  geonames: https://osf.io/download/dprm3 #https://osf.io/download/dprm3
 host: localhost
 port: 5432
-pw: omocaig
-uname: giacomo
+pw: password #omocaig
+uname: fox #giacomo

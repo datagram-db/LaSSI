@@ -3,6 +3,8 @@ import pickle
 from collections import defaultdict
 from enum import Enum
 
+from LaSSI.structures.extended_fol.ModelSearch import ModelSearchBasis, ModelSearch
+from LaSSI.structures.extended_fol.sentence_expansion import PairwiseCases
 from LaSSI.structures.extended_fol.Sentences import FVariable, FNot, FBinaryPredicate, FUnaryPredicate
 
 
@@ -24,6 +26,7 @@ class ExpandConstituents:
     def getExpansionLeaves(self):
         return {x for x, y in self.constituent_expansion_map.items() if len(y) == 0}
 
+
 # def get_formula_expansion(expander, formula):
 #     ec = ExpandConstituents(expander)
 #     ec.expand_formula(formula)
@@ -40,11 +43,15 @@ class CasusHappening(Enum):
     INSTANTIATION_IMPLICATION = 10
     MISSING_1ST_IMPLICATION = 12
 
+
 def isImplication(x):
     return x == CasusHappening.GENERAL_IMPLICATION or x == CasusHappening.LOSE_SPEC_IMPLICATION or x == CasusHappening.INSTANTIATION_IMPLICATION or x == CasusHappening.MISSING_1ST_IMPLICATION
 
+
 d_transformCaseWhenOneArgIsNegated = None
-def transformCaseWhenOneArgIsNegated(orig:CasusHappening):
+
+
+def transformCaseWhenOneArgIsNegated(orig: CasusHappening):
     global d_transformCaseWhenOneArgIsNegated
     if d_transformCaseWhenOneArgIsNegated is None:
         d_transformCaseWhenOneArgIsNegated = {CasusHappening.NONE: CasusHappening.NONE,
@@ -114,7 +121,7 @@ def compare_variable(d, lhs, rhs, kb):
         elif isImplication(nameEQ):
             nameAgainstSpec = kb.name_eq(lhs.name, rhs.specification)
             if (specEQ == copCompareInv) and (specEQ == CasusHappening.EQUIVALENT):
-                val = nameEQ ## If everything is equivalent, then it is implying as the arguments are
+                val = nameEQ  ## If everything is equivalent, then it is implying as the arguments are
             elif (specEQ == CasusHappening.EQUIVALENT) and (copCompareInv == CasusHappening.EXCLUSIVES):
                 val = CasusHappening.EXCLUSIVES
             elif lhs.specification is None and nameAgainstSpec == CasusHappening.EQUIVALENT:
@@ -170,6 +177,7 @@ def simplifyConstituentsAcross(constituentCollection):
     else:
         return CasusHappening.INDIFFERENT
 
+
 def simplifyConstituents(constituentCollection):
     if isinstance(constituentCollection, CasusHappening):
         return constituentCollection
@@ -203,14 +211,15 @@ def simplifyConstituents(constituentCollection):
     else:
         return CasusHappening.INDIFFERENT
 
+
 def test_pairwise_sentence_similarity(d, x, y, store=True, kb=None, shift=True):
     if shift:
-        if (y,x) in d:
-            test_shift = d[(y,x)]
+        if (y, x) in d:
+            test_shift = d[(y, x)]
         else:
             test_shift = test_pairwise_sentence_similarity(d, y, x, store, kb, False)
         if test_shift == CasusHappening.EQUIVALENT or test_shift == CasusHappening.EXCLUSIVES:
-            d[(x,y)] = test_shift
+            d[(x, y)] = test_shift
             return test_shift
     val = CasusHappening.NONE
     if y is None and x is None:
@@ -235,11 +244,11 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, kb=None, shift=True):
         if (x.meta != y.meta):
             val = CasusHappening.INDIFFERENT
         else:
-            assert isinstance(x,FBinaryPredicate) or isinstance(x, FUnaryPredicate)
-            assert isinstance(y,FBinaryPredicate) or isinstance(y, FUnaryPredicate)
+            assert isinstance(x, FBinaryPredicate) or isinstance(x, FUnaryPredicate)
+            assert isinstance(y, FBinaryPredicate) or isinstance(y, FUnaryPredicate)
             xprop = set() if x.properties is None else x.properties
             yprop = set() if y.properties is None else y.properties
-            keyCmp, keyCmpInv = defaultdict(set),  defaultdict(set)
+            keyCmp, keyCmpInv = defaultdict(set), defaultdict(set)
             keys = set(map(lambda z: z[0], xprop)).union(map(lambda z: z[0], yprop))
             dLHS = dict(xprop)
             dRHS = dict(yprop)
@@ -260,10 +269,10 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, kb=None, shift=True):
             keyCmpInv = {key: simplifyConstituents(val) for key, val in keyCmpInv.items()}
             keyCmpElements, keyCmpElementsInv = CasusHappening.EQUIVALENT, CasusHappening.EQUIVALENT
             keyComparisonOutcome = copKeyComparisonOutcome = CasusHappening.INDIFFERENT
-            if len(keyCmp)>0:
-                keyCmpElements = simplifyConstituentsAcross({keyCmp[key] for key in keyCmp })
-                keyCmpElementsInv = simplifyConstituentsAcross({keyCmpInv[key] for key in keyCmpInv })
-            if isinstance(x,FBinaryPredicate) and isinstance(y,FBinaryPredicate):
+            if len(keyCmp) > 0:
+                keyCmpElements = simplifyConstituentsAcross({keyCmp[key] for key in keyCmp})
+                keyCmpElementsInv = simplifyConstituentsAcross({keyCmpInv[key] for key in keyCmpInv})
+            if isinstance(x, FBinaryPredicate) and isinstance(y, FBinaryPredicate):
                 if (x.rel != y.rel):
                     val = CasusHappening.INDIFFERENT
                 else:
@@ -290,7 +299,7 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, kb=None, shift=True):
                                 val = srcCmp
                             else:
                                 val = simplifyConstituents({srcCmp, dstCmp})
-            elif isinstance(y,FUnaryPredicate) and isinstance(x, FUnaryPredicate):
+            elif isinstance(y, FUnaryPredicate) and isinstance(x, FUnaryPredicate):
                 if (x.rel != y.rel):
                     val = CasusHappening.INDIFFERENT
                 else:
@@ -299,18 +308,19 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, kb=None, shift=True):
                 keyComparisonOutcome = compare_variable(d, x.arg, y.arg, kb)
                 copKeyComparisonOutcome = compare_variable(d, x.arg.cop, y.arg.cop, kb)
             else:
-                raise ValueError("Unexpected comparison between "+str(x)+" and"+str(y))
+                raise ValueError("Unexpected comparison between " + str(x) + " and" + str(y))
             if val != CasusHappening.INDIFFERENT:
                 if val == CasusHappening.EQUIVALENT:
                     if keyComparisonOutcome == CasusHappening.EQUIVALENT:
                         if isImplication(keyCmpElements):
-                            if copKeyComparisonOutcome == CasusHappening.EQUIVALENT: # and (
-                                #(y.arg is not None) and (y.arg.cop is not None)):
+                            if copKeyComparisonOutcome == CasusHappening.EQUIVALENT:  # and (
+                                # (y.arg is not None) and (y.arg.cop is not None)):
                                 if CasusHappening.INDIFFERENT in set(keyCmp.values()):
                                     val = CasusHappening.INDIFFERENT
                                 elif CasusHappening.LOSE_SPEC_IMPLICATION in set(keyCmp.values()):
                                     val = CasusHappening.INDIFFERENT
-                                elif keyCmpElements == CasusHappening.INSTANTIATION_IMPLICATION or CasusHappening.INSTANTIATION_IMPLICATION in set(keyCmp.values()):# or keyCmpElements == CasusHappening.GENERAL_IMPLICATION:
+                                elif keyCmpElements == CasusHappening.INSTANTIATION_IMPLICATION or CasusHappening.INSTANTIATION_IMPLICATION in set(
+                                        keyCmp.values()):  # or keyCmpElements == CasusHappening.GENERAL_IMPLICATION:
                                     val = keyCmpElements
                                 else:
                                     val = CasusHappening.INDIFFERENT
@@ -341,14 +351,15 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, kb=None, shift=True):
 
 
 def instantiate_rules(e, constituents, expansion_dictionary, final_constituents, isImpl):
-        for constituent in constituents:
-            s = set(e(constituent, isImpl))
-            s.add(constituent)
-            expansion_dictionary[constituent] = s
-        for y in expansion_dictionary.values():
-            final_constituents = final_constituents.union(set(y))
-        # return {(x, y): CasusHappening.NONE for x in final_constituents for y in
-        #         final_constituents}
+    for constituent in constituents:
+        s = set(e(constituent, isImpl))
+        s.add(constituent)
+        expansion_dictionary[constituent] = s
+    for y in expansion_dictionary.values():
+        final_constituents = final_constituents.union(set(y))
+    # return {(x, y): CasusHappening.NONE for x in final_constituents for y in
+    #         final_constituents}
+
 
 class ExpandConstituents:
     def __init__(self, cfg, expander, list_of_impl_rules):
@@ -357,17 +368,17 @@ class ExpandConstituents:
 
         self.constituents = list(list_of_impl_rules)
 
-        if (os.path.exists(cfg['hand_dataset']+"_ied.pickle") and
-            os.path.exists(cfg['hand_dataset'] + "_ic.pickle") and
-            os.path.exists(cfg['hand_dataset'] + "_eed.pickle") and
-            os.path.exists(cfg['hand_dataset'] + "_ec.pickle")):
-            with open(cfg['hand_dataset']+"_ied.pickle", "rb") as f:
+        if (os.path.exists(cfg['hand_dataset'] + "_ied.pickle") and
+                os.path.exists(cfg['hand_dataset'] + "_ic.pickle") and
+                os.path.exists(cfg['hand_dataset'] + "_eed.pickle") and
+                os.path.exists(cfg['hand_dataset'] + "_ec.pickle")):
+            with open(cfg['hand_dataset'] + "_ied.pickle", "rb") as f:
                 self.impl_expansion_dictionary = pickle.load(f)
-            with open(cfg['hand_dataset']+"_ic.pickle", "rb") as f:
+            with open(cfg['hand_dataset'] + "_ic.pickle", "rb") as f:
                 self.impl_constituents = pickle.load(f)
-            with open(cfg['hand_dataset']+"_eed.pickle", "rb") as f:
+            with open(cfg['hand_dataset'] + "_eed.pickle", "rb") as f:
                 self.eq_expansion_dictionary = pickle.load(f)
-            with open(cfg['hand_dataset']+"_ec.pickle", "rb") as f:
+            with open(cfg['hand_dataset'] + "_ec.pickle", "rb") as f:
                 self.eq_constituents = pickle.load(f)
         else:
             self.impl_expansion_dictionary = dict()
@@ -388,13 +399,13 @@ class ExpandConstituents:
             # self.outcome_eq_dictionary =
             instantiate_rules(self.expander, self.constituents, self.eq_expansion_dictionary, self.eq_constituents,
                               False)
-            with open(cfg['hand_dataset']+"_ied.pickle", "wb") as f:
+            with open(cfg['hand_dataset'] + "_ied.pickle", "wb") as f:
                 pickle.dump(self.impl_expansion_dictionary, f, protocol=pickle.HIGHEST_PROTOCOL)
-            with open(cfg['hand_dataset']+"_ic.pickle", "wb") as f:
+            with open(cfg['hand_dataset'] + "_ic.pickle", "wb") as f:
                 pickle.dump(self.impl_constituents, f, protocol=pickle.HIGHEST_PROTOCOL)
-            with open(cfg['hand_dataset']+"_eed.pickle", "wb") as f:
+            with open(cfg['hand_dataset'] + "_eed.pickle", "wb") as f:
                 pickle.dump(self.eq_expansion_dictionary, f, protocol=pickle.HIGHEST_PROTOCOL)
-            with open(cfg['hand_dataset']+"_ec.pickle", "wb") as f:
+            with open(cfg['hand_dataset'] + "_ec.pickle", "wb") as f:
                 pickle.dump(self.eq_constituents, f, protocol=pickle.HIGHEST_PROTOCOL)
 
         # with open("/home/giacomo/dump_impl.json", "w") as f:
@@ -406,7 +417,6 @@ class ExpandConstituents:
         #     import json
         #     json.dump({str(k):[str(x) for x in v] for k,v in self.eq_expansion_dictionary.items()}, f, cls=EnhancedJSONEncoder, indent=4)
         # exit(101)
-        from inference_engine.ModelSearch import ModelSearch
         self.result_cache = dict()
         self.ms = ModelSearch(self.expander.g)
         # exit(102)
@@ -414,19 +424,15 @@ class ExpandConstituents:
         #     for y in self.eq_constituents:
         #         test_pairwise_sentence_similarity(self.outcome_implication_dictionary, x, y, True, self.expander.g)
 
-
-
-    def determine(self, i:int, j:int):
-        from logical_repr.sentence_expansion import PairwiseCases
+    def determine(self, i: int, j: int):
         if (i == j):
             self.result_cache[(i, j)] = PairwiseCases.Equivalent
-        assert i<len(self.constituents)
-        assert j<len(self.constituents)
-        if (i,j) in self.result_cache:
-            return self.result_cache[(i,j)]
+        assert i < len(self.constituents)
+        assert j < len(self.constituents)
+        if (i, j) in self.result_cache:
+            return self.result_cache[(i, j)]
         val = PairwiseCases.NonImplying
 
-        from inference_engine.ModelSearch import ModelSearchBasis
         lhsOrig = ModelSearchBasis(self.constituents[i], self.impl_expansion_dictionary[self.constituents[i]])
         rhsOrig = ModelSearchBasis(self.constituents[j], self.eq_expansion_dictionary[self.constituents[j]])
         tmp = self.ms.compare(lhsOrig, rhsOrig)
@@ -438,7 +444,6 @@ class ExpandConstituents:
             val = PairwiseCases.Implying
         else:
             val = PairwiseCases.NonImplying
-
 
         # expansionLeft = self.impl_expansion_dictionary[self.constituents_impl[i]]
         # y = self.constituents_impl[j]
@@ -464,13 +469,3 @@ class ExpandConstituents:
         #         val = PairwiseCases.NonImplying
         self.result_cache[(i, j)] = val
         return val
-
-
-
-
-
-
-
-
-
-

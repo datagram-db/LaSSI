@@ -2,12 +2,12 @@ import collections
 import io
 
 import dacite
-import datacite
 import yaml
 
 from LaSSI.external_services.web_cralwer.ScraperConfiguration import ScraperConfiguration
 
 import six
+
 
 def SentenceLoader(arg):
     if isinstance(arg, io.IOBase):
@@ -21,4 +21,3 @@ def SentenceLoader(arg):
         return [str(arg)]
     elif isinstance(arg, collections.abc.Iterable):
         return list(map(str, arg))
-

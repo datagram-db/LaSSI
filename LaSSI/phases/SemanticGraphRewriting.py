@@ -1,2 +1,2 @@
-def SemanticGraphRewriting(self, meuDB, rewrittenGraphs):
-    return self._internal_graph(meuDB, rewrittenGraphs)
+def SemanticGraphRewriting(self, meu_db, rewritten_graphs):
+    return self._internal_graph(meu_db, rewritten_graphs)

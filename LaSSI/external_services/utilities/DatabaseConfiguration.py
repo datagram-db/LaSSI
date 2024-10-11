@@ -14,7 +14,8 @@ class DatabaseConfiguration:
     port: int
     fuzzy_dbs: dict
 
-def load_db_configuration(file:str|io.IOBase, data_class=DatabaseConfiguration):
+
+def load_db_configuration(file: str | io.IOBase, data_class=DatabaseConfiguration):
     f = file
     arg = None
     if isinstance(file, str):
@@ -26,7 +27,8 @@ def load_db_configuration(file:str|io.IOBase, data_class=DatabaseConfiguration):
     f.close()
     return arg
 
-def load_list_configuration(file:str|io.IOBase, data_class=DatabaseConfiguration):
+
+def load_list_configuration(file: str | io.IOBase, data_class=DatabaseConfiguration):
     f = file
     arg = None
     if isinstance(file, str):

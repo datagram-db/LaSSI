@@ -17,6 +17,7 @@ from LaSSI.files.ReadFileContent import ReadFileContent
 
 class FuzzyStringMatchDatabase:
     _instance = None
+
     def create(self, tablename, file):
         exists = False
         with self.connection.cursor() as cursor:
@@ -26,12 +27,12 @@ class FuzzyStringMatchDatabase:
             exists = tablename in S
             cursor.close()
         if not exists:
-            print("Creating table " +tablename)
+            print("Creating table " + tablename)
             with self.connection.cursor() as cursor2:
                 cursor2 = self.connection.cursor()
-                cursor2.execute("DROP TABLE IF EXISTS "+tablename)
+                cursor2.execute("DROP TABLE IF EXISTS " + tablename)
                 self.connection.commit()
-                cursor2.execute("CREATE TABLE "+tablename+" (id integer NOT NULL, idx text, t text)")
+                cursor2.execute("CREATE TABLE " + tablename + " (id integer NOT NULL, idx text, t text)")
                 # self.connection.commit()
                 cursor2.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
                 # self.connection.commit()
@@ -39,8 +40,8 @@ class FuzzyStringMatchDatabase:
                 with ReadFileContent(file) as f:
                     # Notice that we don't need the csv module.
                     next(f)  # Skip the header row.
-                    cursor2.copy_from(f, tablename,sep='\t')
-                cursor2.execute("CREATE INDEX "+tablename+"_idx ON "+tablename+" USING GIST (t gist_trgm_ops);")
+                    cursor2.copy_from(f, tablename, sep='\t')
+                cursor2.execute("CREATE INDEX " + tablename + "_idx ON " + tablename + " USING GIST (t gist_trgm_ops);")
                 self.connection.commit()
                 cursor2.close()
         else:
@@ -55,12 +56,12 @@ class FuzzyStringMatchDatabase:
             exists = tablename in S
             cursor.close()
         if not exists:
-            print("Creating table " +tablename)
+            print("Creating table " + tablename)
             with self.connection.cursor() as cursor2:
                 cursor2 = self.connection.cursor()
-                cursor2.execute("DROP TABLE IF EXISTS "+tablename)
+                cursor2.execute("DROP TABLE IF EXISTS " + tablename)
                 self.connection.commit()
-                cursor2.execute("CREATE TABLE "+tablename+" (id integer NOT NULL, idx text, t text, type text)")
+                cursor2.execute("CREATE TABLE " + tablename + " (id integer NOT NULL, idx text, t text, type text)")
                 # self.connection.commit()
                 cursor2.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
                 # self.connection.commit()
@@ -68,24 +69,25 @@ class FuzzyStringMatchDatabase:
                 with ReadFileContent(file) as f:
                     # Notice that we don't need the csv module.
                     next(f)  # Skip the header row.
-                    cursor2.copy_from(f, tablename,sep='\t')
-                cursor2.execute("CREATE INDEX "+tablename+"_idx ON "+tablename+" USING GIST (t gist_trgm_ops);")
+                    cursor2.copy_from(f, tablename, sep='\t')
+                cursor2.execute("CREATE INDEX " + tablename + "_idx ON " + tablename + " USING GIST (t gist_trgm_ops);")
                 self.connection.commit()
                 cursor2.close()
         else:
             print(f"Table {tablename} already loaded!")
 
-    def init(self,database_name,user="giacomo",
-                                  password="omocaig",
-                                  host="localhost",
-                                  port="5432"):
+    def init(self, database_name, user="giacomo",
+             password="omocaig",
+             host="localhost",
+             port="5432"):
         self.connection = psycopg2.connect(user=user,
-                                  password=password,
-                                  host=host,
-                                  port=port,
-                                  database=database_name)
-    def similarity(self,table,query,score=1.0):
-        query = query.replace("'","''")
+                                           password=password,
+                                           host=host,
+                                           port=port,
+                                           database=database_name)
+
+    def similarity(self, table, query, score=1.0):
+        query = query.replace("'", "''")
         poll = OrderedDict()
         with self.connection.cursor() as cursor:
             cursor.execute(f"""SELECT idx, similarity(t, '{query}') AS sml
@@ -101,8 +103,8 @@ class FuzzyStringMatchDatabase:
             cursor.close()
         return poll
 
-    def typed_similarity(self,table,query,score=1.0):
-        query = query.replace("'","''")
+    def typed_similarity(self, table, query, score=1.0):
+        query = query.replace("'", "''")
         poll = OrderedDict()
         with self.connection.cursor() as cursor:
             cursor.execute(f"""SELECT idx, similarity(t, '{query}') AS sml, type
@@ -114,11 +116,11 @@ class FuzzyStringMatchDatabase:
                 score = float(row[1])
                 if score not in poll:
                     poll[score] = set()
-                poll[score].add((row[0],row[2]))
+                poll[score].add((row[0], row[2]))
             cursor.close()
         return poll
 
-    def morphosyntax(self,table, word, ending):
+    def morphosyntax(self, table, word, ending):
         poll = OrderedDict()
         with self.connection.cursor() as cursor:
             cursor.execute(f"""SELECT idx, t, similarity(t, '{word}') AS sml
@@ -147,16 +149,17 @@ class FuzzyStringMatchDatabase:
         self.connection.commit()
         self.connection.close()
 
+
 class DBFuzzyStringMatching:
     def __init__(self, db, tablename):
         self.db = db
         self.tablename = tablename
 
-    def fuzzyMatch(self, threshold:float, objectString:str):
-        return self.db.similarity(self.tablename,objectString,score=threshold)
+    def fuzzyMatch(self, threshold: float, objectString: str):
+        return self.db.similarity(self.tablename, objectString, score=threshold)
 
-    def typedFuzzyMatch(self, threshold:float, objectString:str):
-        return self.db.typed_similarity(self.tablename,objectString,score=threshold)
+    def typedFuzzyMatch(self, threshold: float, objectString: str):
+        return self.db.typed_similarity(self.tablename, objectString, score=threshold)
 
 
 if __name__ == "__main__":
