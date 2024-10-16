@@ -1,19 +1,20 @@
+import itertools
 from collections import defaultdict
 from itertools import repeat
 
 
-def score_from_meu(min_value, max_value, item_type, stanza_row, parmenides):
-    max_value = max_value
+def score_from_meu(min_value, max_value, node_type, meu_db_row, parmenides):
+    # max_value = max_value
     matched_meus = []
 
-    for meu in stanza_row.multi_entity_unit:
+    for meu in meu_db_row.multi_entity_unit:
         start_meu = meu.start_char
         end_meu = meu.end_char
         if min_value == start_meu and end_meu == max_value:
             # TODO: mgu or its opposite...
-            if (parmenides.most_specific_type([item_type, meu.type]) == meu.type or
-                    item_type == meu.type or
-                    item_type == "None"):
+            if (parmenides.most_specific_type([node_type, meu.type]) == meu.type or
+                    node_type == meu.type or
+                    node_type == "None"):
                 matched_meus.append(meu)
 
     if len(matched_meus) == 0:
@@ -24,7 +25,7 @@ def score_from_meu(min_value, max_value, item_type, stanza_row, parmenides):
             list(map(lambda x: x.type, filter(lambda x: x.confidence == max_score, matched_meus))))
 
 
-def GraphNER_withProperties(item, simplistic, stanza_row, parmenides):
+def GraphNER_withProperties(node, is_simplistic_rewriting, meu_db_row, parmenides, existentials):
     from LaSSI.structures.internal_graph.EntityRelationship import Singleton
     from LaSSI.utils.allChunks import allChunks
     import numpy
@@ -35,40 +36,37 @@ def GraphNER_withProperties(item, simplistic, stanza_row, parmenides):
     fusion_properties = dict()
 
     # Sort entities based on word position to keep correct order
-    sorted_entities = sorted(item.entities, key=lambda x: float(dict(x.properties)['pos']))
+    sorted_entities = sorted(node.entities, key=lambda x: float(dict(x.properties)['pos']))
 
     sorted_entity_names = list(map(getattr, sorted_entities, repeat('named_entity')))
     d = dict(zip(range(len(sorted_entity_names)), sorted_entity_names))  # dictionary for storing the replacing elements
 
-    layeredAlternatives = defaultdict(list)
+    layered_alternatives = defaultdict(list)
     for x in allChunks(list(d.keys())):
-        layeredAlternatives[len(x)].append(x)
+        layered_alternatives[len(x)].append(x)
 
-    for layer in layeredAlternatives.values():
-        maxScore = -1
+    for layer in layered_alternatives.values():
+        max_score = -1
         alternatives = []
         for x in layer:
-            if all(y in d for y in x):
-                exp = " ".join(map(lambda z: sorted_entity_names[z], x))
-                min_value = min(map(lambda z: sorted_entities[z].min, x))
-                max_value = max(map(lambda z: sorted_entities[z].max, x))
-                # max_value = min_value + len(exp)
+            # if all(y in set(map(lambda z: z[0], itertools.chain(map(lambda t: (t, ) if isinstance(t, int) else t, d.keys())))) for y in x):
+            exp = " ".join(map(lambda z: sorted_entity_names[z], x))
+            min_value = min(map(lambda z: sorted_entities[z].min, x))
+            max_value = max(map(lambda z: sorted_entities[z].max, x))
 
-                all_types = [sorted_entities[z].type for z in x]
-                specific_type = parmenides.most_specific_type(all_types)
-                candidate_meu_score, candidate_meu_type = score_from_meu(min_value, max_value, specific_type,
-                                                                         stanza_row, parmenides)
-                allProd = numpy.prod(list(map(lambda z: sorted_entities[z].confidence, x)))
+            all_types = [sorted_entities[z].type for z in x]
+            specific_type = parmenides.most_specific_type(all_types)
+            candidate_meu_score, candidate_meu_type = score_from_meu(min_value, max_value, specific_type,
+                                                                     meu_db_row, parmenides)
+            all_meu_score_prod = numpy.prod(list(map(lambda z: sorted_entities[z].confidence, x)))
 
-                # if (score_from_meu(exp, min_value, max_value, specific_type, stanza_row) >=
-                #         numpy.prod(list(map(lambda z: score_from_meu(sorted_entities[z].named_entity, sorted_entities[z].min, max_value, sorted_entities[z].type, stanza_row), x)))):
-                if ((candidate_meu_score >= allProd) or
-                        ((specific_type != candidate_meu_type) and (
-                                parmenides.most_specific_type(
-                                    [specific_type, candidate_meu_type]) == candidate_meu_type))):
-                    if (candidate_meu_score > maxScore):
-                        alternatives = [(x, allProd, exp)]
-                        maxScore = candidate_meu_score
+            # if (score_from_meu(exp, min_value, max_value, specific_type, stanza_row) >=
+            #         numpy.prod(list(map(lambda z: score_from_meu(sorted_entities[z].named_entity, sorted_entities[z].min, max_value, sorted_entities[z].type, stanza_row), x)))):
+            if ((candidate_meu_score >= all_meu_score_prod) or ((specific_type != candidate_meu_type) and (
+                    parmenides.most_specific_type([specific_type, candidate_meu_type]) == candidate_meu_type))):
+                if (candidate_meu_score > max_score):
+                    alternatives = [(x, all_meu_score_prod, exp)]
+                    max_score = candidate_meu_score
 
         if len(alternatives) > 0:
             alternatives.sort(key=lambda x: x[1])
@@ -84,7 +82,7 @@ def GraphNER_withProperties(item, simplistic, stanza_row, parmenides):
             for z in candidate_delete:
                 d.pop(z)
             d[x[0]] = x[2]
-    print(d)
+    print(d) # TODO: "d" is sometimes producing more than one set of values...
     print("OK")
 
     # for entity in sorted_entities:
@@ -107,7 +105,7 @@ def GraphNER_withProperties(item, simplistic, stanza_row, parmenides):
 
     extra = extra.strip()  # Remove whitespace
 
-    if simplistic:
+    if is_simplistic_rewriting:
         new_properties = {
             "specification": "none",
             "begin": str(sorted_entities[0].min),
@@ -119,30 +117,36 @@ def GraphNER_withProperties(item, simplistic, stanza_row, parmenides):
         new_properties = new_properties | fusion_properties
 
         if chosen_entity is not None:
-            type = chosen_entity.type
+            node_type = chosen_entity.type
         else:
-            type = "ENTITY"
+            node_type = "ENTITY"
 
-        new_item = Singleton(
-            id=item.id,
+        merged_node = Singleton(
+            id=node.id,
             named_entity=extra,
             properties=frozenset(new_properties.items()),
             min=sorted_entities[0].min,
             max=sorted_entities[len(sorted_entities) - 1].max,
-            type=type,  # TODO: What should this type be?
+            type=node_type,  # TODO: What should this type be?
             confidence=norm_confidence
         )
     elif chosen_entity is None:  # Not simplistic
+        sing_type = 'None'
+        min_value = sorted_entities[0].min
+        max_value = sorted_entities[len(sorted_entities) - 1].max
+
         if extra != '':
             name = extra
             extra = ''
         else:
-            name = "?"
+            sing_type = 'existential'
+            name = "?" + str(existentials.increaseAndGetExistential())
+
         # New properties for ? object
         new_properties = {
             "specification": "none",
-            "begin": str(sorted_entities[0].min),
-            "end": str(sorted_entities[len(sorted_entities) - 1].max),
+            "begin": str(min_value),
+            "end": str(max_value),
             "pos": str(dict(sorted_entities[0].properties)['pos']),
             "number": "none",
             "extra": extra
@@ -150,22 +154,25 @@ def GraphNER_withProperties(item, simplistic, stanza_row, parmenides):
 
         new_properties = new_properties | fusion_properties
 
-        new_item = Singleton(
-            id=item.id,
+        candidate_meu_score, candidate_meu_type = score_from_meu(min_value, max_value, sing_type,
+                                                                 meu_db_row, parmenides)
+
+        merged_node = Singleton(
+            id=node.id,
             named_entity=name,
             properties=frozenset(new_properties.items()),
-            min=sorted_entities[0].min,
-            max=sorted_entities[len(sorted_entities) - 1].max,
-            type='None',
-            confidence=norm_confidence
+            min=min_value,
+            max=max_value,
+            type=candidate_meu_type,
+            confidence=candidate_meu_score
         )
-    elif chosen_entity is not None:  # Not simplistic
+    elif chosen_entity is not None:  # Not simplistic and found chosen entity
         # Convert back from frozenset to append new "extra" attribute
         new_properties = dict(chosen_entity.properties)
         new_properties["extra"] = extra
 
-        new_item = Singleton(
-            id=item.id,
+        merged_node = Singleton(
+            id=node.id,
             named_entity=chosen_entity.named_entity,
             properties=frozenset(new_properties.items()),
             min=sorted_entities[0].min,
@@ -175,5 +182,6 @@ def GraphNER_withProperties(item, simplistic, stanza_row, parmenides):
         )
     else:
         print("Error")
+        merged_node = None
 
-    return new_item
+    return merged_node

@@ -8,9 +8,10 @@ import requests
 
 def is_local(url):
     url_parsed = urlparse(url)
-    if url_parsed.scheme in ('file', ''): # Possibly a local file
+    if url_parsed.scheme in ('file', ''):  # Possibly a local file
         return exists(url_parsed.path)
     return False
+
 
 def download(url, file):
     r = None
@@ -36,7 +37,6 @@ class ReadFileContent:
     def __init__(self, path):
         self.path = path
         self.tmp = None
-
 
     def __enter__(self):
         import tempfile
@@ -73,4 +73,3 @@ class ReadFileContent:
         if self.tmp is not None:
             self.tmp.close()
             self.tmp = None
-

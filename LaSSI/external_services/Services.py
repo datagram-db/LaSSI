@@ -2,6 +2,7 @@ from StanfordNLPExtractor.OldWrapper import OldWrapper
 from nltk import WordNetLemmatizer
 
 import LaSSI.Parmenides.paremenides
+from LaSSI.external_services.Existentials import Existentials
 
 
 class Services:
@@ -57,6 +58,9 @@ class Services:
             self.old_java_Service = OldWrapper.getInstance()
         return self.old_java_Service.generateGSMDatabase(sentences)
 
+    def getExistentials(self):
+        return self.existentials
+
     def log(self, message):
         self.logger(message)
 
@@ -90,4 +94,6 @@ class Services:
             self.old_java_Service = None
             self.logger("init WordNet Lemmatizer")
             self.lemmatizer = WordNetLemmatizer()
+            self.logger("init existentials")
+            self.existentials = Existentials()
             Services.__instance = self

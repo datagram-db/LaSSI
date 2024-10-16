@@ -6,6 +6,7 @@ __version__ = "2.0"
 __maintainer__ = "Giacomo Bergami"
 __email__ = "bergamigiacomo@gmail.com"
 __status__ = "Production"
+
 import urllib
 import rdflib
 from rdflib.graph import Graph, ConjunctiveGraph
@@ -13,14 +14,18 @@ from rdflib import Graph, URIRef, BNode, Literal, XSD
 from rdflib import Namespace
 from rdflib.namespace import OWL, RDF, RDFS, FOAF
 
-def literal(s:str):
+
+def literal(s: str):
     return Literal(s, datatype=XSD.string)
 
-def boolean(s:bool):
+
+def boolean(s: bool):
     return Literal(s, datatype=XSD.boolean)
 
-def onta(ns, s:str):
+
+def onta(ns, s: str):
     return URIRef(ns[urllib.parse.quote_plus(s)])
+
 
 class ParmenidesBuild():
     parmenides_ns = Namespace("https://lo-ds.github.io/parmenides#")
@@ -57,10 +62,10 @@ class ParmenidesBuild():
         self.relationships["neqTo"] = URIRef(ParmenidesBuild.parmenides_ns["neqTo"])
 
     def create_concept(self, full_name, type,
-                             hasAdjective = None,
-                             entryPoint = None,
-                             subject = None,
-                             d_object = None,
+                       hasAdjective=None,
+                       entryPoint=None,
+                       subject=None,
+                       d_object=None,
                        entity_name=None,
                        composite_with=None):
         if entity_name == None:
@@ -90,7 +95,7 @@ class ParmenidesBuild():
                 self.g.add((ref, self.relationships["d_object"], self.names[d_object]))
         return ref
 
-    def create_relationship(self, src:str, rel:str, dst:str, refl=False):
+    def create_relationship(self, src: str, rel: str, dst: str, refl=False):
         assert src in self.names
         assert rel in self.relationships
         assert dst in self.names
@@ -98,7 +103,7 @@ class ParmenidesBuild():
         if refl:
             self.g.add((self.names[dst], self.relationships[rel], self.names[src]))
 
-    def create_entity(self, name:str, clazzL=None, label=None):
+    def create_entity(self, name: str, clazzL=None, label=None):
         if label is None:
             label = name
         if name not in self.names:
@@ -130,14 +135,15 @@ class ParmenidesBuild():
             self.classes[name] = clazz
         return self.classes[name]
 
-
     def serialize(self, filename):
         self.g.serialize(destination=filename)
+
+
 def make_ontology_from_raw():
     p = ParmenidesBuild()
     _T = p.create_class("Dimensions")
     LOC_T = p.create_class("LOC", "Dimensions")
-    GPE_T = p.create_class("GPE",  ["Dimensions", "LOC"])
+    GPE_T = p.create_class("GPE", ["Dimensions", "LOC"])
     gp_T = p.create_class("GraphParse")
     reject_T = p.create_class("Rejectable", "GraphParse")
     meta_T = p.create_class("MetaGrammaticalFunction")
@@ -225,6 +231,7 @@ def make_ontology_from_raw():
     p.create_relationship("busy city", "relatedTo", "crowd#n", True)
     p.create_relationship("traffic jam", "capableOf", "traffic jam can slow traffic")
     p.serialize("turtle.ttl")
+
 
 if __name__ == "__main__":
     make_ontology_from_raw()

@@ -18,12 +18,12 @@ from LaSSI.structures.meuDB.meuDB import MeuDBEntry
 
 def build_loc_result(text, type, start_char, end_char, monad, conf, id, src):
     if isinstance(id, str):
-        return [MeuDBEntry(text,type,start_char,end_char,monad,conf, id, src)]
+        return [MeuDBEntry(text, type, start_char, end_char, monad, conf, id, src)]
     from collections.abc import Iterable
     if isinstance(id, Iterable):
-        return map(lambda x: MeuDBEntry(text,type,start_char,end_char,monad,conf, x, src), id)
+        return map(lambda x: MeuDBEntry(text, type, start_char, end_char, monad, conf, x, src), id)
     else:
-        return [MeuDBEntry(text,type,start_char,end_char,monad,conf, str(id), src)]
+        return [MeuDBEntry(text, type, start_char, end_char, monad, conf, str(id), src)]
 
 
 class ResolveMultiNamedEntity:
@@ -38,12 +38,12 @@ class ResolveMultiNamedEntity:
         self.fa = None
         self.src = src
 
-    def test(self, current, rest, k, v, start, end, type:str|List[str]):
+    def test(self, current, rest, k, v, start, end, type: str | List[str]):
         if len(rest) == 0:
             if k >= self.forinsert:
                 if isinstance(type, list):
                     type = self.parmo.most_specific_type(type)
-                for j in build_loc_result(current, type, start, end, v, k*self.trustworthiness_source, v, self.src):
+                for j in build_loc_result(current, type, start, end, v, k * self.trustworthiness_source, v, self.src):
                     self.result.append(j)
         else:
             next = current + " " + rest[0][0]
@@ -52,7 +52,8 @@ class ResolveMultiNamedEntity:
                 if k >= self.forinsert:
                     if isinstance(type, list):
                         type = self.parmo.most_specific_type(type)
-                    for j in build_loc_result(current, type, start, end, v, k*self.trustworthiness_source, v, self.src):
+                    for j in build_loc_result(current, type, start, end, v, k * self.trustworthiness_source, v,
+                                              self.src):
                         self.result.append(j)
             else:
                 self.test(next, rest[1:], val, v, start, rest[0][2], type)
@@ -81,6 +82,5 @@ class ResolveMultiNamedEntity:
                             newK = lev(ls[i][0].lower(), candidate.lower())
                             if newK >= self.threshold:
                                 self.test(ls[i][0], ls[i + 1:], newK, candidate, ls[i][1], ls[i][2], type)
-
 
         return self.result

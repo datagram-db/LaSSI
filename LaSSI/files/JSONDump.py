@@ -7,6 +7,7 @@ from enum import Enum
 def isGoodKey(x):
     return x is None or isinstance(x, str) or isinstance(x, int) or isinstance(x, float) or isinstance(x, bool)
 
+
 class EnhancedJSONEncoder(json.JSONEncoder):
     def default(self, o):
         if o is None:
@@ -38,7 +39,6 @@ class EnhancedJSONEncoder(json.JSONEncoder):
             return o.value
         return super().default(o)
 
+
 def json_dumps(obj):
     return json.dumps(obj, cls=EnhancedJSONEncoder, indent=4)
-
-

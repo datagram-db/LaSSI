@@ -1,5 +1,4 @@
 class Subject:
-
     """Represents what is being observed"""
 
     def __init__(self):
@@ -13,7 +12,7 @@ class Subject:
         """Alert the observers"""
 
         for observer in self._observers:
-                observer(message)
+            observer(message)
 
     def attach(self, observer):
 

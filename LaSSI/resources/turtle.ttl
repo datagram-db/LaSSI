@@ -1375,6 +1375,10 @@ parmenides:center a parmenides:Adjective ;
     parmenides:entryPoint parmenides:center ;
     parmenides:eqTo parmenides:centre .
 
+parmenides:fabulous a parmenides:Adjective ;
+    rdfs:label "fabulous"^^xsd:string ;
+    parmenides:entryPoint parmenides:fabulous .
+
 parmenides:centre a parmenides:Adjective ;
     rdfs:label "centre"^^xsd:string ;
     parmenides:entryPoint parmenides:centre ;
@@ -1429,3 +1433,5 @@ parmenides:dependency a owl:Class ;
 parmenides:TransitiveVerb a owl:Class ;
     rdfs:subClassOf parmenides:Verb .
 
+parmenides:like a parmenides:TransitiveVerb ;
+    rdfs:label "like"^^xsd:string .

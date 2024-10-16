@@ -1,4 +1,14 @@
 
+implication = (V)--[l:nsubj||csubj||nsubj]->(subject)
+        where ((V unmatched p3 . V) ∧ ((V unmatched p3pass . V) ∧ ((V unmatched p3expl3 . V) ∧ ((V unmatched p3expl3 . V) ∧ (V unmatched p3expl3 . V) ∧ (V unmatched p3expl3 . V) ∧ (V unmatched fauxcop . V)))))
+       ↪  set (𝜋 action @ subject) as (𝜉 0 @ V)
+          (V);
+
+
+passivity = (V)--[l:nsubjpass]->(subject)
+        where ((V unmatched p3 . V) ∧ ((V unmatched p3pass . V) ∧ ((V unmatched p3expl3 . V) ∧ ((V unmatched p3expl3 . V) ∧ (V unmatched p3expl3 . V) ∧ (V unmatched p3expl3 . V) ∧ (V unmatched fauxcop . V)))))
+       ↪  set (𝜋 action @ subject) as (𝜉 0 @ V)
+          (V);
 
        // Case matching the sentences having no subject!
 p4 = (>> V)<-[∀ ? w:]--(B)
@@ -39,7 +49,7 @@ p0 = (>> Compl)<-[∀obl||xcomp]--(WithObl)
        (h);
 
 p1 = (X)--[l:det||nmod_poss||amod||mark||case||punct||advmod||advcl||cc||dep||punct]->(Y)                   // Graph matching, First pattern
-      //where ((TEST "= |𝜑 ⦃\"Y\"⦄ | 0 ") ∧ ((Y unmatched p2 . K) ∧ ((Y unmatched p3 . T) ∧ ((Y unmatched p2 . Z) ∧ ((ℓ 0 @ Y ≠ noun) ∧ (ℓ 0 @ Y ≠ verb))))))
+      where ((TEST "= |𝜑 ⦃\"Y\"⦄ | 0 ")) // ∧ ((Y unmatched p2 . K) ∧ ((Y unmatched p3 . T) ∧ ((Y unmatched p2 . Z) ∧ ((ℓ 0 @ Y ≠ noun) ∧ (ℓ 0 @ Y ≠ verb))))))
      ↪  set (𝜋 (label l) @ X) as (𝜉 0 @ Y)                        // Property extension
        del Y                                             // Removing a node
 
@@ -54,8 +64,8 @@ docop = (target)--[cop]->(V)
           set (𝜉 0 @ b) as (𝜉 0 @ target)
           set (ℓ 0 @ a) as (ℓ 0 @ subject)
           set (ℓ 0 @ b) as (ℓ 0 @ target)
-          set (φ inherit , a) as subject
-          set (φ inherit , b) as target
+          set (φ inherit_edge , a) as subject
+          set (φ inherit_edge , b) as target
           del l
           del V
           (a);
@@ -88,11 +98,18 @@ p2 = (>> H)<-[∀l:]--(X)                                   // Graph matching, S
 
 p3fauxcop = (V)--[∀n:nsubj]->(S)
                --[aux]->(A)
-            where ((( FILL ( 𝜋 lemma @ A )= be )) ∧ ((V unmatched p4 . V) ∧((V unmatched p3 . V) ∧ ((V unmatched p3pass . V) ∧ ((V unmatched p3expl . V) ∧((ℓ 0 @ V = verb)))))))
-↪ set (𝜋 cop @ S) as (𝜉 0 @ V)                        // Property extension
+               --[? neg]->(N)
+            where ((( FILL ( 𝜋 lemma @ A )= be ) ∨ (( FILL ( 𝜋 lemma @ A )= do ) ∨  (( FILL ( 𝜋 lemma @ A )= have ) ∨  (( FILL ( 𝜉 0 @ A )= have ) ∨ ( FILL ( 𝜉 0 @ A )= do ))))) ∧ ((V unmatched p4 . V) ∧((V unmatched p3 . V) ∧ ((V unmatched p3pass . V) ∧ ((V unmatched p3expl . V) ∧((ℓ 0 @ V = verb)))))))
+↪  new h
+   set (𝜋 action @ h) as (SCRIPT "(^(^(^(^ (^ ( [(𝜉 ⦃\"A\"⦄) 0])  \" \") ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])) \" \")")                        // Property extension
+   set (𝜋 begin @ h) as (𝜋 begin @ V)                        // Property extension
+   set (𝜋 end @ h) as (𝜋 end @ V)                        // Property extension
+   set (𝜉 0 @ h) as (𝜉 0 @ S)                        // Property extension
+   set (ℓ 0 @ h) as (ℓ 0 @ S)                        // Property extension
+   set (ℓ 1 @ h) as (SCRIPT "\"root\"")                       // Property extension
          del A                                             // Removing a node
-         del V
-         (S);                                              // Instance of reference to be returned
+   set (φ inherit_partial , h) as V
+         (h);                                              // Instance of reference to be returned
 
 
 p3simple = (V)--[∀n:nsubj]->(>>S)
@@ -104,7 +121,7 @@ p3simple = (V)--[∀n:nsubj]->(>>S)
      where ((V unmatched p3pass . V) ∧ ((V unmatched p3expl . V) ∧((V unmatched p3 . V) ∧((ℓ 0 @ V = verb)))))
      ↪
         //new s
-        set(φ (SCRIPT "(^(^(^(^ (^ ( [(𝜉 ⦃\"A\"⦄) 0])  \" \") ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])) \" \") ([ (𝜉 ⦃\"T\"⦄)  0])") , S) as Z
+        set(φ (SCRIPT "(^(^(^(^(^ (^ ( [(𝜉 ⦃\"A\"⦄) 0])  \" \") ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])) \" \") ([ (𝜉 ⦃\"T\"⦄)  0]))") , S) as Z
         //set(   𝜋 mark @ s) as (𝜉 0 @ M)
         //set(   φ orig , s) as S
         //set(   𝜉 0 @ s) as (𝜉 0 @ S)
@@ -118,7 +135,7 @@ p3simple = (V)--[∀n:nsubj]->(>>S)
 
     // This matches any direct clause with subject and (in)direct object.
     // Still, we want to avoid having multiple matches: the idea is to group them by as in 4.
-    
+
 p3 = (>> V)<-[∀ ? w:]--(B)
         --[n:nsubj]->(>> S)
         --[? mark]->(M)
@@ -201,9 +218,7 @@ p3pass = (V)--[∀n:nsubjpass]->(>> S)
                                              else
                                               SCRIPT "^(^( ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])"
                                              ), Z) as S
-        //set(   𝜋 mark @ s) as (𝜉 0 @ M)
-        //set(   φ orig , s) as S
-        //set(   𝜉 0 @ s) as (𝜉 0 @ S)
+    set(   𝜉 1 @ Z) as (SCRIPT "\"subjpass\"")
        set (φ iobj , Z) as IOB
        set (𝜋 adv @ Z) as (𝜉 0 @ ADM)
        //set (φ dep , Z) as XC
@@ -218,7 +233,3 @@ p3pass = (V)--[∀n:nsubjpass]->(>> S)
        (S)
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-
-
