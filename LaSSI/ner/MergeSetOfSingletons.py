@@ -40,6 +40,7 @@ def GraphNER_withProperties(node, is_simplistic_rewriting, meu_db_row, parmenide
 
     sorted_entity_names = list(map(getattr, sorted_entities, repeat('named_entity')))
     d = dict(zip(range(len(sorted_entity_names)), sorted_entity_names))  # dictionary for storing the replacing elements
+    resolved_d = []
 
     layered_alternatives = defaultdict(list)
     for x in allChunks(list(d.keys())):
@@ -62,14 +63,20 @@ def GraphNER_withProperties(node, is_simplistic_rewriting, meu_db_row, parmenide
 
             # if (score_from_meu(exp, min_value, max_value, specific_type, stanza_row) >=
             #         numpy.prod(list(map(lambda z: score_from_meu(sorted_entities[z].named_entity, sorted_entities[z].min, max_value, sorted_entities[z].type, stanza_row), x)))):
-            if ((candidate_meu_score >= all_meu_score_prod) or ((specific_type != candidate_meu_type) and (
-                    parmenides.most_specific_type([specific_type, candidate_meu_type]) == candidate_meu_type))):
-                if (candidate_meu_score > max_score):
-                    alternatives = [(x, all_meu_score_prod, exp)]
+            if (
+                    ((candidate_meu_score >= all_meu_score_prod)
+                     or
+                    ((specific_type != candidate_meu_type) and (parmenides.most_specific_type([specific_type, candidate_meu_type]) == candidate_meu_type)))
+                    or
+                    (len(resolved_d) > 0 and all(candidate_meu_score >= subarray[1] for subarray in resolved_d) and (specific_type != candidate_meu_type) and (all(parmenides.most_specific_type([subarray[2], candidate_meu_type]) == candidate_meu_type for subarray in resolved_d)))   # Check if current score is greater than previous resolutions
+            ):
+                if candidate_meu_score > max_score:
+                    alternatives = [(x, all_meu_score_prod, exp, candidate_meu_type)]
                     max_score = candidate_meu_score
 
         if len(alternatives) > 0:
             alternatives.sort(key=lambda x: x[1])
+            d = dict(zip(range(len(sorted_entity_names)), sorted_entity_names))
             candidate_delete = set()
             x = alternatives[-1]
             for k, v in d.items():
@@ -82,27 +89,36 @@ def GraphNER_withProperties(node, is_simplistic_rewriting, meu_db_row, parmenide
             for z in candidate_delete:
                 d.pop(z)
             d[x[0]] = x[2]
-    print(d) # TODO: "d" is sometimes producing more than one set of values...
-    print("OK")
+            resolved_d.append([d, x[1], x[3]]) # [d, confidence_score, type]
 
-    # for entity in sorted_entities:
-    #     norm_confidence *= entity.confidence
-    #     fusion_properties = fusion_properties | dict(entity.properties)  # TODO: Most properties are overwritten?
-    #     # Giacomo: then, we'd need to use a defaultdict(list) and merge them as https://stackoverflow.com/a/70689832/1376095
-    #     if entity.type != "ENTITY" and entity.type != 'noun' and not simplistic and chosen_entity is None:  # TODO: FIX CHOSEN ENTITY NOT NONE
-    #         chosen_entity = entity
-    #     else:
-    #         extra = " ".join((extra, entity.named_entity))  # Ensure there is no leading space
+    print(resolved_d)
+    # If resolved_d has > 1 elements, there are multiple resolutions with equal confidence score
+    if len(resolved_d) > 1:
+        # Therefore find the resolution with the most entities
+        highest_num_of_entities = 0
+        for current_d in resolved_d:
+            # TODO: Check length of key instead of entity_name
+            for entity_name in list(current_d[0].values()):
+                current_num_of_entities = len(entity_name.split())
+                if current_num_of_entities > highest_num_of_entities:
+                    highest_num_of_entities = current_num_of_entities
+                    d = current_d[0]
+    elif len(resolved_d) == 1:
+        d = resolved_d[0][0]
+
+    print(d)
+    print("OK")
 
     # TODO: Remove time-space information and add as properties
     for entity in sorted_entities:
         norm_confidence *= entity.confidence
-        fusion_properties = fusion_properties | dict(entity.properties)  # TODO: Most properties are overwritten?
+
+        merge_properties(dict(entity.properties), fusion_properties)
+        # fusion_properties = fusion_properties | dict(entity.properties)  # TODO: Most properties are overwritten?
         if entity.named_entity == list(d.values())[0]:
             chosen_entity = entity
         else:
             extra = " ".join((extra, entity.named_entity))  # Ensure there is no leading space
-
     extra = extra.strip()  # Remove whitespace
 
     if is_simplistic_rewriting:
@@ -151,11 +167,11 @@ def GraphNER_withProperties(node, is_simplistic_rewriting, meu_db_row, parmenide
             "number": "none",
             "extra": extra
         }
+        new_properties = merge_properties(fusion_properties, new_properties)
 
-        new_properties = new_properties | fusion_properties
-
-        candidate_meu_score, candidate_meu_type = score_from_meu(min_value, max_value, sing_type,
-                                                                 meu_db_row, parmenides)
+        # Get score and type for newly created Singleton
+        candidate_meu_score, candidate_meu_type = (
+            score_from_meu(min_value, max_value, sing_type, meu_db_row, parmenides))
 
         merged_node = Singleton(
             id=node.id,
@@ -168,7 +184,7 @@ def GraphNER_withProperties(node, is_simplistic_rewriting, meu_db_row, parmenide
         )
     elif chosen_entity is not None:  # Not simplistic and found chosen entity
         # Convert back from frozenset to append new "extra" attribute
-        new_properties = dict(chosen_entity.properties)
+        new_properties = merge_properties(fusion_properties, dict(chosen_entity.properties))
         new_properties["extra"] = extra
 
         merged_node = Singleton(
@@ -185,3 +201,17 @@ def GraphNER_withProperties(node, is_simplistic_rewriting, meu_db_row, parmenide
         merged_node = None
 
     return merged_node
+
+
+def merge_properties(entity_properties, fusion_properties):
+    for key, value in entity_properties.items():
+        if key in fusion_properties:
+            if key == 'begin':
+                fusion_properties[key] = min(fusion_properties[key], value)
+            elif key == 'end':
+                fusion_properties[key] = max(fusion_properties[key], value)
+            elif key == 'pos':
+                fusion_properties[key] = str(min(float(fusion_properties[key]), float(value)))
+        else:
+            fusion_properties[key] = value
+    return fusion_properties

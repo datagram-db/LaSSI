@@ -1435,3 +1435,21 @@ parmenides:TransitiveVerb a owl:Class ;
 
 parmenides:like a parmenides:TransitiveVerb ;
     rdfs:label "like"^^xsd:string .
+
+parmenides:be a parmenides:TransitiveVerb ;
+    rdfs:label "be"^^xsd:string .
+
+parmenides:world a parmenides:Noun ;
+    rdfs:label "world"^^xsd:string ;
+    parmenides:entryPoint parmenides:world .
+
+parmenides:picture a parmenides:Noun ;
+    rdfs:label "picture"^^xsd:string ;
+    parmenides:entryPoint parmenides:picture .
+
+parmenides:beautiful a parmenides:Adjective ;
+    rdfs:label "beautiful"^^xsd:string ;
+    parmenides:entryPoint parmenides:beautiful .
+
+parmenides:skate a parmenides:IntransitiveVerb ;
+    rdfs:label "skate"^^xsd:string .
