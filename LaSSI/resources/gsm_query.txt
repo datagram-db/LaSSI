@@ -49,7 +49,7 @@ p0 = (>> Compl)<-[∀obl||xcomp]--(WithObl)
        (h);
 
 p1 = (X)--[l:det||nmod_poss||amod||mark||case||punct||advmod||advcl||cc||dep||punct]->(Y)                   // Graph matching, First pattern
-      where ((TEST "= |𝜑 ⦃\"Y\"⦄ | 0 ")) // ∧ ((Y unmatched p2 . K) ∧ ((Y unmatched p3 . T) ∧ ((Y unmatched p2 . Z) ∧ ((ℓ 0 @ Y ≠ noun) ∧ (ℓ 0 @ Y ≠ verb))))))
+      where ((TEST "= |𝜑 ⦃\"Y\"⦄ | 0 ") ∧ (ℓ 0 @ Y ≠ CC)) // ∧ ((Y unmatched p2 . K) ∧ ((Y unmatched p3 . T) ∧ ((Y unmatched p2 . Z) ∧ ((ℓ 0 @ Y ≠ noun) ∧ ((ℓ 0 @ Y ≠ CC) ∧ (ℓ 0 @ Y ≠ verb)))))))
      ↪  set (𝜋 (label l) @ X) as (𝜉 0 @ Y)                        // Property extension
        del Y                                             // Removing a node
 

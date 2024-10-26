@@ -15,15 +15,14 @@ class GraphProvenance:
         self.gsm_json_graph = gsm_json_graph
         self.is_simplistic_rewriting = is_simplistic_rewriting
         self.meu_db_row = meu_db
-        self.atts_global = AssignTypeToSingleton()
+        self.atts_global = AssignTypeToSingleton(is_simplistic_rewriting, meu_db)
         self.services = Services.getInstance()
         self.parmenides = self.services.getParmenides()
         self.existentials = self.services.getExistentials()
 
     def internal_graph(self) -> Graph:
         # Phase 0-4
-        self.atts_global.groupGraphNodes(self.gsm_json_graph, self.is_simplistic_rewriting, self.parmenides,
-                                         self.meu_db_row)
+        self.atts_global.groupGraphNodes(self.gsm_json_graph)
         # Phase 5
         self.atts_global.checkForNegation(self.gsm_json_graph)
 

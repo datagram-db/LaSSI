@@ -4,7 +4,7 @@ from collections import defaultdict, deque
 from itertools import repeat
 
 
-def bfs(lists, s):
+def bfs(lists, s, f):
     nodes = {x['id']:x for x in lists}
 
     visited = set()
@@ -22,8 +22,9 @@ def bfs(lists, s):
         # Dequeue a vertex from queue and print it
         id = q.popleft()
 
-        if 'cc' in nodes[id]['properties']:
-            return nodes[id]['properties']['cc']
+        val = f(nodes, id)
+        if val is not None:
+            return val
 
         # Get all adjacent vertices of the dequeued
         # vertex. If an adjacent has not been visited,

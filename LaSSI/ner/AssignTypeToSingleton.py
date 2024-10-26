@@ -18,12 +18,12 @@ from LaSSI.external_services.Services import Services
 from LaSSI.files.JSONDump import EnhancedJSONEncoder
 from LaSSI.structures.internal_graph.EntityRelationship import Singleton, Grouping, SetOfSingletons, Relationship
 from LaSSI.structures.internal_graph.Graph import Graph
-from LaSSI.structures.kernels.Sentence import Sentence, get_node_type
-from LaSSI.structures.meuDB.meuDB import MeuDB
+from LaSSI.structures.kernels.Sentence import Sentence, get_node_type, lemmatize_verb
 
 
-class AssignTypeToSingleton:  # TODO: This is doing a bit more than "AssignTypeToSingleton", should move some functions into different classes?
-    def __init__(self, negations=None):
+# TODO: This is doing a bit more than "AssignTypeToSingleton", should move some functions into different classes?
+class AssignTypeToSingleton:
+    def __init__(self, is_simplistic_rewriting, meu_db_row, negations=None):
         if negations is None:
             negations = {'not', 'no'}
         self.negations = negations
@@ -34,10 +34,15 @@ class AssignTypeToSingleton:  # TODO: This is doing a bit more than "AssignTypeT
         self.edges = None
         self.services = Services.getInstance()
         self.existentials = self.services.getExistentials()
+        self.is_simplistic_rewriting = is_simplistic_rewriting
+        self.meu_db_row = meu_db_row
 
     def get_gsm_item_from_id(self, gsm_json, gsm_id):
         gsm_id_json = {row['id']: row for row in gsm_json}  # Associate ID to key value
-        return gsm_id_json[gsm_id]
+        if gsm_id in gsm_id_json:
+            return gsm_id_json[gsm_id]
+        else:
+            return None
 
     def get_node_id(self, node_id):
         value = self.node_id_map.get(node_id, node_id)
@@ -46,18 +51,23 @@ class AssignTypeToSingleton:  # TODO: This is doing a bit more than "AssignTypeT
         else:
             return value
 
+    def get_original_node_id(self, node_id):
+        for old_id, new_id in self.node_id_map.items():
+            if new_id == node_id:
+                return old_id
+        return node_id
+
     def resolve_node_id(self, node_id):
         if node_id is None:
-            # TODO: Is this an incorrect assumption, that if no node is found it is a variable/existential?
             return Singleton(
-                        id=-1, # TODO: Should this be a "freshID"?
-                        named_entity="?" + str(self.existentials.increaseAndGetExistential()),
-                        properties=frozenset(),
-                        min=-1,
-                        max=-1,
-                        type='existential',
-                        confidence=1
-                    )
+                id=-1,
+                named_entity="?" + str(self.existentials.increaseAndGetExistential()),
+                properties=frozenset(),
+                min=-1,
+                max=-1,
+                type='existential',
+                confidence=1
+            )
         else:
             return self.nodes[self.get_node_id(node_id)]
 
@@ -72,59 +82,35 @@ class AssignTypeToSingleton:  # TODO: This is doing a bit more than "AssignTypeT
     def does_string_have_negations(self, edge_label_name):
         return bool(re.search(r"\b(" + "|".join(re.escape(neg) for neg in self.negations) + r")\b", edge_label_name))
 
-    # def create_merged_node(self, node):
-    #     sorted_entities = sorted(node.entities, key=lambda x: float(dict(x.properties)['pos']))
-    #     sorted_entity_names = list(map(getattr, sorted_entities, repeat('named_entity')))
-    #     new_properties = {
-    #         "specification": str(dict(sorted_entities[0].properties)['specification']),  # TODO: ?
-    #         "begin": str(sorted_entities[0].min),
-    #         "end": str(sorted_entities[len(sorted_entities) - 1].max),
-    #         "pos": str(dict(sorted_entities[0].properties)['pos']),
-    #         "number": str(dict(sorted_entities[0].properties)['number']),  # TODO: ?
-    #     }
-    #     merged_node = Singleton(
-    #         id=node.id,
-    #         named_entity=' '.join(sorted_entity_names),
-    #         properties=frozenset(new_properties.items()),
-    #         min=sorted_entities[0].min,
-    #         max=sorted_entities[len(sorted_entity_names) - 1].max,
-    #         type='ENTITY',
-    #         confidence=1
-    #     )
-    #     return merged_node
-    # def mergePossibleSharedSetOfSingletons(self):
-    #     allSetOfSingletons = []
-    #     for item in self.nodes:
-    #         if isinstance(item, SetOfSingletons):
-    #             allSetOfSingletons.append(item)
-
     def freshId(self):
         v = self.max_id
         self.max_id += 1
         return v
 
-    def groupGraphNodes(self, gsm_json, is_simplistic_rewriting, parmenides, meu_db_row):
+    def groupGraphNodes(self, gsm_json):
         # Used for when we want to generate a "fresh ID"
         self.max_id = max(map(lambda x: int(x["id"]), gsm_json)) + 1
+
+        # TODO: Topological sort phase
 
         # Phase 0
         self.preProcessing(gsm_json)
 
         # Phase 1
-        self.extractLogicalConnectorsAsGroups(parmenides, gsm_json, is_simplistic_rewriting)
+        self.extractLogicalConnectorsAsGroups(gsm_json)
 
         # Phase 1.5
-        # self.mergePossibleSharedSetOfSingletons()
+        self.checkForBut(gsm_json) # TODO: Move to kernel creation
 
+        # TODO: These phases may be removed, as it already happens in Phase 1.1, as it might only need to happen for SetOfSingletons
         # Phase 2
         for key in self.nodes:
-            self.associateNodeToMeuMatches(self.nodes[key], meu_db_row)
-
+            self.associateNodeToMeuMatches(self.nodes[key])
         # Phase 3
         self.singletonTypeResolution()
 
         # Phase 4
-        self.resolveGraphNERs(is_simplistic_rewriting, parmenides, meu_db_row)
+        self.resolveGraphNERs()
 
     # Phase 0
     def preProcessing(self, gsm_json):
@@ -155,10 +141,15 @@ class AssignTypeToSingleton:  # TODO: This is doing a bit more than "AssignTypeT
             gsm_item['phi'] = edges_to_keep
 
     # Phase 1
-    def extractLogicalConnectorsAsGroups(self, parmenides, gsm_json, is_simplistic_rewriting):
+    def extractLogicalConnectorsAsGroups(self, gsm_json):
         # Get all nodes from resulting graph and create list of Singletons
         number_of_nodes = range(len(gsm_json))
+
+        # Phase 1.1
         self.create_all_singleton_nodes(gsm_json, number_of_nodes)
+
+        # Sorts the JSON by ID, so child compounds are merged before parent ones?
+        gsm_json = sorted(gsm_json, key=lambda x: x['id'])  # TODO: Needs to change to be a topological
 
         # Check if conjugation ('conj') or ('multipleindobj') exists and if true exists, merge into SetOfSingletons
         # Also if 'compound' relationship is present, merge parent and child nodes
@@ -170,11 +161,21 @@ class AssignTypeToSingleton:  # TODO: This is doing a bit more than "AssignTypeT
             is_compound = False
             group_type = None
             norm_confidence = 1.0
+
+            # Determine conjugation type
             if has_conj:
                 conj = gsm_item['properties']['conj'].strip()
                 if len(conj) == 0:
                     from LaSSI.structures.internal_graph.from_raw_json_graph import bfs
-                    conj = bfs(gsm_json, gsm_item['id'])
+                    def f(nodes, id):
+                        cc_names = list(map(lambda y: nodes[y['score']['child']]['xi'][0], filter(lambda x: x['containment'] == 'cc', nodes[id]['phi'])))
+                        if len(cc_names) > 0:
+                            return ' '.join(cc_names)
+                        else:
+                            return None
+                    # if 'cc' in nodes[id]['properties']:
+                    #     return nodes[id]['properties']['cc']
+                    conj = bfs(gsm_json, gsm_item['id'], f)
 
                 if 'and' in conj or 'but' in conj:
                     group_type = Grouping.AND
@@ -185,10 +186,11 @@ class AssignTypeToSingleton:  # TODO: This is doing a bit more than "AssignTypeT
                 else:
                     group_type = Grouping.NONE
 
+            # Get all nodes from edges of root node
             if has_conj or has_multipleindobj:
                 for edge in gsm_item['phi']:
-                    if 'orig' in edge['containment']:
-                        node = self.nodes[edge['content']]
+                    if 'orig' in edge['containment'] or ((not has_multipleindobj) or self.is_label_verb(edge['containment'])):
+                        node = self.nodes[self.get_node_id(edge['content'])]
                         grouped_nodes.append(node)
                         norm_confidence *= node.confidence
             else:
@@ -197,12 +199,12 @@ class AssignTypeToSingleton:  # TODO: This is doing a bit more than "AssignTypeT
                                                                           is_compound,
                                                                           norm_confidence)
 
-            if is_simplistic_rewriting and len(grouped_nodes) > 0:
+            if self.is_simplistic_rewriting and len(grouped_nodes) > 0:
                 sorted_entities = sorted(grouped_nodes, key=lambda x: float(dict(x.properties)['pos']))
                 sorted_entity_names = list(map(getattr, sorted_entities, repeat('named_entity')))
 
                 all_types = list(map(getattr, sorted_entities, repeat('type')))
-                specific_type = parmenides.most_specific_type(all_types)
+                specific_type = self.services.getParmenides().most_specific_type(all_types)
 
                 if group_type == Grouping.OR:
                     name = " or ".join(sorted_entity_names)
@@ -223,9 +225,9 @@ class AssignTypeToSingleton:  # TODO: This is doing a bit more than "AssignTypeT
                     type=specific_type,
                     confidence=norm_confidence
                 )
-            elif not is_simplistic_rewriting:
+            elif not self.is_simplistic_rewriting:
                 self.create_set_of_singletons(group_type, grouped_nodes, gsm_item, has_conj, has_multipleindobj,
-                                              is_compound, norm_confidence)
+                                              is_compound, norm_confidence, gsm_json)
 
         self.remove_duplicate_nodes()
 
@@ -238,8 +240,7 @@ class AssignTypeToSingleton:  # TODO: This is doing a bit more than "AssignTypeT
             else:
                 min_value = -1
                 max_value = -1
-                node_type = "None"
-                if len(gsm_item['xi']) > 0 and gsm_item['xi'][0] != '':
+                if len(gsm_item['xi']) > 0 and gsm_item['xi'][0] != '' and gsm_item['ell'][0] != '∃': # TODO: Checking for ∃ might not be valid...
                     name = gsm_item['xi'][0]
                     min_value = int(gsm_item['properties']['begin'])
                     max_value = int(gsm_item['properties']['end'])
@@ -258,6 +259,10 @@ class AssignTypeToSingleton:  # TODO: This is doing a bit more than "AssignTypeT
                     type=node_type,
                     confidence=1.0
                 )
+
+                # TODO: Need to resolve grouped entities before merging, is there a more elegant way to do this? Could this thus be removed from the phases?
+                self.associteNodeToBestMeuMatches(self.nodes[gsm_item['id']])
+                self.singletonTypeResolution()
 
     # Phase 1.2
     def get_compound_entities(self, grouped_nodes, gsm_json, gsm_item, is_compound, norm_confidence):
@@ -282,16 +287,22 @@ class AssignTypeToSingleton:  # TODO: This is doing a bit more than "AssignTypeT
         return is_compound, norm_confidence
 
     # Phase 1.3
-    def create_set_of_singletons(self, group_type, grouped_nodes, gsm_item, has_conj, has_multipleindobj, is_compound, norm_confidence):
+    def create_set_of_singletons(self, group_type, grouped_nodes, gsm_item, has_conj, has_multipleindobj, is_compound, norm_confidence, gsm_json):
         if has_conj:
-            if group_type == Grouping.NEITHER:
-                grouped_nodes = [
-                    SetOfSingletons(id=x.id, type=Grouping.NOT, entities=tuple([x]), min=x.min, max=x.max,
-                                    confidence=x.confidence) for x in grouped_nodes]
-                grouped_nodes = tuple(grouped_nodes)
-                group_type = Grouping.AND
-            self.nodes[gsm_item['id']] = SetOfSingletons(
-                id=gsm_item['id'],
+            # if group_type == Grouping.NEITHER:
+                # g = []
+                # for x in grouped_nodes:
+                #     fresh_not = SetOfSingletons(id=self.freshId(), type=Grouping.NOT, entities=tuple([x]), min=x.min, max=x.max, confidence=x.confidence)
+                #     g.append(fresh_not)
+                #     self.node_id_map[x.id] = fresh_not.id
+                #
+                # grouped_nodes = tuple(g)
+                # group_type = Grouping.AND
+
+            new_id = self.freshId()
+            self.node_id_map[gsm_item['id']] = new_id
+            self.nodes[new_id] = SetOfSingletons(
+                id=new_id,
                 type=group_type,
                 entities=tuple(grouped_nodes),
                 min=min(grouped_nodes, key=lambda x: x.min).min,
@@ -299,7 +310,7 @@ class AssignTypeToSingleton:  # TODO: This is doing a bit more than "AssignTypeT
                 confidence=norm_confidence
             )
         elif is_compound:
-            grouped_nodes.insert(0, self.nodes[gsm_item['id']])
+            grouped_nodes.insert(0, self.nodes[self.get_node_id(gsm_item['id'])])
             new_id = self.freshId()
             self.node_id_map[gsm_item['id']] = new_id
             self.nodes[new_id] = SetOfSingletons(
@@ -320,6 +331,11 @@ class AssignTypeToSingleton:  # TODO: This is doing a bit more than "AssignTypeT
                 confidence=norm_confidence
             )
 
+        node_to_resolve = self.nodes[self.get_node_id(gsm_item['id'])]
+        if isinstance(node_to_resolve, SetOfSingletons):
+            self.resolveSpecificSetOfSingletonsNERs(node_to_resolve)
+            self.checkForSpecificNegation(gsm_json, self.nodes[self.get_node_id(gsm_item['id'])])
+
     # Phase 1.4
     def remove_duplicate_nodes(self):
         ids_to_remove = set()
@@ -333,25 +349,83 @@ class AssignTypeToSingleton:  # TODO: This is doing a bit more than "AssignTypeT
         for x in ids_to_remove:
             self.nodes.pop(x)
 
+    # Phase 1.5
+    def checkForBut(self, gsm_json):
+        number_of_nodes = range(len(gsm_json))
+        for row in number_of_nodes:
+            gsm_item = gsm_json[row]
+            is_but = 'but' in gsm_item['xi'][0].lower() and 'cc' in gsm_item['ell'][0].lower()
+            if is_but:
+                norm_confidence = 1.0
+                but_node = self.nodes[self.get_node_id(gsm_item['id'])]
+                grouped_nodes = []
+
+                # Create group of all nodes attached to "but"
+                for edge in gsm_item['phi']:
+                    if 'neg' not in edge['containment']:
+                        node = self.nodes[self.get_node_id(edge['content'])]
+                        grouped_nodes.append(node)
+                        norm_confidence *= node.confidence
+
+                if len(grouped_nodes) > 0:
+                    new_id = self.freshId()
+                    self.node_id_map[gsm_item['id']] = new_id
+
+                    # Create an AND grouping from given child nodes
+                    new_but_node = SetOfSingletons(
+                        id=new_id,
+                        type=Grouping.AND,
+                        entities=tuple(grouped_nodes),
+                        min=min(grouped_nodes, key=lambda x: x.min).min,
+                        max=max(grouped_nodes, key=lambda x: x.max).max,
+                        confidence=norm_confidence
+                    )
+
+                    # If "but" has a negation, group the original grouped nodes in a NOT and then wrap again in an AND
+                    if self.checkForSpecificNegation(gsm_json, but_node, create_node=False):
+                        # Create new NOT node within nodes
+                        new_new_id = self.freshId()
+                        self.node_id_map[grouped_nodes[0].id] = new_new_id
+                        self.nodes[new_new_id] = SetOfSingletons(
+                            id=new_new_id,
+                            type=Grouping.NOT,
+                            entities=tuple(grouped_nodes),
+                            min=min(grouped_nodes, key=lambda x: x.min).min,
+                            max=max(grouped_nodes, key=lambda x: x.max).max,
+                            confidence=norm_confidence
+                        )
+
+                        self.nodes[new_id] = SetOfSingletons(
+                            id=new_id,
+                            type=Grouping.AND,
+                            entities=[self.nodes[new_new_id]],
+                            min=min(grouped_nodes, key=lambda x: x.min).min,
+                            max=max(grouped_nodes, key=lambda x: x.max).max,
+                            confidence=norm_confidence
+                        )
+                    else:
+                        # Otherwise return the new node
+                        self.nodes[new_id] = new_but_node
+
     # Phase 2
-    def associateNodeToMeuMatches(self, node, meu_db_row):
+    def associateNodeToMeuMatches(self, node):
         # If key is SetOfSingletons, loop over each Singleton and make association to type
         # Giacomo: FIX, but only if they are not logical predicates
         from LaSSI.structures.internal_graph.EntityRelationship import SetOfSingletons
         if isinstance(node, SetOfSingletons) and ((node.type == Grouping.NONE) or (node.type == Grouping.GROUPING)):
             for entity in node.entities:
-                self.associateNodeToMeuMatches(entity, meu_db_row)
+                self.associateNodeToMeuMatches(entity)
 
             # merged_node = self.create_merged_node(node)  # So we can check if the concatenated name is in meuDB
             # self.associateNodeToMeuMatches(node, meu_db_row)
         elif isinstance(node, Singleton):
             # assign_type_to_singleton(item, stanza_row, nodes, key)
-            self.associteNodeToBestMeuMatches(node, meu_db_row)
+            self.associteNodeToBestMeuMatches(node)
 
     # Phase 2.1
-    def associteNodeToBestMeuMatches(self, item, stanza_row: MeuDB):
+    def associteNodeToBestMeuMatches(self, item):
         # Loop over Stanza MEU and GSM result and evaluate overlapping words from chars
-        for meu in stanza_row.multi_entity_unit:
+        for meu in self.meu_db_row.multi_entity_unit:
             start_meu = meu.start_char
             end_meu = meu.end_char
             start_graph = item.min
@@ -425,7 +499,7 @@ class AssignTypeToSingleton:  # TODO: This is doing a bit more than "AssignTypeT
                 )
 
     ## Phase 4
-    def resolveGraphNERs(self, is_simplistic_rewriting, parmenides, meu_db_row):
+    def resolveGraphNERs(self):
         for key in self.nodes:
             node = self.nodes[key]
             # association = nbb[item]
@@ -450,7 +524,7 @@ class AssignTypeToSingleton:  # TODO: This is doing a bit more than "AssignTypeT
                     # if len(node.entities) == 1:
                     #     entity = node.entities[0]
                     #     if isinstance(entity, SetOfSingletons):
-                    #         self.nodes[node.id] = GraphNER_withProperties(entity, is_simplistic_rewriting, meu_db_row,
+                    #         self.nodes[node.id] = GraphNER_withProperties(entity, self.is_simplistic_rewriting, meu_db_row,
                     #                                                       parmenides, existentials)
                     #     else:
                     #         self.node_id_map[node.id] = entity.id
@@ -460,13 +534,56 @@ class AssignTypeToSingleton:  # TODO: This is doing a bit more than "AssignTypeT
                     #     # nodes[item.id] = associate_to_container(item, nbb)
                     for entity in node.entities:
                         if isinstance(entity, SetOfSingletons):
-                            self.nodes[entity.id] = GraphNER_withProperties(entity, is_simplistic_rewriting,
-                                                                            meu_db_row, parmenides, self.existentials)
+                            self.nodes[entity.id] = GraphNER_withProperties(
+                                entity,
+                                self.is_simplistic_rewriting,
+                                self.meu_db_row,
+                                self.services.getParmenides(),
+                                self.existentials
+                            )
                         else:
                             self.node_id_map[node.id] = entity.id
                             self.ConfidenceAndEntityExpand(entity.id)
                 if node.type == Grouping.GROUPING:
-                    self.nodes[key] = GraphNER_withProperties(node, is_simplistic_rewriting, meu_db_row, parmenides, self.existentials)
+                    self.nodes[key] = GraphNER_withProperties(
+                        node,
+                        self.is_simplistic_rewriting,
+                        self.meu_db_row,
+                        self.services.getParmenides(),
+                        self.existentials
+                    )
+
+
+    def resolveSpecificSetOfSingletonsNERs(self, node_to_resolve):
+        for node in node_to_resolve.entities:
+            if not isinstance(node, SetOfSingletons):
+                self.ConfidenceAndEntityExpand(node.id)
+
+        if isinstance(node_to_resolve, SetOfSingletons):
+            self.ConfidenceAndEntityExpand(node_to_resolve.id)
+
+        from LaSSI.ner.MergeSetOfSingletons import GraphNER_withProperties
+        if node_to_resolve.type == Grouping.MULTIINDIRECT:
+            for entity in node_to_resolve.entities:
+                if isinstance(entity, SetOfSingletons):
+                    self.nodes[entity.id] = GraphNER_withProperties(
+                        entity,
+                        self.is_simplistic_rewriting,
+                        self.meu_db_row,
+                        self.services.getParmenides(),
+                        self.existentials
+                    )
+                else:
+                    self.node_id_map[node_to_resolve.id] = entity.id
+                    self.ConfidenceAndEntityExpand(entity.id)
+        if node_to_resolve.type == Grouping.GROUPING:
+            self.nodes[node_to_resolve.id] = GraphNER_withProperties(
+                node_to_resolve,
+                self.is_simplistic_rewriting,
+                self.meu_db_row,
+                self.services.getParmenides(),
+                self.existentials
+            )
 
     # Phase 4.1
     def ConfidenceAndEntityExpand(self, key):
@@ -486,6 +603,7 @@ class AssignTypeToSingleton:  # TODO: This is doing a bit more than "AssignTypeT
                 confidence=confidence
             )
             self.nodes[key] = set_item
+            return set_item
         else:
             if item.id not in self.nodes:
                 self.nodes[item.id] = item
@@ -500,49 +618,92 @@ class AssignTypeToSingleton:  # TODO: This is doing a bit more than "AssignTypeT
         for row in range(len(gsm_json)):
             gsm_item = gsm_json[row]  # Find node in JSON so we can get child nodes
             key = gsm_item['id']
-            node = self.nodes[key]  # Singleton node
+            try:
+                node = self.nodes[self.get_node_id(key)]  # Singleton node
 
-            # # TODO: Check if xi is in negations or NEG is in ell
-            # if len(gsm_item['xi']) > 0 and gsm_item['xi'][0] in self.negations or 'NEG' in gsm_item['ell']:
-            #     is_prop_negated = True
+                if node.type == Grouping.NOT:
+                    return
 
-            # Check if name is not/no or if negation found in properties
-            ## TODO: there was a case where node didn't have the field named_entity
-            ##       Please double check if this will fix it...
-            # if is_prop_negated:
-            #     self.nodes[key] = SetOfSingletons(
-            #         id=key,
-            #         type=Grouping.NOT,
-            #         entities=tuple([node]),
-            #         min=node.min,
-            #         max=node.max,
-            #         confidence=node.confidence
-            #     )
-            # else:
-            # if hasattr(node, "named_entity") and node.named_entity in self.negations:
-            grouped_nodes.append(node)
+                # # TODO: Check if xi is in negations or NEG is in ell
+                # if len(gsm_item['xi']) > 0 and gsm_item['xi'][0] in self.negations or 'NEG' in gsm_item['ell']:
+                #     is_prop_negated = True
+
+                # Check if name is not/no or if negation found in properties
+                ## TODO: there was a case where node didn't have the field named_entity
+                ##       Please double check if this will fix it...
+                # if is_prop_negated:
+                #     self.nodes[key] = SetOfSingletons(
+                #         id=key,
+                #         type=Grouping.NOT,
+                #         entities=tuple([node]),
+                #         min=node.min,
+                #         max=node.max,
+                #         confidence=node.confidence
+                #     )
+                # else:
+                # if hasattr(node, "named_entity") and node.named_entity in self.negations:
+                grouped_nodes.append(node)
+                for edge in gsm_item['phi']:
+                    if edge['score']['child'] in self.nodes:  # Node might have been removed so check key exists
+                        child = self.nodes[self.get_node_id(edge['score']['child'])]
+                        if (hasattr(child, "named_entity") and child.named_entity in self.negations) or child.type == 'NEG':
+                            # grouped_nodes.append(child)
+                            fresh_id = self.freshId()
+                            self.node_id_map[key] = fresh_id
+                            self.nodes[fresh_id] = SetOfSingletons(
+                                id=fresh_id,
+                                type=Grouping.NOT,
+                                entities=tuple(grouped_nodes),
+                                min=min(grouped_nodes, key=lambda x: x.min).min,
+                                max=max(grouped_nodes, key=lambda x: x.max).max,
+                                confidence=child.confidence
+                            )
+                grouped_nodes = []
+            except KeyError:
+                continue
+
+    def checkForSpecificNegation(self, gsm_json, node, grouped_nodes=None, create_node=True):
+        if node.type == Grouping.NOT:
+            return
+
+        if isinstance(node, SetOfSingletons):
+            grouped_nodes = [node]
+            for entity in node.entities:
+                self.checkForSpecificNegation(gsm_json, entity, grouped_nodes, create_node)
+
+        if grouped_nodes is None:
+            grouped_nodes = [node]
+
+        # Check for negation in node 'xi' and 'properties'
+        node_id = self.get_original_node_id(node.id)
+        gsm_item = self.get_gsm_item_from_id(gsm_json, node_id)
+        if gsm_item is not None:
             for edge in gsm_item['phi']:
-                # if edge['score']['child'] in self.nodes:  # Node might have been removed so check key exists
-                child = self.nodes[self.get_node_id(edge['score']['child'])]
-                if (hasattr(child, "named_entity") and child.named_entity in self.negations) or child.type == 'NEG':
-                    # grouped_nodes.append(child)
-                    fresh_id = self.freshId()
-                    self.node_id_map[key] = fresh_id
-                    self.nodes[fresh_id] = SetOfSingletons(
-                        id=fresh_id,
-                        type=Grouping.NOT,
-                        entities=tuple(grouped_nodes),
-                        min=min(grouped_nodes, key=lambda x: x.min).min,
-                        max=max(grouped_nodes, key=lambda x: x.max).max,
-                        confidence=child.confidence
-                    )
-            grouped_nodes = []
+                if edge['score']['child'] in self.nodes:  # Node might have been removed so check key exists
+                    child = self.nodes[self.get_node_id(edge['score']['child'])]
+                    if (hasattr(child, "named_entity") and child.named_entity in self.negations) or child.type == 'NEG':
+                        # grouped_nodes.append(child)
+                        if create_node:
+                            fresh_id = self.freshId()
+                            self.node_id_map[node_id] = fresh_id
+                            self.nodes[fresh_id] = SetOfSingletons(
+                                id=fresh_id,
+                                type=Grouping.NOT,
+                                entities=tuple(grouped_nodes),
+                                min=min(grouped_nodes, key=lambda x: x.min).min,
+                                max=max(grouped_nodes, key=lambda x: x.max).max,
+                                confidence=child.confidence
+                            )
+                        else:
+                            return True
 
     def constructIntermediateGraph(self, gsm_json, rejected_edges, non_verbs) -> Graph:
         self.edges = []
+
+        # Add child node if 'amod' as properties of source node
         for row, gsm_item, edge in self.iterateOverEdges(gsm_json, rejected_edges):
             edge_label_name = edge['containment']  # Name of edge label
-            if 'amod' in edge_label_name: # TODO: Is this 'amod' or just 'mod' as could have 'nmod' (e.g. (traffic)-[nmod]->(Newcastle)
+            if 'amod' in edge_label_name:  # TODO: Is this 'amod' or just 'mod' as could have 'nmod' (e.g. (traffic)-[nmod]->(Newcastle)
                 source_node = self.nodes[self.get_node_id(edge['score']['parent'])]
                 target_node = self.nodes[self.get_node_id(edge['score']['child'])]
                 temp_prop = dict(copy(source_node.properties))
@@ -581,8 +742,8 @@ class AssignTypeToSingleton:  # TODO: This is doing a bit more than "AssignTypeT
                     source_properties = dict(source_node.properties)
                     if 'action' in source_properties:
                         edge_label_name = source_properties['action']
-                        parmenides_types = {str(x)[len(Parmenides.parmenides_ns):] for x in self.services.getParmenides().typeOf(edge_label_name)}
-                        if 'Verb' in parmenides_types or len(parmenides_types) == 0:
+                        is_verb = self.is_label_verb(edge_label_name)
+                        if is_verb:
                             self.create_edges(edge_label_name, gsm_item, non_verbs, source_node_id, target_node_id)
 
             for edge in gsm_item['phi']:
@@ -608,6 +769,13 @@ class AssignTypeToSingleton:  # TODO: This is doing a bit more than "AssignTypeT
 
         print(json.dumps(Graph(self.edges), cls=EnhancedJSONEncoder))
         return Graph(self.edges)
+
+    def is_label_verb(self, edge_label_name):
+        edge_label_name = lemmatize_verb(edge_label_name)
+        parmenides_types = {str(x)[len(Parmenides.parmenides_ns):] for x in
+                            self.services.getParmenides().typeOf(edge_label_name)}
+        is_verb = any(map(lambda x: 'Verb' in x, parmenides_types)) or len(parmenides_types) == 0
+        return is_verb
 
     def iterateOverEdges(self, gsm_json, rejected_edges):
         for row in range(len(gsm_json)):
@@ -635,7 +803,8 @@ class AssignTypeToSingleton:  # TODO: This is doing a bit more than "AssignTypeT
             if edge_label_name == non_verb.strip():
                 edge_type = "non_verb"
                 break
-        if self.nodes[source_node_id].type == Grouping.MULTIINDIRECT:  # TODO: I don't think this ever happens?
+        if self.nodes[source_node_id].type == Grouping.MULTIINDIRECT:
+            # TODO: I don't think this logic is correct (e.g. The mouse is eaten by the cat)
             for node in self.nodes[source_node_id].entities:
                 self.edges.append(Relationship(
                     source=source_node,

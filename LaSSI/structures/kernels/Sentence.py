@@ -86,6 +86,7 @@ def create_cop(node, kernel, target_or_source):
             target_json = json_dumps(node)
             target_dict = dict(json.loads(target_json))
             temp_prop['cop'] = target_dict
+
             new_source = Singleton(
                 id=kernel.source.id,
                 named_entity=kernel.source.named_entity,
@@ -97,7 +98,7 @@ def create_cop(node, kernel, target_or_source):
             )
             kernel = Relationship(
                 source=new_source,
-                target=node,
+                target=kernel.target,
                 edgeLabel=kernel.edgeLabel,
                 isNegated=kernel.isNegated
             )
@@ -109,6 +110,7 @@ def create_cop(node, kernel, target_or_source):
             target_json = json_dumps(node)
             target_dict = dict(json.loads(target_json))
             temp_prop['cop'] = target_dict
+
             new_target = Singleton(
                 id=kernel.target.id,
                 named_entity=kernel.target.named_entity,
@@ -118,9 +120,16 @@ def create_cop(node, kernel, target_or_source):
                 type=kernel.target.type,
                 confidence=kernel.target.confidence
             )
+
+
+            # Only add the copula if it differs from the target name
+            kernel_target = new_target
+            if kernel.target is not None and kernel.target.named_entity == node.named_entity:
+                kernel_target = None
+
             kernel = Relationship(
                 source=kernel.source,
-                target=new_target,
+                target=kernel_target,
                 edgeLabel=kernel.edgeLabel,
                 isNegated=kernel.isNegated
             )
@@ -129,6 +138,12 @@ def create_cop(node, kernel, target_or_source):
         target_json = json_dumps(node)
         target_dict = dict(json.loads(target_json))
         temp_prop['cop'] = target_dict
+
+        # Only add the copula if it differs from the target name
+        kernel_target = kernel.target
+        if kernel.target is not None and kernel.target.named_entity == node.named_entity:
+            kernel_target = None
+
         new_source = Singleton(
             id=kernel.source.id,
             named_entity=kernel.source.named_entity,
@@ -140,7 +155,7 @@ def create_cop(node, kernel, target_or_source):
         )
         kernel = Relationship(
             source=new_source,
-            target=kernel.target,
+            target=kernel_target,
             edgeLabel=kernel.edgeLabel,
             isNegated=kernel.isNegated
         )
@@ -157,14 +172,26 @@ def create_sentence_obj(edges, nodes, transitive_verbs, negations) -> List[Sente
     if kernel is not None:
         if kernel.source is not None:
             kernel_nodes.add(kernel.source)
+            if isinstance(kernel.source, SetOfSingletons):
+                for entity in kernel.source.entities:
+                    kernel_nodes.add(entity)
         if kernel.target is not None:
             kernel_nodes.add(kernel.target)
+            if isinstance(kernel.target, SetOfSingletons):
+                for entity in kernel.target.entities:
+                    kernel_nodes.add(entity)
+
+    # TODO: Is this the right place to do this? As trying to do this earlier one becomes redundant as we remove the NOT type when resolving the node ID
+    # TODO: I think this is accounted for now
+    # Check if AND grouping should be NEITHER, thus negate kernel
+    # kernel = check_kernel_for_neither(kernel)
+
     for edge in edges:
         # Source
-        kernel, properties, kernel_nodes = add_to_properties(kernel, edge.source, 'source', kernel_nodes, properties)
+        kernel, properties, kernel_nodes = add_to_properties(kernel, edge.source, 'source', kernel_nodes, properties, negations)
 
         # Target
-        kernel, properties, kernel_nodes = add_to_properties(kernel, edge.target, 'target', kernel_nodes, properties)
+        kernel, properties, kernel_nodes = add_to_properties(kernel, edge.target, 'target', kernel_nodes, properties, negations)
 
     edge_label_name = kernel.edgeLabel.named_entity
     el = lemmatize_verb(edge_label_name)
@@ -184,6 +211,22 @@ def create_sentence_obj(edges, nodes, transitive_verbs, negations) -> List[Sente
     )]
 
 
+# def check_kernel_for_neither(kernel):
+#     if (isinstance(kernel.source, SetOfSingletons) and kernel.source.type == Grouping.AND or
+#             isinstance(kernel.target, SetOfSingletons) and kernel.target.type == Grouping.AND):
+#         for node in kernel.source.entities:
+#             for prop in dict(node.properties).values():
+#                 if 'neither' in prop.lower() or 'nor' in prop.lower():
+#                     kernel = Relationship(
+#                         source=kernel.source,
+#                         target=kernel.target,
+#                         edgeLabel=kernel.edgeLabel,
+#                         isNegated=True
+#                     )
+#                     break
+#     return kernel
+
+
 def lemmatize_verb(edge_label_name):
     stNLP = Services.getInstance().getStanzaSTNLP()
     lemmatizer = Services.getInstance().getWTLemmatizer()
@@ -191,20 +234,49 @@ def lemmatize_verb(edge_label_name):
         lemmatizer.lemmatize(edge_label_name, 'v')).to_dict()[0])))
 
 
-def add_to_properties(kernel, node, source_or_target, kernel_nodes, properties, type_key = None):
-    lemma_node_edge_label_name = lemmatize_verb(node.named_entity)
+def add_to_properties(kernel, node, source_or_target, kernel_nodes, properties, negations, type_key = None):
     lemma_kernel_edge_label_name = lemmatize_verb(kernel.edgeLabel.named_entity)
 
-    if node is not None and lemma_node_edge_label_name != lemma_kernel_edge_label_name:
+    if isinstance(node, SetOfSingletons) and node.type == Grouping.NOT:
+        node_props = dict(node.entities[0].properties)
+        if 'action' in node_props:
+            # Get label from action prop
+            lemma_node_edge_label_name = lemmatize_verb(node_props['action'])
+
+            # Remove negation from label
+            query_words = lemma_node_edge_label_name.split()
+            result_words = [word for word in query_words if word.lower() not in negations]
+            lemma_node_edge_label_name = ' '.join(result_words)
+
+            # If lemmatized action == kernel edge, then negate
+            if lemma_node_edge_label_name == lemma_kernel_edge_label_name:
+                kernel = Relationship(
+                    source=kernel.source,
+                    target=kernel.target,
+                    edgeLabel=kernel.edgeLabel,
+                    isNegated=True
+                )
+                return kernel, properties, kernel_nodes
+        else:
+            lemma_node_edge_label_name = node.entities[0].named_entity
+    elif isinstance(node, Singleton):
+        lemma_node_edge_label_name = lemmatize_verb(node.named_entity)
+
+    if (isinstance(node, SetOfSingletons)) or (node is not None and lemma_node_edge_label_name != lemma_kernel_edge_label_name):
         if type_key is None:
             type_key = get_node_type(node)
         if type_key == 'JJ' or type_key == 'JJS':
             kernel_nodes.add(node)
             kernel = create_cop(node, kernel, source_or_target)
-        if type_key not in 'NEG' and type_key not in 'existential':
+        if 'NEG' not in type_key and 'existential' not in type_key:
             if node.type == Grouping.MULTIINDIRECT:
                 return kernel, properties, kernel_nodes
             elif node not in kernel_nodes and node not in properties[type_key]:
+                if isinstance(node, SetOfSingletons):
+                    for entity in node.entities:
+                        kernel_nodes.add(entity)
+                else:
+                    kernel_nodes.add(node)
                 properties[type_key].append(node)
     return kernel, properties, kernel_nodes
 
@@ -220,12 +292,19 @@ def assign_kernel(edges, kernel, negations, nodes, transitive_verbs):
             edge_label = edge.edgeLabel
             if edge.isNegated:
                 for name in negations:
+                    # If edge label contains negations (no, not), remove them
                     if bool(re.search(rf"\b{re.escape(name)}\b", edge_label.named_entity)):
                         edge_label_name = edge_label.named_entity.replace(name, "")
                         edge_label_name = edge_label_name.strip()
-                        edge_label = Singleton(edge_label.id, edge_label_name, edge_label.properties, edge_label.min,
-                                               edge_label.max,
-                                               edge_label.type, edge_label.confidence)
+                        edge_label = Singleton(
+                            edge_label.id,
+                            edge_label_name,
+                            edge_label.properties,
+                            edge_label.min,
+                            edge_label.max,
+                            edge_label.type,
+                            edge_label.confidence
+                        )
                         break
 
             # If not a transitive verb, remove target as target reflects direct object

@@ -35,7 +35,12 @@ class Services:
 
     def lemmatize_sentence(self, text):
         doc = self.stanza.nlp(text)
-        return {word.lemma for sent in doc.sentences for word in sent.words}
+        lemmas = set()
+        for sentence in doc.sentences:
+            for word in sentence.words:
+                if word.pos.lower() != 'aux':
+                    lemmas.add(word.lemma)
+        return lemmas
 
     def getStanzaSTNLP(self):
         return self.stanza.stNLP
