@@ -161,7 +161,6 @@ def create_cop(node, kernel, target_or_source):
         )
     return kernel
 
-
 def create_sentence_obj(edges, nodes, transitive_verbs, negations) -> List[Sentence]:
     if len(edges) <= 0:
         create_existential(edges, nodes)
@@ -170,21 +169,11 @@ def create_sentence_obj(edges, nodes, transitive_verbs, negations) -> List[Sente
     kernel, properties = assign_kernel(edges, kernel, negations, nodes, transitive_verbs)
     kernel_nodes = set()
     if kernel is not None:
+        # Add relevant nodes to kernel_nodes, and check if source or target should be a pronoun
         if kernel.source is not None:
-            kernel_nodes.add(kernel.source)
-            if isinstance(kernel.source, SetOfSingletons):
-                for entity in kernel.source.entities:
-                    kernel_nodes.add(entity)
+            kernel, kernel_nodes = analyse_kernel_node(kernel, kernel_nodes, "source")
         if kernel.target is not None:
-            kernel_nodes.add(kernel.target)
-            if isinstance(kernel.target, SetOfSingletons):
-                for entity in kernel.target.entities:
-                    kernel_nodes.add(entity)
-
-    # TODO: Is this the right place to do this? As trying to do this earlier one becomes redundant as we remove the NOT type when resolving the node ID
-    # TODO: I think this is accounted for now
-    # Check if AND grouping should be NEITHER, thus negate kernel
-    # kernel = check_kernel_for_neither(kernel)
+            kernel, kernel_nodes = analyse_kernel_node(kernel, kernel_nodes, "target")
 
     for edge in edges:
         # Source
@@ -211,20 +200,45 @@ def create_sentence_obj(edges, nodes, transitive_verbs, negations) -> List[Sente
     )]
 
 
-# def check_kernel_for_neither(kernel):
-#     if (isinstance(kernel.source, SetOfSingletons) and kernel.source.type == Grouping.AND or
-#             isinstance(kernel.target, SetOfSingletons) and kernel.target.type == Grouping.AND):
-#         for node in kernel.source.entities:
-#             for prop in dict(node.properties).values():
-#                 if 'neither' in prop.lower() or 'nor' in prop.lower():
-#                     kernel = Relationship(
-#                         source=kernel.source,
-#                         target=kernel.target,
-#                         edgeLabel=kernel.edgeLabel,
-#                         isNegated=True
-#                     )
-#                     break
-#     return kernel
+def analyse_kernel_node(kernel, kernel_nodes, kernel_node_type):
+    if kernel_node_type == 'source':
+        kernel_node = kernel.source
+    else:
+        kernel_node = kernel.target
+
+    kernel_nodes.add(kernel_node)
+    if isinstance(kernel_node, SetOfSingletons):
+        for entity in kernel_node.entities:
+            kernel_nodes.add(entity)
+
+    if isinstance(kernel_node, Singleton):
+        if kernel_node.type == 'det' or kernel_node.type == 'JJ' or kernel_node.type == 'JJS': # TODO: Is 'det' type correct?
+            kernel_node = Singleton(
+                id=kernel_node.id,
+                named_entity=kernel_node.named_entity,
+                properties=kernel_node.properties,
+                min=kernel_node.min,
+                max=kernel_node.max,
+                type="PRON",
+                confidence=kernel_node.confidence
+            )
+            if kernel_node_type == 'source':
+                kernel = Relationship(
+                    source=kernel_node,
+                    target=kernel.target,
+                    edgeLabel=kernel.edgeLabel,
+                    isNegated=kernel.isNegated
+                )
+            else:
+                kernel = Relationship(
+                    source=kernel.source,
+                    target=kernel_node,
+                    edgeLabel=kernel.edgeLabel,
+                    isNegated=kernel.isNegated
+                )
+
+    return kernel, kernel_nodes
+
 
 
 def lemmatize_verb(edge_label_name):
@@ -260,7 +274,12 @@ def add_to_properties(kernel, node, source_or_target, kernel_nodes, properties, 
         else:
             lemma_node_edge_label_name = node.entities[0].named_entity
     elif isinstance(node, Singleton):
-        lemma_node_edge_label_name = lemmatize_verb(node.named_entity)
+        node_props = dict(node.properties)
+        if 'action' in node_props:
+            # Get label from action prop
+            lemma_node_edge_label_name = lemmatize_verb(node_props['action'])
+        else:
+            lemma_node_edge_label_name = lemmatize_verb(node.named_entity)
 
     if (isinstance(node, SetOfSingletons)) or (node is not None and lemma_node_edge_label_name != lemma_kernel_edge_label_name):
         if type_key is None:
@@ -274,10 +293,12 @@ def add_to_properties(kernel, node, source_or_target, kernel_nodes, properties, 
             elif node not in kernel_nodes and node not in properties[type_key]:
                 if isinstance(node, SetOfSingletons):
                     for entity in node.entities:
-                        kernel_nodes.add(entity)
+                        if entity not in kernel_nodes:
+                            kernel_nodes.add(entity)
+                            properties[type_key].append(node)
                 else:
                     kernel_nodes.add(node)
-                properties[type_key].append(node)
+                    properties[type_key].append(node)
     return kernel, properties, kernel_nodes
 
 
@@ -288,8 +309,9 @@ def get_node_type(node):
 def assign_kernel(edges, kernel, negations, nodes, transitive_verbs):
     properties = defaultdict(list)
     for edge in edges:
-        if edge.edgeLabel.type == "verb":
-            edge_label = edge.edgeLabel
+        if edge.edgeLabel.type == "verb" or edge.source.type == "verb":
+            edge_label = edge.edgeLabel if edge.edgeLabel.type == "verb" else edge.source
+            edge_source = edge.source if edge.source.type != "verb" else None
             if edge.isNegated:
                 for name in negations:
                     # If edge label contains negations (no, not), remove them
@@ -311,14 +333,19 @@ def assign_kernel(edges, kernel, negations, nodes, transitive_verbs):
             if len(Services.getInstance().lemmatize_sentence(edge.edgeLabel.named_entity).intersection(
                     transitive_verbs)) == 0:
                 kernel = Relationship(
-                    source=edge.source,
+                    source=edge_source,
                     target=None,
                     edgeLabel=edge_label,
                     isNegated=edge.isNegated
                 )
                 break
             else:
-                kernel = edge
+                kernel = Relationship(
+                    source=edge_source,
+                    target=edge.target,
+                    edgeLabel=edge.edgeLabel,
+                    isNegated=edge.isNegated
+                )
                 break
     # If kernel is none, look for existential
     if kernel is None:

@@ -32,16 +32,20 @@ class ResolveBasicTypes:
                 time = MeuDBEntry.from_dict_with_src(time, "SUTime")
                 multi_entity_unit.append(time)
 
-            for x in self.services.getGeoNames().resolve_u(self.recall_threshold, self.precision_threshold, sentence,
-                                                           "GPE"):
+            for x in self.services.getGeoNames().resolve_u(self.recall_threshold, self.precision_threshold, sentence, "GPE"):
                 multi_entity_unit.append(x)
 
-            for x in self.services.getConcepts().resolve_u(self.recall_threshold, self.precision_threshold, sentence,
-                                                           "ENTITY"):
+            for x in self.services.getConcepts().resolve_u(self.recall_threshold, self.precision_threshold, sentence, "ENTITY"):
                 multi_entity_unit.append(x)
 
             ## 2) Typed entity parsing
             results = self.stanza_service(sentence)
+
+            for result_sentence in results.sentences:
+                for word in result_sentence.words:
+                    if word.pos.lower() == 'verb':
+                        multi_entity_unit.append(MeuDBEntry(word.text, word.pos.lower(), word.start_char, word.end_char, word.lemma, 1.0, word.lemma, "Stanza"))
+
             for ent in results.ents:
                 # monad = ""
                 entity = ent.text
@@ -49,8 +53,7 @@ class ResolveBasicTypes:
                 if ent.type == "ORG":  # Remove spaces to create one word 'ORG' entities
                     entities.append([entity, monad])
                 from LaSSI.similarities.levenshtein import lev
-                multi_entity_unit.append(MeuDBEntry(ent.text, ent.type, ent.start_char, ent.end_char, monad,
-                                                    lev(monad.lower(), ent.text.lower()), "Stanza"))
+                multi_entity_unit.append(MeuDBEntry(ent.text, ent.type, ent.start_char, ent.end_char, monad, lev(monad.lower(), ent.text.lower()), monad, "Stanza"))
 
             # Loop through all entities and replace in sentence before passing to NLP server
             for entity in entities:
