@@ -21,6 +21,7 @@ p4 = (>> V)<-[∀ ? w:]--(B)
      (Z)--[? case]->(T)
       where ((V unmatched p3 . V) ∧ ((V unmatched p3pass . V) ∧ ((V unmatched p3expl3 . V) ∧ (ℓ 0 @ V = verb))))
      ↪  new j
+     set (𝜋 kernel @ h) as kernel
         set(φ when , j) as TN
         set(𝜋 expl @ j) as (ℓ 0 @ E)
        set (𝜋 adv @ j) as (𝜉 0 @ ADM)
@@ -128,7 +129,7 @@ p3simple = (V)--[∀n:nsubj]->(>>S)
        del V
        del T
        del M
-
+     set (𝜋 kernel @ S) as kernel
        (S) ;
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -164,6 +165,7 @@ p3 = (>> V)<-[∀ ? w:]--(B)
        del A
        del E
        del NN
+     set (𝜋 kernel @ S) as kernel
        (S);
 
 p3expl = (V)--[∀n:nsubj]->(>> S)
@@ -196,6 +198,7 @@ p3expl = (V)--[∀n:nsubj]->(>> S)
        del A
        del NN
        del ADM
+     set (𝜋 kernel @ S) as kernel
        (S);
 
 p3pass = (V)--[∀n:nsubjpass]->(>> S)
@@ -230,6 +233,7 @@ p3pass = (V)--[∀n:nsubjpass]->(>> S)
        del E
        del NN
        del ADM
+     set (𝜋 kernel @ S) as kernel
        (S)
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

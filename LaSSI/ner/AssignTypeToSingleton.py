@@ -237,7 +237,7 @@ class AssignTypeToSingleton:
             # Get all nodes from edges of root node
             if has_conj or has_multipleindobj:
                 for edge in gsm_item['phi']:
-                    if 'orig' in edge['containment'] or ((not has_multipleindobj) or self.is_label_verb(edge['containment'])):
+                    if 'orig' in edge['containment'] and ((not has_multipleindobj) or self.is_label_verb(edge['containment'])):
                         node = self.nodes[self.get_node_id(edge['content'])]
                         grouped_nodes.append(node)
                         norm_confidence *= node.confidence
@@ -297,6 +297,10 @@ class AssignTypeToSingleton:
                     # xi might be empty if the node is invented, therefore existential
                     name = "?" + str(self.existentials.increaseAndGetExistential())
                     node_type = 'existential'
+
+                # If we have "root" in "ell", add it to properties
+                if len(gsm_item['ell']) > 1:
+                    gsm_item['properties']['kernel'] = gsm_item['ell'][1]
 
                 self.nodes[gsm_item['id']] = Singleton(
                     id=gsm_item['id'],
@@ -527,7 +531,6 @@ class AssignTypeToSingleton:
                     y for y in self.meu_entities[item]
                     if y.confidence == best_score
                 ]
-                best_type = None
                 if len(best_items) == 0:
                     return
                 if len(best_items) == 1:
@@ -535,7 +538,6 @@ class AssignTypeToSingleton:
                     best_type = best_item.type
                 else:
                     best_types = list(set(map(lambda best_item: best_item.type, best_items)))
-                    best_type = None
                     if len(best_types) == 1:
                         best_type = best_types[0]
                     ## TODO! type disambiguation, in future works, needs to take into account also the verb associated to it!
@@ -549,6 +551,8 @@ class AssignTypeToSingleton:
                         best_type = "GPE"
                     elif "LOC" in best_types:
                         best_type = "LOC"
+                    elif "ENTITY" in best_types:
+                        best_type = "ENTITY"
                     else:
                         best_type = "None"
             from LaSSI.structures.internal_graph.EntityRelationship import Singleton
@@ -865,9 +869,9 @@ class AssignTypeToSingleton:
             if edge_label_name == non_verb.strip():
                 edge_type = "non_verb"
                 break
-        if self.nodes[source_node_id].type == Grouping.MULTIINDIRECT:
+        if self.nodes[self.get_node_id(source_node_id)].type == Grouping.MULTIINDIRECT:
             # TODO: I don't think this logic is correct (e.g. The mouse is eaten by the cat)
-            for node in self.nodes[source_node_id].entities:
+            for node in self.nodes[self.get_node_id(source_node_id)].entities:
                 self.edges.append(Relationship(
                     source=source_node,
                     target=self.resolve_node_id(node.id),
@@ -886,7 +890,7 @@ class AssignTypeToSingleton:
                                     properties=frozenset(dict().items()),
                                     min=-1,
                                     max=-1, type=edge_type,
-                                    confidence=self.nodes[gsm_item['id']].confidence),
+                                    confidence=self.nodes[self.get_node_id(gsm_item['id'])].confidence),
                 isNegated=has_negations,
             ))
 

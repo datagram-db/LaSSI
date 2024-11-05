@@ -1439,6 +1439,12 @@ parmenides:like a parmenides:TransitiveVerb ;
 parmenides:be a parmenides:TransitiveVerb ;
     rdfs:label "be"^^xsd:string .
 
+parmenides:waste a parmenides:TransitiveVerb ;
+    rdfs:label "waste"^^xsd:string .
+
+parmenides:buy a parmenides:TransitiveVerb ;
+    rdfs:label "buy"^^xsd:string .
+
 parmenides:world a parmenides:Noun ;
     rdfs:label "world"^^xsd:string ;
     parmenides:entryPoint parmenides:world .
@@ -1453,3 +1459,6 @@ parmenides:beautiful a parmenides:Adjective ;
 
 parmenides:skate a parmenides:IntransitiveVerb ;
     rdfs:label "skate"^^xsd:string .
+
+parmenides:come a parmenides:IntransitiveVerb ;
+    rdfs:label "come"^^xsd:string .
