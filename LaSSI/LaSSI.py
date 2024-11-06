@@ -204,11 +204,11 @@ class LaSSI():
 
         if self.transformation == SentenceRepresentation.Logical:
             self.logger("[TODO]")
-            logical_representations = target_file_dump(self.logical_rewriting,
-                                                      json.load,
-                                                      lambda: LogicalRewriting(self, intermediate_representations),
-                                                      json_dumps,
-                                                      self.force)
+            # logical_representations = target_file_dump(self.logical_rewriting,
+            #                                           json.load,
+            #                                           lambda: LogicalRewriting(self, intermediate_representations),
+            #                                           json_dumps,
+            #                                           self.force)
 
             # TODO: Post hoc Matrices output
             # confusion_matrices =  target_file_dump(self.confusion_matrices,

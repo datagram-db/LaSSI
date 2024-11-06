@@ -87,11 +87,17 @@ class AssignTypeToSingleton:
         self.max_id += 1
         return v
 
+    def freshIdAndAddToNodeMap(self, id_to_map):
+        fresh_id = self.freshId()
+        self.node_id_map[id_to_map] = fresh_id
+        return fresh_id
+
     def groupGraphNodes(self, gsm_json):
         # Used for when we want to generate a "fresh ID"
         self.max_id = max(map(lambda x: int(x["id"]), gsm_json)) + 1
 
-        # TODO: Topological sort phase
+        # Phase -1
+        gsm_json = self.topologicalSort(gsm_json)
 
         # Phase 0
         self.preProcessing(gsm_json)
@@ -107,10 +113,55 @@ class AssignTypeToSingleton:
         for key in self.nodes:
             self.associateNodeToMeuMatches(self.nodes[key])
         # Phase 3
-        self.singletonTypeResolution()
+        for item in self.associations:
+            self.singletonTypeResolution(item)
 
         # Phase 4
         self.resolveGraphNERs()
+
+    # Phase -1
+    def getJsonAsAdjacencyList(self, gsm_json):
+        gsm_id_json = {row['id']: row for row in gsm_json}
+
+        num_of_nodes = max(item['id'] for item in gsm_json) + 1
+        adj = [[] for _ in range(num_of_nodes)]
+
+        for i in gsm_id_json:
+            node = gsm_id_json[i]
+            if len(node['phi']) > 0:
+                for edge in node['phi']:
+                    adj[edge['score']['parent']].append(edge['score']['child'])
+
+        return adj, num_of_nodes
+
+    def topologicalSortUtil(self, v, adj, visited, stack):
+        # Mark the current node as visited
+        visited[v] = True
+
+        # Recur for all adjacent vertices
+        for i in adj[v]:
+            if not visited[i]:
+                self.topologicalSortUtil(i, adj, visited, stack)
+
+        # Push current vertex to stack which stores the result
+        stack.append(v)
+
+    def topologicalSort(self, gsm_json):  # where adj is adjacency list
+        adj, num_of_nodes = self.getJsonAsAdjacencyList(gsm_json)
+
+        stack = []
+        visited = [False] * num_of_nodes
+
+        for i in range(num_of_nodes):
+            if not visited[i]:
+                self.topologicalSortUtil(i, adj, visited, stack)
+
+        json_ids = {item['id'] for item in gsm_json}
+
+        # Create a dictionary mapping IDs to their positions in the stack,
+        # but only for IDs that exist in the JSON data
+        id_order = {id: index for index, id in enumerate(stack) if id in json_ids}
+        return sorted(gsm_json, key=lambda item: id_order.get(item['id']))
 
     # Phase 0
     def preProcessing(self, gsm_json):
@@ -147,9 +198,6 @@ class AssignTypeToSingleton:
 
         # Phase 1.1
         self.create_all_singleton_nodes(gsm_json, number_of_nodes)
-
-        # Sorts the JSON by ID, so child compounds are merged before parent ones?
-        gsm_json = sorted(gsm_json, key=lambda x: x['id'])  # TODO: Needs to change to be a topological
 
         # Check if conjugation ('conj') or ('multipleindobj') exists and if true exists, merge into SetOfSingletons
         # Also if 'compound' relationship is present, merge parent and child nodes
@@ -262,7 +310,7 @@ class AssignTypeToSingleton:
 
                 # TODO: Need to resolve grouped entities before merging, is there a more elegant way to do this? Could this thus be removed from the phases?
                 self.associteNodeToBestMeuMatches(self.nodes[gsm_item['id']])
-                self.singletonTypeResolution()
+                self.singletonTypeResolution(self.nodes[gsm_item['id']])
 
     # Phase 1.2
     def get_compound_entities(self, grouped_nodes, gsm_json, gsm_item, is_compound, norm_confidence):
@@ -289,18 +337,7 @@ class AssignTypeToSingleton:
     # Phase 1.3
     def create_set_of_singletons(self, group_type, grouped_nodes, gsm_item, has_conj, has_multipleindobj, is_compound, norm_confidence, gsm_json):
         if has_conj:
-            # if group_type == Grouping.NEITHER:
-                # g = []
-                # for x in grouped_nodes:
-                #     fresh_not = SetOfSingletons(id=self.freshId(), type=Grouping.NOT, entities=tuple([x]), min=x.min, max=x.max, confidence=x.confidence)
-                #     g.append(fresh_not)
-                #     self.node_id_map[x.id] = fresh_not.id
-                #
-                # grouped_nodes = tuple(g)
-                # group_type = Grouping.AND
-
-            new_id = self.freshId()
-            self.node_id_map[gsm_item['id']] = new_id
+            new_id = self.freshIdAndAddToNodeMap(gsm_item['id'])
             self.nodes[new_id] = SetOfSingletons(
                 id=new_id,
                 type=group_type,
@@ -311,8 +348,7 @@ class AssignTypeToSingleton:
             )
         elif is_compound:
             grouped_nodes.insert(0, self.nodes[self.get_node_id(gsm_item['id'])])
-            new_id = self.freshId()
-            self.node_id_map[gsm_item['id']] = new_id
+            new_id = self.freshIdAndAddToNodeMap(gsm_item['id'])
             self.nodes[new_id] = SetOfSingletons(
                 id=new_id,
                 type=Grouping.GROUPING,
@@ -354,8 +390,25 @@ class AssignTypeToSingleton:
         number_of_nodes = range(len(gsm_json))
         for row in number_of_nodes:
             gsm_item = gsm_json[row]
-            is_but = 'but' in gsm_item['xi'][0].lower() and 'cc' in gsm_item['ell'][0].lower()
-            if is_but:
+            but_gsm_item = None
+            is_but = self.is_node_but(gsm_item)  # Is the current node BUT
+
+            # Check for if the current node has an EDGE that contains BUT
+            if len(gsm_item['phi']) > 0:
+                for edge in gsm_item['phi']:
+                    but_gsm_item = self.get_gsm_item_from_id(gsm_json, edge['score']['child'])
+                    has_but = self.is_node_but(but_gsm_item)
+
+                    # Check if BUT has edges, if it does, then we will use those later
+                    if len(but_gsm_item['phi']) > 0:
+                        has_but = False
+
+                    if has_but:
+                        break
+                    else:
+                        but_gsm_item = None
+
+            if is_but:  # If current node "BUT", then check if it has children
                 norm_confidence = 1.0
                 but_node = self.nodes[self.get_node_id(gsm_item['id'])]
                 grouped_nodes = []
@@ -367,45 +420,58 @@ class AssignTypeToSingleton:
                         grouped_nodes.append(node)
                         norm_confidence *= node.confidence
 
-                if len(grouped_nodes) > 0:
-                    new_id = self.freshId()
-                    self.node_id_map[gsm_item['id']] = new_id
+                self.create_but_group(but_node, grouped_nodes, gsm_item, gsm_json, norm_confidence)
+            elif but_gsm_item is not None:  # This node has a BUT child, so therefore create group
+                norm_confidence = 1.0
+                parent_node = self.nodes[self.get_node_id(gsm_item['id'])]
+                grouped_nodes = [parent_node]
+                self.create_but_group(parent_node, grouped_nodes, gsm_item, gsm_json, norm_confidence)
 
-                    # Create an AND grouping from given child nodes
-                    new_but_node = SetOfSingletons(
-                        id=new_id,
-                        type=Grouping.AND,
-                        entities=tuple(grouped_nodes),
-                        min=min(grouped_nodes, key=lambda x: x.min).min,
-                        max=max(grouped_nodes, key=lambda x: x.max).max,
-                        confidence=norm_confidence
-                    )
+    def create_but_group(self, node, grouped_nodes, gsm_item, gsm_json, norm_confidence):
+        if len(grouped_nodes) > 0:
+            new_id = self.freshIdAndAddToNodeMap(gsm_item['id'])
 
-                    # If "but" has a negation, group the original grouped nodes in a NOT and then wrap again in an AND
-                    if self.checkForSpecificNegation(gsm_json, but_node, create_node=False):
-                        # Create new NOT node within nodes
-                        new_new_id = self.freshId()
-                        self.node_id_map[grouped_nodes[0].id] = new_new_id
-                        self.nodes[new_new_id] = SetOfSingletons(
-                            id=new_new_id,
-                            type=Grouping.NOT,
-                            entities=tuple(grouped_nodes),
-                            min=min(grouped_nodes, key=lambda x: x.min).min,
-                            max=max(grouped_nodes, key=lambda x: x.max).max,
-                            confidence=norm_confidence
-                        )
+            # Create an AND grouping from given child nodes
+            new_but_node = SetOfSingletons(
+                id=new_id,
+                type=Grouping.AND,
+                entities=tuple(grouped_nodes),
+                min=min(grouped_nodes, key=lambda x: x.min).min,
+                max=max(grouped_nodes, key=lambda x: x.max).max,
+                confidence=norm_confidence
+            )
 
-                        self.nodes[new_id] = SetOfSingletons(
-                            id=new_id,
-                            type=Grouping.AND,
-                            entities=[self.nodes[new_new_id]],
-                            min=min(grouped_nodes, key=lambda x: x.min).min,
-                            max=max(grouped_nodes, key=lambda x: x.max).max,
-                            confidence=norm_confidence
-                        )
-                    else:
-                        # Otherwise return the new node
-                        self.nodes[new_id] = new_but_node
+            # If "but" has a negation, group the original grouped nodes in a NOT and then wrap again in an AND
+            if self.checkForSpecificNegation(gsm_json, node, create_node=False):
+                # Create new NOT node within nodes
+                if grouped_nodes[0].id != gsm_item['id']:
+                    new_new_id = self.freshIdAndAddToNodeMap(grouped_nodes[0].id)
+                else:
+                    new_new_id = self.freshId()
+
+                self.nodes[new_new_id] = SetOfSingletons(
+                    id=new_new_id,
+                    type=Grouping.NOT,
+                    entities=tuple(grouped_nodes),
+                    min=min(grouped_nodes, key=lambda x: x.min).min,
+                    max=max(grouped_nodes, key=lambda x: x.max).max,
+                    confidence=norm_confidence
+                )
+
+                self.nodes[new_id] = SetOfSingletons(
+                    id=new_id,
+                    type=Grouping.AND,
+                    entities=[self.nodes[new_new_id]],
+                    min=min(grouped_nodes, key=lambda x: x.min).min,
+                    max=max(grouped_nodes, key=lambda x: x.max).max,
+                    confidence=norm_confidence
+                )
+            else:
+                # Otherwise return the new node
+                self.nodes[new_id] = new_but_node
+
+    def is_node_but(self, gsm_item):
+        return len(gsm_item['xi']) > 0 and 'but' in gsm_item['xi'][0].lower() and 'cc' in gsm_item['ell'][0].lower()
 
     # Phase 2
     def associateNodeToMeuMatches(self, node):
@@ -439,64 +505,62 @@ class AssignTypeToSingleton:
                     self.associations.add(item)
 
     # Phase 3
-    def singletonTypeResolution(self):
-        # if len(self.nodes) > 0:
-        #     return self.nodes
-        for item in self.associations:
-            # for association in associations:
-            if len(self.meu_entities[item]) > 0:
-                if item.type == '∃' or item.type.startswith("JJ") or item.type.startswith("IN") or item.type.startswith(
-                        "NEG"):
-                    best_score = item.confidence
-                    best_items = [item]
-                    best_type = item.type
+    def singletonTypeResolution(self, item):
+        if len(self.meu_entities[item]) > 0:
+            if item.type == '∃' or item.type.startswith("JJ") or item.type.startswith("IN") or item.type.startswith(
+                    "NEG"):
+                best_score = item.confidence
+                best_items = [item]
+                best_type = item.type
+            else:
+                # TODO: Fix typing information (e.g. Golden Gate Bridge has GPE (0.8) and ENTITY (1.0)
+                best_score = max(map(lambda y: y.confidence, self.meu_entities[item]))
+                # best_items = [
+                #     y for y in self.meu_entities[item]
+                #     if (len(item.named_entity.split(' ')) == 1 and y.confidence == best_score) or
+                #        (y.confidence == best_score and
+                #         len(item.named_entity.split(' ')) > 1 and
+                #         y.monad is not None and
+                #        y.monad.lower() == item.named_entity.lower())
+                # ]
+                best_items = [
+                    y for y in self.meu_entities[item]
+                    if y.confidence == best_score
+                ]
+                best_type = None
+                if len(best_items) == 0:
+                    return
+                if len(best_items) == 1:
+                    best_item = best_items[0]
+                    best_type = best_item.type
                 else:
-                    # TODO: Fix typing information (e.g. Golden Gate Bridge has GPE (0.8) and ENTITY (1.0)
-                    best_score = max(map(lambda y: y.confidence, self.meu_entities[item]))
-                    # best_items = [
-                    #     y for y in self.meu_entities[item]
-                    #     if (len(item.named_entity.split(' ')) == 1 and y.confidence == best_score) or
-                    #        (y.confidence == best_score and
-                    #         len(item.named_entity.split(' ')) > 1 and
-                    #         y.monad is not None and
-                    #        y.monad.lower() == item.named_entity.lower())
-                    # ]
-                    best_items = [
-                        y for y in self.meu_entities[item]
-                        if y.confidence == best_score
-                    ]
+                    best_types = list(set(map(lambda best_item: best_item.type, best_items)))
                     best_type = None
-                    if len(best_items) == 0:
-                        return
-                    if len(best_items) == 1:
-                        best_item = best_items[0]
-                        best_type = best_item.type
+                    if len(best_types) == 1:
+                        best_type = best_types[0]
+                    ## TODO! type disambiguation, in future works, needs to take into account also the verb associated to it!
+                    elif "verb" in best_types:
+                        best_type = "verb"
+                    elif "PERSON" in best_types:
+                        best_type = "PERSON"
+                    elif "DATE" in best_types or "TIME" in best_types:
+                        best_type = "DATE"
+                    elif "GPE" in best_types:
+                        best_type = "GPE"
+                    elif "LOC" in best_types:
+                        best_type = "LOC"
                     else:
-                        best_types = list(set(map(lambda best_item: best_item.type, best_items)))
-                        best_type = None
-                        if len(best_types) == 1:
-                            best_type = best_types[0]
-                        ## TODO! type disambiguation, in future works, needs to take into account also the verb associated to it!
-                        elif "PERSON" in best_types:
-                            best_type = "PERSON"
-                        elif "DATE" in best_types or "TIME" in best_types:
-                            best_type = "DATE"
-                        elif "GPE" in best_types:
-                            best_type = "GPE"
-                        elif "LOC" in best_types:
-                            best_type = "LOC"
-                        else:
-                            best_type = "None"
-                from LaSSI.structures.internal_graph.EntityRelationship import Singleton
-                self.nodes[item.id] = Singleton(
-                    id=item.id,
-                    named_entity=item.named_entity,
-                    properties=item.properties,
-                    min=item.min,
-                    max=item.max,
-                    type=best_type,
-                    confidence=best_score
-                )
+                        best_type = "None"
+            from LaSSI.structures.internal_graph.EntityRelationship import Singleton
+            self.nodes[item.id] = Singleton(
+                id=item.id,
+                named_entity=item.named_entity,
+                properties=item.properties,
+                min=item.min,
+                max=item.max,
+                type=best_type,
+                confidence=best_score
+            )
 
     ## Phase 4
     def resolveGraphNERs(self):
@@ -621,7 +685,7 @@ class AssignTypeToSingleton:
             try:
                 node = self.nodes[self.get_node_id(key)]  # Singleton node
 
-                if node.type == Grouping.NOT:
+                if node.type == Grouping.NOT or (node.type == Grouping.AND and node.entities[0].type == Grouping.NOT):
                     return
 
                 # # TODO: Check if xi is in negations or NEG is in ell
@@ -648,8 +712,7 @@ class AssignTypeToSingleton:
                         child = self.nodes[self.get_node_id(edge['score']['child'])]
                         if (hasattr(child, "named_entity") and child.named_entity in self.negations) or child.type == 'NEG':
                             # grouped_nodes.append(child)
-                            fresh_id = self.freshId()
-                            self.node_id_map[key] = fresh_id
+                            fresh_id = self.freshIdAndAddToNodeMap(key)
                             self.nodes[fresh_id] = SetOfSingletons(
                                 id=fresh_id,
                                 type=Grouping.NOT,
@@ -684,8 +747,7 @@ class AssignTypeToSingleton:
                     if (hasattr(child, "named_entity") and child.named_entity in self.negations) or child.type == 'NEG':
                         # grouped_nodes.append(child)
                         if create_node:
-                            fresh_id = self.freshId()
-                            self.node_id_map[node_id] = fresh_id
+                            fresh_id = self.freshIdAndAddToNodeMap(node_id)
                             self.nodes[fresh_id] = SetOfSingletons(
                                 id=fresh_id,
                                 type=Grouping.NOT,
