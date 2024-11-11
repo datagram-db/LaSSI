@@ -2,7 +2,7 @@ import sys
 from LaSSI.LaSSI import LaSSI
 
 if __name__ == '__main__':
-    dataset_name = "test_sentences/extension/copula_test.yaml"
+    dataset_name = "test_sentences/extension/sentences.yaml"
     fuzzyDBs = "connection.yaml"
 
     if len(sys.argv) > 1:

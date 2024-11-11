@@ -44,6 +44,8 @@ class Parmenides():
         self.trcl = defaultdict(set)
         self.syn = defaultdict(set)
         self.st = defaultdict(set)
+        self.pronouns = set(self.get_pronouns())
+        self.prototypical_prepositions = set(self.get_prototypical_prepositions())
         self.transitive_verbs = set(self.get_transitive_verbs())
         self.rejected_edges = set(self.get_rejected_edges())
         self.non_verbs = set(self.get_universal_dependencies())
@@ -111,6 +113,12 @@ class Parmenides():
                 break
 
         return lca
+
+    def getPronouns(self):
+        return self.pronouns
+
+    def getPrototypicalPrepositions(self):
+        return self.prototypical_prepositions
 
     def getTransitiveVerbs(self):
         return self.transitive_verbs
@@ -212,6 +220,24 @@ class Parmenides():
          SELECT DISTINCT ?c
          WHERE {
              ?a a parmenides:TransitiveVerb.
+             ?a rdfs:label ?c .
+         }"""
+        return self._single_unary_query(knows_query, lambda x: str(x.c))
+
+    def get_prototypical_prepositions(self):
+        knows_query = """
+         SELECT DISTINCT ?c
+         WHERE {
+             ?a a parmenides:PrototypicalPreposition.
+             ?a rdfs:label ?c .
+         }"""
+        return self._single_unary_query(knows_query, lambda x: str(x.c))
+
+    def get_pronouns(self):
+        knows_query = """
+         SELECT DISTINCT ?c
+         WHERE {
+             ?a a parmenides:Pronoun.
              ?a rdfs:label ?c .
          }"""
         return self._single_unary_query(knows_query, lambda x: str(x.c))

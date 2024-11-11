@@ -12,7 +12,6 @@ from collections import defaultdict
 # from scipy._lib.array_api_compat.array_api_compat import numpy
 
 from LaSSI.structures.internal_graph.EntityRelationship import NodeEntryPoint, Singleton, SetOfSingletons, Grouping
-from LaSSI.structures.kernels.Sentence import Sentence
 from LaSSI.structures.extended_fol.Sentences import FNot, FOr, FAnd, FUnaryPredicate, FVariable, FBinaryPredicate, Formula, \
     prune_from_cop
 
@@ -217,7 +216,7 @@ def src_make_prop(src, rel, negated, score, properties, dst):
         return make_prop(None, rel, negated, score, properties, dst)
 
 
-def rewrite_kernels(obj: Sentence) -> Formula:
+def rewrite_kernels(obj: Singleton) -> Formula:
     main_pop = obj.kernel
     properties = obj.properties
     rel = main_pop.edgeLabel.named_entity

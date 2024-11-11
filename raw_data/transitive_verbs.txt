@@ -7,6 +7,7 @@ arrest
 ask
 avoid
 bash
+be
 beat
 bend
 bite
@@ -18,6 +19,7 @@ brush
 build
 bump
 burn
+buy
 call
 cancel
 capture
@@ -162,6 +164,7 @@ leave
 let
 lick
 lift
+like
 light
 lighten
 limit
@@ -293,6 +296,7 @@ stake
 start
 startle
 stay
+steal
 steer
 stir
 stop
@@ -346,6 +350,7 @@ want
 warm
 warn
 wash
+waste
 watch
 wear
 widen
