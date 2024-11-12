@@ -132,7 +132,7 @@ class LaSSI():
         for graph, meu_db in zip(gsm_list, meu_dbs):
             from LaSSI.structures.provenance.GraphProvenance import GraphProvenance
             g = GraphProvenance(graph, meu_db, self.transformation == SentenceRepresentation.SimpleGraph)
-            print(f"{meu_db.first_sentence}")
+            self.logger(f"{meu_db.first_sentence}")
             internal_graph = g.internal_graph()
             final_form = internal_graph
             if self.transformation == SentenceRepresentation.Logical:

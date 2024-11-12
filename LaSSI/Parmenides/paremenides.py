@@ -44,6 +44,7 @@ class Parmenides():
         self.trcl = defaultdict(set)
         self.syn = defaultdict(set)
         self.st = defaultdict(set)
+        self.semi_modal_verbs = set(self.get_semi_modal_verbs())
         self.pronouns = set(self.get_pronouns())
         self.prototypical_prepositions = set(self.get_prototypical_prepositions())
         self.transitive_verbs = set(self.get_transitive_verbs())
@@ -113,6 +114,9 @@ class Parmenides():
                 break
 
         return lca
+
+    def getSemiModalVerbs(self):
+        return self.semi_modal_verbs
 
     def getPronouns(self):
         return self.pronouns
@@ -214,6 +218,15 @@ class Parmenides():
         qres = self.g.query(knows_query)
         for row in qres:
             yield f(row)
+
+    def get_semi_modal_verbs(self):
+        knows_query = """
+         SELECT DISTINCT ?c
+         WHERE {
+             ?a a parmenides:SemiModalVerb.
+             ?a rdfs:label ?c .
+         }"""
+        return self._single_unary_query(knows_query, lambda x: str(x.c))
 
     def get_transitive_verbs(self):
         knows_query = """

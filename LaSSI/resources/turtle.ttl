@@ -360,6 +360,10 @@ parmenides:d_object a owl:ObjectProperty .
 parmenides:dampen a parmenides:TransitiveVerb ;
     rdfs:label "dampen"^^xsd:string .
 
+parmenides:dare a parmenides:SemiModalVerb,
+        parmenides:Verb ;
+    rdfs:label "dare"^^xsd:string .
+
 parmenides:dash a parmenides:TransitiveVerb ;
     rdfs:label "dash"^^xsd:string .
 
@@ -962,6 +966,10 @@ parmenides:nearest a parmenides:PrototypicalPreposition ;
 parmenides:neath a parmenides:PrototypicalPreposition ;
     rdfs:label "neath"^^xsd:string .
 
+parmenides:need a parmenides:SemiModalVerb,
+        parmenides:Verb ;
+    rdfs:label "need"^^xsd:string .
+
 parmenides:neg a parmenides:dependency ;
     rdfs:label "neg"^^xsd:string .
 
@@ -1066,6 +1074,10 @@ parmenides:opposite a parmenides:PrototypicalPreposition ;
 
 parmenides:order a parmenides:TransitiveVerb ;
     rdfs:label "order"^^xsd:string .
+
+parmenides:ought a parmenides:SemiModalVerb,
+        parmenides:Verb ;
+    rdfs:label "ought"^^xsd:string .
 
 parmenides:our a parmenides:PersonalPronoun,
         parmenides:Pronoun ;
@@ -1708,6 +1720,10 @@ parmenides:us a parmenides:PersonalPronoun,
 parmenides:use a parmenides:TransitiveVerb ;
     rdfs:label "use"^^xsd:string .
 
+parmenides:used a parmenides:SemiModalVerb,
+        parmenides:Verb ;
+    rdfs:label "used"^^xsd:string .
+
 parmenides:vacate a parmenides:TransitiveVerb ;
     rdfs:label "vacate"^^xsd:string .
 
@@ -1993,6 +2009,9 @@ parmenides:slow%23adj a parmenides:Adjective ;
     parmenides:entryPoint parmenides:slow%23adj ;
     parmenides:neqTo parmenides:fast .
 
+parmenides:SemiModalVerb a owl:Class ;
+    rdfs:subClassOf parmenides:Verb .
+
 parmenides:center a parmenides:Adjective ;
     rdfs:label "center"^^xsd:string ;
     parmenides:entryPoint parmenides:center ;
@@ -2041,9 +2060,6 @@ parmenides:GrammaticalFunction a owl:Class ;
 parmenides:LOC a owl:Class ;
     rdfs:subClassOf parmenides:Dimensions .
 
-parmenides:Verb a owl:Class ;
-    rdfs:subClassOf parmenides:GrammaticalFunction .
-
 parmenides:traffic%23n a parmenides:Noun ;
     rdfs:label "traffic"^^xsd:string ;
     parmenides:entryPoint parmenides:traffic%23n ;
@@ -2057,6 +2073,9 @@ parmenides:Noun a owl:Class ;
 
 parmenides:IndefinitePronoun a owl:Class ;
     rdfs:subClassOf parmenides:Pronoun .
+
+parmenides:Verb a owl:Class ;
+    rdfs:subClassOf parmenides:GrammaticalFunction .
 
 parmenides:city a parmenides:LOC ;
     rdfs:label "city"^^xsd:string ;

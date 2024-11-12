@@ -156,6 +156,7 @@ def make_ontology_from_raw():
     adj_T = p.create_class("CompoundForm", "GrammaticalFunction")
     tverb_T = p.create_class("TransitiveVerb", "Verb")
     iverb_T = p.create_class("IntransitiveVerb", "Verb")
+    semimodalverb_T = p.create_class("SemiModalVerb", "Verb")
     proto_Prop = p.create_class("PrototypicalPreposition", "GrammaticalFunction")
     pronoun = p.create_class("Pronoun")
     pronoun_per = p.create_class("PersonalPronoun", "Pronoun")
@@ -221,6 +222,13 @@ def make_ontology_from_raw():
         for line in dep:
             line = line.strip()
             classes = ["Pronoun", "InterrogativePronoun"]
+            if line in to_reject:
+                classes.append("Rejectable")
+            p.create_entity(line, classes)
+    with open("../../raw_data/semi_modal_verbs.txt", "r") as dep:
+        for line in dep:
+            line = line.strip()
+            classes = ["Verb", "SemiModalVerb"]
             if line in to_reject:
                 classes.append("Rejectable")
             p.create_entity(line, classes)

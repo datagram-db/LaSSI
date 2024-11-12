@@ -168,9 +168,7 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
             for key in dict(node_to_use.properties):
                 if key not in props_to_ignore:
                     properties_key_ = dict(node_to_use.properties)[key]
-                    if isinstance(properties_key_, str) and key != 'cop':
-                        properties_list.append(f'({key}:{properties_key_})')
-                    elif key == 'cop':
+                    if key == 'cop':
                         copula_sing = Singleton(
                             int(properties_key_['id']),
                             properties_key_['named_entity'],
@@ -181,10 +179,12 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
                             float(properties_key_['confidence'])
                         )
                         properties_list.append(f'({key}:{get_node_string(copula_sing)})')
+                    elif isinstance(properties_key_, str) and properties_key_ != '':
+                        properties_list.append(f'({key}:{properties_key_})')
                     else:
                         for node in properties_key_:
-                            if key == 'None':  # It is a node with kernel (most likely)
-                                properties_list.append(self.to_string(node))
+                            if key == 'SENTENCE':  # It is a node with kernel (most likely)
+                                properties_list.append(f'({key}:{self.to_string(node)})')
                             else:
                                 properties_list.append(f'({key}:{get_node_string(node)})')
 
@@ -192,6 +192,9 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
 
         def get_node_string(node):
             node_string = node.named_entity if node is not None and isinstance(node, Singleton) else 'None'
+
+            # If node_string is empty, it is a kernel so return that
+            node_string = node.to_string(node) if node_string == "" else node_string
 
             # Join SetOfSingletons
             node_string = f"{node.type.name}({', '.join(get_node_string(entity) for entity in node.entities)})" if isinstance(
@@ -204,14 +207,15 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
 
         if node is None:
             node = self
-        edge_label = node.kernel.edgeLabel.named_entity
-        source = get_node_string(node.kernel.source)
-        target = get_node_string(node.kernel.target)
-
-        properties = get_node_properties_string(node)
 
         if node.kernel:
-            return f"{edge_label}({source}, {target}){properties}"
+            edge_label = get_node_string(node.kernel.edgeLabel) if node.kernel.edgeLabel is not None else 'None'
+            source = get_node_string(node.kernel.source) if node.kernel.source is not None else 'None'
+            target = get_node_string(node.kernel.target) if node.kernel.target is not None else 'None'
+
+            properties = get_node_properties_string(node)
+
+            return f"{edge_label}({source}, {target}){properties}" if not node.kernel.isNegated else f"NOT({edge_label}({source}, {target}){properties})"
         else:
             return node.named_entity
 
