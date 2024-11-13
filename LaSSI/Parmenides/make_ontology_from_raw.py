@@ -156,6 +156,14 @@ def make_ontology_from_raw():
     adj_T = p.create_class("CompoundForm", "GrammaticalFunction")
     tverb_T = p.create_class("TransitiveVerb", "Verb")
     iverb_T = p.create_class("IntransitiveVerb", "Verb")
+    semimodalverb_T = p.create_class("SemiModalVerb", "Verb")
+    proto_Prop = p.create_class("PrototypicalPreposition", "GrammaticalFunction")
+    pronoun = p.create_class("Pronoun")
+    pronoun_per = p.create_class("PersonalPronoun", "Pronoun")
+    pronoun_dem = p.create_class("DemonstrativePronoun", "Pronoun")
+    pronoun_rel = p.create_class("RelativePronoun", "Pronoun")
+    pronoun_indef = p.create_class("IndefinitePronoun", "Pronoun")
+    pronoun_interro = p.create_class("InterrogativePronoun", "Pronoun")
     to_reject = set()
     with open("../../raw_data/rejected_edge_types.txt", "r") as dep:
         for line in dep:
@@ -175,6 +183,60 @@ def make_ontology_from_raw():
             if line in to_reject:
                 classes.append("Rejectable")
             p.create_entity(line, classes)
+    with open("../../raw_data/prototypical_prepositions.txt", "r") as dep:
+        for line in dep:
+            line = line.strip()
+            classes = ["PrototypicalPreposition"]
+            if line in to_reject:
+                classes.append("Rejectable")
+            p.create_entity(line, classes)
+    with open("../../raw_data/pronouns/personal_pronouns.txt", "r") as dep:
+        for line in dep:
+            line = line.strip()
+            classes = ["Pronoun", "PersonalPronoun"]
+            if line in to_reject:
+                classes.append("Rejectable")
+            p.create_entity(line, classes)
+    with open("../../raw_data/pronouns/demonstrative_pronouns.txt", "r") as dep:
+        for line in dep:
+            line = line.strip()
+            classes = ["Pronoun", "DemonstrativePronoun"]
+            if line in to_reject:
+                classes.append("Rejectable")
+            p.create_entity(line, classes)
+    with open("../../raw_data/pronouns/relative_pronouns.txt", "r") as dep:
+        for line in dep:
+            line = line.strip()
+            classes = ["Pronoun", "RelativePronoun"]
+            if line in to_reject:
+                classes.append("Rejectable")
+            p.create_entity(line, classes)
+    with open("../../raw_data/pronouns/indefinite_pronouns.txt", "r") as dep:
+        for line in dep:
+            line = line.strip()
+            classes = ["Pronoun", "IndefinitePronoun"]
+            if line in to_reject:
+                classes.append("Rejectable")
+            p.create_entity(line, classes)
+    with open("../../raw_data/pronouns/interrogative_pronouns.txt", "r") as dep:
+        for line in dep:
+            line = line.strip()
+            classes = ["Pronoun", "InterrogativePronoun"]
+            if line in to_reject:
+                classes.append("Rejectable")
+            p.create_entity(line, classes)
+    with open("../../raw_data/semi_modal_verbs.txt", "r") as dep:
+        for line in dep:
+            line = line.strip()
+            classes = ["Verb", "SemiModalVerb"]
+            if line in to_reject:
+                classes.append("Rejectable")
+            p.create_entity(line, classes)
+    p.create_concept("world", ["Noun"])
+    p.create_concept("picture", ["Noun"])
+    p.create_concept("hectic", "Adjective")
+    p.create_concept("beautiful", "Adjective")
+    p.create_concept("fabulous", "Adjective")
     p.create_concept("center", "Adjective")
     p.create_concept("centre", "Adjective")
     p.create_relationship("center", "eqTo", "centre", True)
@@ -230,6 +292,8 @@ def make_ontology_from_raw():
     p.create_relationship("crowd#n", "relatedTo", "congestion", True)
     p.create_relationship("busy city", "relatedTo", "crowd#n", True)
     p.create_relationship("traffic jam", "capableOf", "traffic jam can slow traffic")
+    p.create_relationship("hectic", "hasProperty", "traffic#n", True)
+    p.create_relationship("hectic", "eqTo", "busy", True)
     p.serialize("turtle.ttl")
 
 

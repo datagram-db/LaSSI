@@ -6,9 +6,10 @@ __version__ = "2.0"
 __maintainer__ = "Oliver R. Fox, Giacomo Bergami"
 __status__ = "Production"
 
+import itertools
 import json
 import re
-from collections import defaultdict
+from collections import defaultdict, deque
 from copy import copy
 from itertools import repeat
 from typing import List
@@ -16,9 +17,11 @@ from typing import List
 from LaSSI.Parmenides.paremenides import Parmenides
 from LaSSI.external_services.Services import Services
 from LaSSI.files.JSONDump import EnhancedJSONEncoder
+from LaSSI.ner.MergeSetOfSingletons import merge_properties
 from LaSSI.structures.internal_graph.EntityRelationship import Singleton, Grouping, SetOfSingletons, Relationship
 from LaSSI.structures.internal_graph.Graph import Graph
-from LaSSI.structures.kernels.Sentence import Sentence, get_node_type, lemmatize_verb
+from LaSSI.structures.kernels.Sentence import get_node_type, lemmatize_verb, is_node_in_kernel_nodes, \
+    create_edge_kernel, is_kernel_in_props, create_existential
 
 
 # TODO: This is doing a bit more than "AssignTypeToSingleton", should move some functions into different classes?
@@ -53,6 +56,11 @@ class AssignTypeToSingleton:
 
     def get_original_node_id(self, node_id):
         for old_id, new_id in self.node_id_map.items():
+            # If we have MULTIINDIRECT, we just want the original ID as the passed on
+            if old_id in self.nodes and self.nodes[old_id].type == Grouping.MULTIINDIRECT and len(
+                    self.nodes[old_id].entities) == 1:
+                return node_id
+
             if new_id == node_id:
                 return old_id
         return node_id
@@ -106,7 +114,7 @@ class AssignTypeToSingleton:
         self.extractLogicalConnectorsAsGroups(gsm_json)
 
         # Phase 1.5
-        self.checkForBut(gsm_json) # TODO: Move to kernel creation
+        self.check_for_but(gsm_json)  # TODO: Move to kernel creation
 
         # TODO: These phases may be removed, as it already happens in Phase 1.1, as it might only need to happen for SetOfSingletons
         # Phase 2
@@ -146,7 +154,7 @@ class AssignTypeToSingleton:
         # Push current vertex to stack which stores the result
         stack.append(v)
 
-    def topologicalSort(self, gsm_json):  # where adj is adjacency list
+    def topologicalSort(self, gsm_json):
         adj, num_of_nodes = self.getJsonAsAdjacencyList(gsm_json)
 
         stack = []
@@ -176,8 +184,12 @@ class AssignTypeToSingleton:
                     node_to_inherit = self.get_gsm_item_from_id(gsm_json, edge['score']['child'])
                     if edge['containment'].endswith('_edge'):
                         gsm_item['xi'] = node_to_inherit['xi']
-                        gsm_item['ell'] = node_to_inherit['ell']
-                        gsm_item['properties'] = node_to_inherit['properties']
+                        if len(gsm_item['ell']) == 0:
+                            gsm_item['ell'] = node_to_inherit['ell']
+                        else:
+                            gsm_item['ell'][1:] = node_to_inherit['ell'][1:]
+                        new_properties = merge_properties(dict(gsm_item['properties']), dict(node_to_inherit['properties']))
+                        gsm_item['properties'] = new_properties
 
                     for edge_to_inherit in node_to_inherit['phi']:
                         edge_to_inherit['score']['parent'] = gsm_item['id']
@@ -185,6 +197,10 @@ class AssignTypeToSingleton:
 
                     # Remove edges from node that has been inherited
                     node_to_inherit['phi'] = []
+                elif 'mark' in edge['containment']:
+                    mark_target_node = self.get_gsm_item_from_id(gsm_json, edge['score']['child'])
+                    if 'IN' in mark_target_node['ell'] or 'TO' in mark_target_node['ell']:
+                        gsm_item['properties']['mark'] = mark_target_node['ell'][0]
                 else:
                     edges_to_keep.append(edge)
 
@@ -207,22 +223,66 @@ class AssignTypeToSingleton:
             has_conj = 'conj' in gsm_item['properties']
             has_multipleindobj = 'multipleindobj' in gsm_item['ell']
             is_compound = False
+            has_compound_prt = False
             group_type = None
             norm_confidence = 1.0
 
+            # TODO: Change this property to broader name?
+            if len(gsm_item['xi']) > 1 and 'subjpass' in gsm_item['xi']:
+                gsm_item['properties']['subjpass'] = gsm_item['xi'][1]
+
+            # Get all nodes from edges of root node
+            if has_conj or has_multipleindobj:
+                for edge in gsm_item['phi']:
+                    if 'orig' in edge['containment'] and (
+                            (not has_multipleindobj) or self.is_label_verb(edge['containment'])):
+                        node_id = self.get_node_id(edge['content'])
+                        node = self.nodes[node_id]
+
+                        # Merge properties from parent into children
+                        # TODO: Should we really only be merging desired properties like 'kernel' (e.g. we now get conj property in children)?
+                        if isinstance(node, Singleton):
+                            node_props = merge_properties(gsm_item['properties'], dict(node.properties))
+                            self.nodes[node_id] = Singleton.update_node_props(node, node_props)
+
+                        grouped_nodes.append(self.nodes[node_id])
+                        norm_confidence *= node.confidence
+            else:
+                # If not 'conjugation' or 'multipleindobj', then check for compound edges
+                is_compound, norm_confidence = self.get_relationship_entities(grouped_nodes, gsm_json, gsm_item,
+                                                                              is_compound,
+                                                                              norm_confidence, 'compound', False)
+                if not is_compound:
+                    has_conj, norm_confidence = self.get_relationship_entities(grouped_nodes, gsm_json, gsm_item,
+                                                                               has_conj,
+                                                                               norm_confidence, 'conj', False)
+                    if has_conj:
+                        grouped_nodes.insert(0, self.nodes[self.get_node_id(gsm_item['id'])])
+                    else:
+                        has_compound_prt, norm_confidence = self.get_relationship_entities(grouped_nodes, gsm_json,
+                                                                                           gsm_item,
+                                                                                           has_compound_prt,
+                                                                                           norm_confidence,
+                                                                                           'compound_prt')
+
             # Determine conjugation type
             if has_conj:
-                conj = gsm_item['properties']['conj'].strip()
+                conj = gsm_item['properties']['conj'].strip() if 'conj' in gsm_item['properties'] else ""
                 if len(conj) == 0:
                     from LaSSI.structures.internal_graph.from_raw_json_graph import bfs
                     def f(nodes, id):
-                        cc_names = list(map(lambda y: nodes[y['score']['child']]['xi'][0], filter(lambda x: x['containment'] == 'cc', nodes[id]['phi'])))
+                        cc_names = list(map(lambda y: nodes[y['score']['child']]['xi'][0],
+                                            filter(lambda x: x['containment'] == 'cc', nodes[id]['phi'])))
+
+                        cc_properties = list(map(lambda z: z['properties']['cc'] if 'cc' in z['properties'] else None, nodes.values()))
+                        cc_properties = [val for val in cc_properties if val is not None]
+                        cc_names.extend(cc_properties)
+
                         if len(cc_names) > 0:
                             return ' '.join(cc_names)
                         else:
                             return None
-                    # if 'cc' in nodes[id]['properties']:
-                    #     return nodes[id]['properties']['cc']
+
                     conj = bfs(gsm_json, gsm_item['id'], f)
 
                 if 'and' in conj or 'but' in conj:
@@ -233,19 +293,6 @@ class AssignTypeToSingleton:
                     group_type = Grouping.OR
                 else:
                     group_type = Grouping.NONE
-
-            # Get all nodes from edges of root node
-            if has_conj or has_multipleindobj:
-                for edge in gsm_item['phi']:
-                    if 'orig' in edge['containment'] or ((not has_multipleindobj) or self.is_label_verb(edge['containment'])):
-                        node = self.nodes[self.get_node_id(edge['content'])]
-                        grouped_nodes.append(node)
-                        norm_confidence *= node.confidence
-            else:
-                # If not 'conjugation' or 'multipleindobj', then check for compound edges
-                is_compound, norm_confidence = self.get_compound_entities(grouped_nodes, gsm_json, gsm_item,
-                                                                          is_compound,
-                                                                          norm_confidence)
 
             if self.is_simplistic_rewriting and len(grouped_nodes) > 0:
                 sorted_entities = sorted(grouped_nodes, key=lambda x: float(dict(x.properties)['pos']))
@@ -274,8 +321,7 @@ class AssignTypeToSingleton:
                     confidence=norm_confidence
                 )
             elif not self.is_simplistic_rewriting:
-                self.create_set_of_singletons(group_type, grouped_nodes, gsm_item, has_conj, has_multipleindobj,
-                                              is_compound, norm_confidence, gsm_json)
+                self.create_set_of_singletons(group_type, grouped_nodes, gsm_item, has_conj, has_multipleindobj, is_compound, has_compound_prt, norm_confidence, gsm_json, row)
 
         self.remove_duplicate_nodes()
 
@@ -298,6 +344,17 @@ class AssignTypeToSingleton:
                     name = "?" + str(self.existentials.increaseAndGetExistential())
                     node_type = 'existential'
 
+                # If we have "root" in "ell", add it to properties
+                if len(gsm_item['ell']) > 1:
+                    gsm_item['properties']['kernel'] = gsm_item['ell'][1]
+
+                if len(gsm_item['xi']) > 1 and 'subjpass' in gsm_item['xi']:
+                    gsm_item['properties']['subjpass'] = gsm_item['xi'][1]
+
+                # Add 'det' to properties
+                if len(gsm_item['ell']) > 0 and 'det' in gsm_item['ell']:
+                    gsm_item['properties']['det'] = gsm_item['ell'][0]
+
                 self.nodes[gsm_item['id']] = Singleton(
                     id=gsm_item['id'],
                     named_entity=name,
@@ -313,13 +370,14 @@ class AssignTypeToSingleton:
                 self.singletonTypeResolution(self.nodes[gsm_item['id']])
 
     # Phase 1.2
-    def get_compound_entities(self, grouped_nodes, gsm_json, gsm_item, is_compound, norm_confidence):
+    def get_relationship_entities(self, grouped_nodes, gsm_json, gsm_item, has_relationship, norm_confidence,
+                                  edge_relationship_label='compound', deplete_phi=True):
         gsm_id_json = {row['id']: row for row in gsm_json}  # Associate ID to key value
         edges_to_remove = []
         for idx, edge in enumerate(gsm_item['phi']):
-            is_current_edge_compound = 'compound' in edge['containment']
-            if is_current_edge_compound:
-                is_compound = True
+            is_current_edge_relationship = edge['containment'] in edge_relationship_label
+            if is_current_edge_relationship:
+                has_relationship = True
                 child_node = self.nodes[edge['score']['child']]
                 grouped_nodes.append(child_node)
                 norm_confidence *= child_node.confidence
@@ -328,44 +386,81 @@ class AssignTypeToSingleton:
                 if len(child_gsm_item['phi']) > 0:
                     # Remove current compound edge
                     edges_to_remove.append(idx)
-                    self.get_compound_entities(grouped_nodes, gsm_json, child_gsm_item, is_compound, norm_confidence)
+                    self.get_relationship_entities(grouped_nodes, gsm_json, child_gsm_item, has_relationship,
+                                                   norm_confidence, edge_relationship_label)
+                else:
+                    edges_to_remove.append(idx)
 
         # Remove compound edges as no longer needed
-        gsm_item['phi'] = [i for j, i in enumerate(gsm_item['phi']) if j not in edges_to_remove]
-        return is_compound, norm_confidence
+        if deplete_phi:
+            gsm_item['phi'] = [i for j, i in enumerate(gsm_item['phi']) if j not in edges_to_remove]
+        return has_relationship, norm_confidence
+
+    # Insert at position to retain topological order
+    def add_to_nodes_at_pos(self, nodes, new_node, pos):
+        items = list(nodes.items())
+        items.insert(pos, (new_node.id, new_node))
+        return dict(items)
 
     # Phase 1.3
-    def create_set_of_singletons(self, group_type, grouped_nodes, gsm_item, has_conj, has_multipleindobj, is_compound, norm_confidence, gsm_json):
+    def create_set_of_singletons(self, group_type, grouped_nodes, gsm_item, has_conj, has_multipleindobj, is_compound, has_compound_prt, norm_confidence, gsm_json, pos):
+        new_node = None
         if has_conj:
             new_id = self.freshIdAndAddToNodeMap(gsm_item['id'])
-            self.nodes[new_id] = SetOfSingletons(
+            new_node = SetOfSingletons(
                 id=new_id,
                 type=group_type,
                 entities=tuple(grouped_nodes),
                 min=min(grouped_nodes, key=lambda x: x.min).min,
                 max=max(grouped_nodes, key=lambda x: x.max).max,
-                confidence=norm_confidence
+                confidence=norm_confidence,
+                root=any(map(is_kernel_in_props, grouped_nodes))
             )
         elif is_compound:
             grouped_nodes.insert(0, self.nodes[self.get_node_id(gsm_item['id'])])
             new_id = self.freshIdAndAddToNodeMap(gsm_item['id'])
-            self.nodes[new_id] = SetOfSingletons(
+            new_node = SetOfSingletons(
                 id=new_id,
                 type=Grouping.GROUPING,
                 entities=tuple(grouped_nodes),
                 min=min(grouped_nodes, key=lambda x: x.min).min,
                 max=max(grouped_nodes, key=lambda x: x.max).max,
-                confidence=norm_confidence
+                confidence=norm_confidence,
+                root=any(map(is_kernel_in_props, grouped_nodes))
             )
         elif has_multipleindobj:
-            self.nodes[gsm_item['id']] = SetOfSingletons(
+            new_node = SetOfSingletons(
                 id=gsm_item['id'],
                 type=Grouping.MULTIINDIRECT,
                 entities=tuple(grouped_nodes),
                 min=min(grouped_nodes, key=lambda x: x.min).min,
                 max=max(grouped_nodes, key=lambda x: x.max).max,
-                confidence=norm_confidence
+                confidence=norm_confidence,
+                root=any(map(is_kernel_in_props, grouped_nodes))
             )
+        elif has_compound_prt:
+            grouped_nodes.insert(0, self.nodes[self.get_node_id(gsm_item['id'])])
+            new_id = self.freshIdAndAddToNodeMap(gsm_item['id'])
+
+            sorted_entities = sorted(grouped_nodes, key=lambda x: float(dict(x.properties)['pos']))
+            sorted_entity_names = list(map(getattr, sorted_entities, repeat('named_entity')))
+
+            all_types = list(map(getattr, sorted_entities, repeat('type')))
+            specific_type = self.services.getParmenides().most_specific_type(all_types)
+            name = " ".join(sorted_entity_names)
+
+            new_node = Singleton(
+                id=new_id,
+                named_entity=name,
+                properties=frozenset(gsm_item['properties'].items()),
+                min=min(grouped_nodes, key=lambda x: x.min).min,
+                max=max(grouped_nodes, key=lambda x: x.max).max,
+                type=specific_type,
+                confidence=1
+            )
+
+        if new_node is not None:
+            self.nodes = self.add_to_nodes_at_pos(self.nodes, new_node, pos)
 
         node_to_resolve = self.nodes[self.get_node_id(gsm_item['id'])]
         if isinstance(node_to_resolve, SetOfSingletons):
@@ -386,7 +481,7 @@ class AssignTypeToSingleton:
             self.nodes.pop(x)
 
     # Phase 1.5
-    def checkForBut(self, gsm_json):
+    def check_for_but(self, gsm_json):
         number_of_nodes = range(len(gsm_json))
         for row in number_of_nodes:
             gsm_item = gsm_json[row]
@@ -428,6 +523,9 @@ class AssignTypeToSingleton:
                 self.create_but_group(parent_node, grouped_nodes, gsm_item, gsm_json, norm_confidence)
 
     def create_but_group(self, node, grouped_nodes, gsm_item, gsm_json, norm_confidence):
+        # If node is a NOT and it equals the content of grouped nodes, then it is already a BUT and no need to do this again
+        if isinstance(node, SetOfSingletons) and node.type == Grouping.NOT and node == grouped_nodes[0]:
+            return
         if len(grouped_nodes) > 0:
             new_id = self.freshIdAndAddToNodeMap(gsm_item['id'])
 
@@ -440,6 +538,7 @@ class AssignTypeToSingleton:
                 max=max(grouped_nodes, key=lambda x: x.max).max,
                 confidence=norm_confidence
             )
+            self.nodes[new_id] = new_but_node
 
             # If "but" has a negation, group the original grouped nodes in a NOT and then wrap again in an AND
             if self.checkForSpecificNegation(gsm_json, node, create_node=False):
@@ -466,9 +565,9 @@ class AssignTypeToSingleton:
                     max=max(grouped_nodes, key=lambda x: x.max).max,
                     confidence=norm_confidence
                 )
-            else:
-                # Otherwise return the new node
-                self.nodes[new_id] = new_but_node
+            # else:
+            #     # Otherwise return the new node
+            #     self.nodes[new_id] = new_but_node
 
     def is_node_but(self, gsm_item):
         return len(gsm_item['xi']) > 0 and 'but' in gsm_item['xi'][0].lower() and 'cc' in gsm_item['ell'][0].lower()
@@ -507,50 +606,55 @@ class AssignTypeToSingleton:
     # Phase 3
     def singletonTypeResolution(self, item):
         if len(self.meu_entities[item]) > 0:
-            if item.type == '∃' or item.type.startswith("JJ") or item.type.startswith("IN") or item.type.startswith(
-                    "NEG"):
-                best_score = item.confidence
-                best_items = [item]
-                best_type = item.type
+            if item.type == 'verb':
+                best_type = 'verb'
+                best_score = 1
             else:
-                # TODO: Fix typing information (e.g. Golden Gate Bridge has GPE (0.8) and ENTITY (1.0)
-                best_score = max(map(lambda y: y.confidence, self.meu_entities[item]))
-                # best_items = [
-                #     y for y in self.meu_entities[item]
-                #     if (len(item.named_entity.split(' ')) == 1 and y.confidence == best_score) or
-                #        (y.confidence == best_score and
-                #         len(item.named_entity.split(' ')) > 1 and
-                #         y.monad is not None and
-                #        y.monad.lower() == item.named_entity.lower())
-                # ]
-                best_items = [
-                    y for y in self.meu_entities[item]
-                    if y.confidence == best_score
-                ]
-                best_type = None
-                if len(best_items) == 0:
-                    return
-                if len(best_items) == 1:
-                    best_item = best_items[0]
-                    best_type = best_item.type
+                if item.type == '∃' or item.type.startswith("JJ") or item.type.startswith("IN") or item.type.startswith(
+                        "NEG"):
+                    best_score = item.confidence
+                    best_items = [item]
+                    best_type = item.type
                 else:
-                    best_types = list(set(map(lambda best_item: best_item.type, best_items)))
-                    best_type = None
-                    if len(best_types) == 1:
-                        best_type = best_types[0]
-                    ## TODO! type disambiguation, in future works, needs to take into account also the verb associated to it!
-                    elif "verb" in best_types:
-                        best_type = "verb"
-                    elif "PERSON" in best_types:
-                        best_type = "PERSON"
-                    elif "DATE" in best_types or "TIME" in best_types:
-                        best_type = "DATE"
-                    elif "GPE" in best_types:
-                        best_type = "GPE"
-                    elif "LOC" in best_types:
-                        best_type = "LOC"
+                    # TODO: Fix typing information (e.g. Golden Gate Bridge has GPE (0.8) and ENTITY (1.0)
+                    best_score = max(map(lambda y: y.confidence, self.meu_entities[item]))
+                    # best_items = [
+                    #     y for y in self.meu_entities[item]
+                    #     if (len(item.named_entity.split(' ')) == 1 and y.confidence == best_score) or
+                    #        (y.confidence == best_score and
+                    #         len(item.named_entity.split(' ')) > 1 and
+                    #         y.monad is not None and
+                    #        y.monad.lower() == item.named_entity.lower())
+                    # ]
+                    # TODO: min and max might not be correct when coming from an inherit edge
+                    best_items = [
+                        y for y in self.meu_entities[item]
+                        if y.confidence == best_score
+                    ]
+                    if len(best_items) == 0:
+                        return
+                    if len(best_items) == 1:
+                        best_item = best_items[0]
+                        best_type = best_item.type
                     else:
-                        best_type = "None"
+                        best_types = list(set(map(lambda best_item: best_item.type, best_items)))
+                        if len(best_types) == 1:
+                            best_type = best_types[0]
+                        ## TODO! type disambiguation, in future works, needs to take into account also the verb associated to it!
+                        elif "verb" in best_types:
+                            best_type = "verb"
+                        elif "PERSON" in best_types:
+                            best_type = "PERSON"
+                        elif "DATE" in best_types or "TIME" in best_types:
+                            best_type = "DATE"
+                        elif "GPE" in best_types:
+                            best_type = "GPE"
+                        elif "LOC" in best_types:
+                            best_type = "LOC"
+                        elif "ENTITY" in best_types:
+                            best_type = "ENTITY"
+                        else:
+                            best_type = "None"
             from LaSSI.structures.internal_graph.EntityRelationship import Singleton
             self.nodes[item.id] = Singleton(
                 id=item.id,
@@ -617,7 +721,6 @@ class AssignTypeToSingleton:
                         self.existentials
                     )
 
-
     def resolveSpecificSetOfSingletonsNERs(self, node_to_resolve):
         for node in node_to_resolve.entities:
             if not isinstance(node, SetOfSingletons):
@@ -664,7 +767,8 @@ class AssignTypeToSingleton:
                 entities=tuple(new_set),
                 min=item.min,
                 max=item.max,
-                confidence=confidence
+                confidence=confidence,
+                root=item.root
             )
             self.nodes[key] = set_item
             return set_item
@@ -682,57 +786,83 @@ class AssignTypeToSingleton:
         for row in range(len(gsm_json)):
             gsm_item = gsm_json[row]  # Find node in JSON so we can get child nodes
             key = gsm_item['id']
-            try:
-                node = self.nodes[self.get_node_id(key)]  # Singleton node
+            node = self.nodes[self.get_node_id(key)]  # Singleton node
+            found_negation = False
 
-                if node.type == Grouping.NOT or (node.type == Grouping.AND and node.entities[0].type == Grouping.NOT):
-                    return
+            if node.type == Grouping.NOT or (node.type == Grouping.AND and node.entities[0].type == Grouping.NOT):
+                return
+            # # TODO: Check if xi is in negations or NEG is in ell
+            # if len(gsm_item['xi']) > 0 and gsm_item['xi'][0] in self.negations or 'NEG' in gsm_item['ell']:
+            #     is_prop_negated = True
 
-                # # TODO: Check if xi is in negations or NEG is in ell
-                # if len(gsm_item['xi']) > 0 and gsm_item['xi'][0] in self.negations or 'NEG' in gsm_item['ell']:
-                #     is_prop_negated = True
+            # Check if name is not/no or if negation found in properties
+            ## TODO: there was a case where node didn't have the field named_entity
+            ##       Please double check if this will fix it...
+            # if is_prop_negated:
+            #     self.nodes[key] = SetOfSingletons(
+            #         id=key,
+            #         type=Grouping.NOT,
+            #         entities=tuple([node]),
+            #         min=node.min,
+            #         max=node.max,
+            #         confidence=node.confidence
+            #     )
+            # else:
+            # if hasattr(node, "named_entity") and node.named_entity in self.negations:
+            grouped_nodes.append(node)
+            for edge in gsm_item['phi']:
+                if edge['score']['child'] in self.nodes:  # Node might have been removed so check key exists
+                    child = self.nodes[self.get_node_id(edge['score']['child'])]
+                    if (hasattr(child, "named_entity") and child.named_entity in self.negations) or child.type == 'NEG':
+                        # grouped_nodes.append(child)
+                        found_negation = True
 
-                # Check if name is not/no or if negation found in properties
-                ## TODO: there was a case where node didn't have the field named_entity
-                ##       Please double check if this will fix it...
-                # if is_prop_negated:
-                #     self.nodes[key] = SetOfSingletons(
-                #         id=key,
-                #         type=Grouping.NOT,
-                #         entities=tuple([node]),
-                #         min=node.min,
-                #         max=node.max,
-                #         confidence=node.confidence
-                #     )
-                # else:
-                # if hasattr(node, "named_entity") and node.named_entity in self.negations:
-                grouped_nodes.append(node)
-                for edge in gsm_item['phi']:
-                    if edge['score']['child'] in self.nodes:  # Node might have been removed so check key exists
-                        child = self.nodes[self.get_node_id(edge['score']['child'])]
-                        if (hasattr(child, "named_entity") and child.named_entity in self.negations) or child.type == 'NEG':
-                            # grouped_nodes.append(child)
-                            fresh_id = self.freshIdAndAddToNodeMap(key)
-                            self.nodes[fresh_id] = SetOfSingletons(
-                                id=fresh_id,
-                                type=Grouping.NOT,
-                                entities=tuple(grouped_nodes),
-                                min=min(grouped_nodes, key=lambda x: x.min).min,
-                                max=max(grouped_nodes, key=lambda x: x.max).max,
-                                confidence=child.confidence
-                            )
-                grouped_nodes = []
-            except KeyError:
-                continue
+            # Check if BUT has a property NEG
+            if 'neg' in gsm_item['properties']:
+                found_negation = True
+
+            if found_negation:
+                fresh_id = self.freshIdAndAddToNodeMap(key)
+                self.nodes[fresh_id] = SetOfSingletons(
+                    id=fresh_id,
+                    type=Grouping.NOT,
+                    entities=tuple(grouped_nodes),
+                    min=min(grouped_nodes, key=lambda x: x.min).min,
+                    max=max(grouped_nodes, key=lambda x: x.max).max,
+                    confidence=1
+                )
+
+            grouped_nodes = []
 
     def checkForSpecificNegation(self, gsm_json, node, grouped_nodes=None, create_node=True):
-        if node.type == Grouping.NOT:
-            return
+        if node.type == Grouping.NOT and len(node.entities) == 1:
+            node = node.entities[0]
+
+        # if node.type == Grouping.NOT:
+        #     return
 
         if isinstance(node, SetOfSingletons):
-            grouped_nodes = [node]
+            # grouped_nodes = [node]
+            new_entities = []
             for entity in node.entities:
-                self.checkForSpecificNegation(gsm_json, entity, grouped_nodes, create_node)
+                # self.checkForSpecificNegation(gsm_json, entity, grouped_nodes, create_node)
+                new_entity = self.checkForSpecificNegation(gsm_json, entity, grouped_nodes, create_node)
+                if isinstance(new_entity, SetOfSingletons):
+                    new_entities.append(new_entity)
+                else:
+                    new_entities.append(entity)
+            if len(new_entities) > 0:
+                self.nodes[node.id] = SetOfSingletons(
+                    id=node.id,
+                    type=node.type,
+                    entities=tuple(new_entities),
+                    min=min(new_entities, key=lambda x: x.min).min,
+                    max=max(new_entities, key=lambda x: x.max).max,
+                    confidence=node.confidence,
+                    root=node.root
+                )
+                node = self.nodes[node.id]
+                return node
 
         if grouped_nodes is None:
             grouped_nodes = [node]
@@ -741,23 +871,35 @@ class AssignTypeToSingleton:
         node_id = self.get_original_node_id(node.id)
         gsm_item = self.get_gsm_item_from_id(gsm_json, node_id)
         if gsm_item is not None:
+            found_negation = False
+
+            # Check if NOT is attached to BUT through an edge
             for edge in gsm_item['phi']:
                 if edge['score']['child'] in self.nodes:  # Node might have been removed so check key exists
                     child = self.nodes[self.get_node_id(edge['score']['child'])]
                     if (hasattr(child, "named_entity") and child.named_entity in self.negations) or child.type == 'NEG':
                         # grouped_nodes.append(child)
-                        if create_node:
-                            fresh_id = self.freshIdAndAddToNodeMap(node_id)
-                            self.nodes[fresh_id] = SetOfSingletons(
-                                id=fresh_id,
-                                type=Grouping.NOT,
-                                entities=tuple(grouped_nodes),
-                                min=min(grouped_nodes, key=lambda x: x.min).min,
-                                max=max(grouped_nodes, key=lambda x: x.max).max,
-                                confidence=child.confidence
-                            )
-                        else:
-                            return True
+                        found_negation = True
+
+            # Check if BUT has a property NEG
+            if 'neg' in gsm_item['properties']:
+                found_negation = True
+
+            if found_negation:
+                if create_node:
+                    fresh_id = self.freshIdAndAddToNodeMap(node_id)
+                    self.nodes[fresh_id] = SetOfSingletons(
+                        id=fresh_id,
+                        type=Grouping.NOT,
+                        entities=tuple(grouped_nodes),
+                        min=min(grouped_nodes, key=lambda x: x.min).min,
+                        max=max(grouped_nodes, key=lambda x: x.max).max,
+                        confidence=1
+                    )
+                    return self.nodes[fresh_id]
+                else:
+                    return True
+
 
     def constructIntermediateGraph(self, gsm_json, rejected_edges, non_verbs) -> Graph:
         self.edges = []
@@ -765,7 +907,7 @@ class AssignTypeToSingleton:
         # Add child node if 'amod' as properties of source node
         for row, gsm_item, edge in self.iterateOverEdges(gsm_json, rejected_edges):
             edge_label_name = edge['containment']  # Name of edge label
-            if 'amod' in edge_label_name:  # TODO: Is this 'amod' or just 'mod' as could have 'nmod' (e.g. (traffic)-[nmod]->(Newcastle)
+            if 'amod' in edge_label_name or 'advmod' in edge_label_name:  # TODO: Is this 'amod' or just 'mod' as could have 'nmod' (e.g. (traffic)-[nmod]->(Newcastle)
                 source_node = self.nodes[self.get_node_id(edge['score']['parent'])]
                 target_node = self.nodes[self.get_node_id(edge['score']['child'])]
                 temp_prop = dict(copy(source_node.properties))
@@ -829,7 +971,7 @@ class AssignTypeToSingleton:
                         target_node_id = edge['score']['child']
                         self.create_edges(edge_label_name, gsm_item, non_verbs, source_node_id, target_node_id)
 
-        print(json.dumps(Graph(self.edges), cls=EnhancedJSONEncoder))
+        # print(json.dumps(Graph(self.edges), cls=EnhancedJSONEncoder))
         return Graph(self.edges)
 
     def is_label_verb(self, edge_label_name):
@@ -865,9 +1007,9 @@ class AssignTypeToSingleton:
             if edge_label_name == non_verb.strip():
                 edge_type = "non_verb"
                 break
-        if self.nodes[source_node_id].type == Grouping.MULTIINDIRECT:
+        if self.nodes[self.get_node_id(source_node_id)].type == Grouping.MULTIINDIRECT:
             # TODO: I don't think this logic is correct (e.g. The mouse is eaten by the cat)
-            for node in self.nodes[source_node_id].entities:
+            for node in self.nodes[self.get_node_id(source_node_id)].entities:
                 self.edges.append(Relationship(
                     source=source_node,
                     target=self.resolve_node_id(node.id),
@@ -878,18 +1020,321 @@ class AssignTypeToSingleton:
                                         confidence=self.nodes[gsm_item['id']].confidence),
                     isNegated=has_negations
                 ))
-        elif 'amod' not in edge_label_name and 'neg' not in edge_label_name:
+        elif 'amod' not in edge_label_name and 'advmod' not in edge_label_name and 'neg' not in edge_label_name:
             self.edges.append(Relationship(
                 source=source_node,
                 target=target_node,
-                edgeLabel=Singleton(id=gsm_item['id'], named_entity=edge_label_name,
-                                    properties=frozenset(dict().items()),
-                                    min=-1,
-                                    max=-1, type=edge_type,
-                                    confidence=self.nodes[gsm_item['id']].confidence),
-                isNegated=has_negations,
+                edgeLabel=Singleton(
+                    id=gsm_item['id'],
+                    named_entity=edge_label_name,
+                    properties=frozenset(dict().items()),
+                    min=-1,
+                    max=-1,
+                    type=edge_type,
+                    confidence=self.nodes[self.get_node_id(gsm_item['id'])].confidence
+                ),
+                isNegated=has_negations
             ))
 
-    def constructSentence(self, transitive_verbs) -> List[Sentence]:
+    def match_whole_word(self, w):
+        return re.compile(r'\b({0})\b'.format(w), flags=re.IGNORECASE).search
+
+    def get_min_position(self, node):
+        if isinstance(node, Singleton):
+            node_props = dict(node.properties)
+            if not 'pos' in node_props:
+                return -1
+            else:
+                return int(float(node_props['pos']))
+        else:
+            return min(filter(lambda y: y > -1, map(lambda x: self.get_min_position(x), node.entities)))
+
+    def constructSentence(self) -> List[Singleton]:
         from LaSSI.structures.kernels.Sentence import create_sentence_obj
-        return create_sentence_obj(self.edges, self.nodes, transitive_verbs, self.negations)
+
+        found_proposition_labels = {}
+        true_targets = set()
+        new_edges = []
+        position_pairs = {}
+
+        for edge in self.edges:
+            source_pos = self.get_min_position(edge.source)
+            target_pos = self.get_min_position(edge.target)
+            if target_pos > source_pos:
+                if edge.source.id in position_pairs:
+                    if target_pos < position_pairs[edge.source.id]:
+                        position_pairs[edge.source.id] = target_pos
+                else:
+                    position_pairs[edge.source.id] = target_pos
+
+        if len(self.edges) > 0:
+            prototypical_prepositions = Services.getInstance().getParmenides().getPrototypicalPrepositions()
+
+            edge_labels = defaultdict(set)
+            for edge in self.edges:
+                edge_labels[(edge.source.id, edge.target.id)].add(edge.edgeLabel.named_entity)
+            edge_labels = {key: "dep" in value and len(value) > 1 for key, value in edge_labels.items()}
+
+            for edge in self.edges:
+                if edge.edgeLabel.named_entity == 'dep' and edge_labels[(edge.source.id, edge.target.id)]:
+                    continue
+                new_edge = None
+                found_prototypical_prepositions = False
+                for p in prototypical_prepositions:
+                    # Check if prototypical preposition is in edge label but NOT just the edge label (i.e. "to" in "to steal" = TRUE, "like" in "like" = FALSE)
+                    if re.search(r"\b"+p+r"\b", edge.edgeLabel.named_entity) and p != edge.edgeLabel.named_entity:
+                        found_prototypical_prepositions = True
+                        # Add root property to target
+                        if isinstance(edge.target, Singleton):
+                            target_props = dict(edge.target.properties)
+                            target_props['kernel'] = 'root'
+                            new_edge = Relationship(
+                                source=edge.source,
+                                target=Singleton.update_node_props(edge.target, target_props),
+                                edgeLabel=edge.edgeLabel,
+                                isNegated=edge.isNegated
+                            )
+                        elif isinstance(edge.target, SetOfSingletons):
+                            new_edge = Relationship(
+                                source=edge.source,
+                                target=SetOfSingletons(
+                                    id=edge.target.id,
+                                    type=edge.target.type,
+                                    entities=edge.target.entities,
+                                    min=edge.target.min,
+                                    max=edge.target.max,
+                                    confidence=edge.target.confidence,
+                                    root=True
+                                ),
+                                edgeLabel=edge.edgeLabel,
+                                isNegated=edge.isNegated
+                            )
+
+                        # re.sub(r"\b"+p+r"\b", "", edge.edgeLabel.named_entity).strip()
+                        found_proposition_labels[edge.target.id] = edge.edgeLabel.named_entity
+                        break
+
+                # If the edge is a verb and source is a 'root', remove 'root' from the target node of the edge
+                if not found_prototypical_prepositions and self.is_label_verb(edge.edgeLabel.named_entity) and is_kernel_in_props(edge.source):
+                    if isinstance(edge.target, Singleton):
+                        new_edge = Relationship(
+                            source=edge.source,
+                            target=Singleton.strip_root_properties(edge.target),
+                            edgeLabel=edge.edgeLabel,
+                            isNegated=edge.isNegated
+                        )
+                    else:
+                        new_target = SetOfSingletons(
+                            id=edge.target.id,
+                            type=edge.target.type,
+                            # entities=tuple(Singleton.strip_root_properties(entity) for entity in edge.target.entities),
+                            entities=edge.target.entities,
+                            min=edge.target.min,
+                            max=edge.target.max,
+                            confidence=edge.target.confidence,
+                            root=False
+                        )
+                        new_edge = Relationship(
+                            source=edge.source,
+                            target=new_target,
+                            edgeLabel=edge.edgeLabel,
+                            isNegated=edge.isNegated
+                        )
+
+                if new_edge is None:
+                    new_edge = edge
+                    if not is_kernel_in_props(edge.target):
+                        true_targets.add(edge.target.id)
+                new_edges.append(new_edge)
+
+        filtered_nodes = set()
+        filtered_top_node_ids = set()
+        remove_set = set()
+
+        # Loop over every source and target for every edge
+        for edge_node in itertools.chain.from_iterable(map(lambda x: [x.source, x.target], new_edges)):
+            if edge_node is None or edge_node.id in filtered_top_node_ids:
+                continue
+            filtered_top_node_ids.add(edge_node.id)
+
+            # Check if edge node is not None, in true targets, is a root or existential
+            if ((edge_node is not None and edge_node.id not in true_targets) and
+                    (is_kernel_in_props(edge_node))
+                    # or
+                # (isinstance(edge_node, Singleton) and edge_node.type == 'existential')
+            ):
+                filtered_nodes.add(edge_node.id)
+                if isinstance(edge_node, SetOfSingletons):
+                    for entity in edge_node.entities:
+                        remove_set.add(entity.id)
+
+        # IDs of root nodes in topological order
+        filtered_nodes = filtered_nodes - remove_set
+        filtered_top_node_ids = [x.id for x in self.nodes.values() if x.id in filtered_nodes] # Filter node IDs in topological order based on self.nodes order
+
+        if len(filtered_top_node_ids) == 0:
+            filtered_top_node_ids = [self.nodes[len(self.nodes) - 1].id]
+
+        for node_id in filtered_top_node_ids:
+            descendant_nodes = self.node_bfs(new_edges, node_id)
+            filtered_edges = [x for x in new_edges if (x.source.id in descendant_nodes and x.target.id in descendant_nodes) or (x.target.id in found_proposition_labels)]
+            kernel = create_sentence_obj(filtered_edges, {key: x for key, x in self.nodes.items() if x.id in descendant_nodes}, self.negations, node_id, found_proposition_labels)
+            kernel = self.kernel_post_processing(kernel, position_pairs)
+            self.nodes[node_id] = kernel
+
+            # Remove 'root' property from nodes
+            self.nodes = {k: Singleton.strip_root_properties(v) if isinstance(v, Singleton) and v.id in descendant_nodes else v for k, v in self.nodes.items()}
+
+            # Re-instantiate new node properties across all relationships
+            new_edges = [Relationship.from_nodes(r, self.nodes) for r in new_edges]
+
+        # return create_sentence_obj(self.edges, self.nodes, self.negations)
+
+        # Return the last node ('highest' kernel), with duplicate properties removed
+        final_kernel = self.nodes[filtered_top_node_ids[-1]]
+        # final_kernel = self.remove_duplicate_properties(final_kernel)
+
+        if final_kernel.kernel is None:
+            if final_kernel.type == 'verb':
+                final_kernel = create_edge_kernel(final_kernel)
+                final_kernel = self.kernel_post_processing(final_kernel, position_pairs)
+            else:
+                edges = []
+                nodes = {final_kernel.id: final_kernel}
+                if not 'action' in dict(final_kernel.properties):
+                    create_existential(edges, nodes)
+                    final_kernel = create_sentence_obj(edges, nodes, self.negations, final_kernel.id, {})
+                    final_kernel = self.kernel_post_processing(final_kernel, position_pairs)
+                else:
+                    # Get label from action prop
+                    lemma_node_edge_label_name = lemmatize_verb(dict(final_kernel.properties)['action'])
+
+                    # Remove negation from label
+                    query_words = lemma_node_edge_label_name.split()
+                    result_words = [word for word in query_words if word.lower() not in self.negations]
+                    refactored_lemma_node_edge_label_name = ' '.join(result_words)
+
+                    final_kernel = Singleton(
+                        id=final_kernel.id,
+                        named_entity='',
+                        type='SENTENCE',
+                        min=-1,
+                        max=-1,
+                        confidence=1,
+                        kernel=Relationship(
+                            source=final_kernel,
+                            target=None,
+                            edgeLabel=Singleton(
+                                id=-1,
+                                named_entity=refactored_lemma_node_edge_label_name,
+                                type='verb',
+                                min=-1,
+                                max=-1,
+                                confidence=1,
+                                kernel=None,
+                                properties={},
+                            ),
+                            isNegated=lemma_node_edge_label_name != refactored_lemma_node_edge_label_name,
+                        ),
+                        properties={},
+                    )
+                    final_kernel = self.kernel_post_processing(final_kernel, position_pairs)
+        else:
+            final_kernel = self.remove_duplicate_properties(final_kernel)
+
+        print(f"{final_kernel.to_string()}\n")
+        return final_kernel
+
+    def kernel_post_processing(self, kernel, position_pairs):
+        if not isinstance(kernel, Singleton) or kernel.kernel is None:
+            return kernel
+
+        # Check kernel positions
+        properties_to_keep = dict(kernel.properties)
+        new_target = kernel.kernel.target
+        if kernel.id in position_pairs and self.check_semi_modal(kernel.kernel.edgeLabel.named_entity):
+            position_value = position_pairs[kernel.id]
+            if 'SENTENCE' in dict(kernel.properties):
+                properties_to_keep['SENTENCE'] = []
+                for sentence_elm in list(dict(kernel.properties)['SENTENCE']):
+                    if int(float(dict(sentence_elm.properties)['pos'])) == position_value:
+                        new_target = sentence_elm
+                    else:
+                        properties_to_keep['SENTENCE'].append(sentence_elm)
+
+            return Singleton(
+                id=kernel.id,
+                named_entity="",
+                type="SENTENCE",
+                min=kernel.min,
+                max=kernel.max,
+                confidence=kernel.confidence,
+                kernel=Relationship(
+                    source=kernel.kernel.source,
+                    target=new_target,
+                    edgeLabel=kernel.kernel.edgeLabel,
+                    isNegated=kernel.kernel.isNegated
+                ),
+                properties=frozenset({k: tuple(v) if isinstance(v, list) else v for k, v in properties_to_keep.items()}.items()),
+            )
+        return kernel
+
+
+    def check_semi_modal(self, label):
+        return len({label}.intersection(Services.getInstance().getParmenides().getSemiModalVerbs())) != 0
+
+
+    def remove_duplicate_properties(self, kernel, kernel_nodes=None):
+        if kernel.kernel is None:
+            return kernel
+
+        properties_to_keep = defaultdict(list)
+
+        if kernel_nodes is None:
+            kernel_nodes = []
+        kernel_nodes.append(kernel.kernel.source) if kernel.kernel.source is not None else kernel_nodes
+        kernel_nodes.append(kernel.kernel.target) if kernel.kernel.target is not None else kernel_nodes
+        kernel_nodes.append(kernel.kernel.edgeLabel) if kernel.kernel.edgeLabel is not None else kernel_nodes
+
+        for key in dict(kernel.properties):
+            properties_key_ = dict(kernel.properties)[key]
+            if isinstance(properties_key_, str):
+                continue
+            else:
+                for node in properties_key_:
+                    if key == 'SENTENCE':
+                        properties_to_keep[key].append(self.remove_duplicate_properties(node, kernel_nodes))
+                    elif not is_node_in_kernel_nodes(node, kernel_nodes):
+                        properties_to_keep[key].append(node)
+
+        return Singleton(
+            id=kernel.id,
+            named_entity=kernel.named_entity,
+            type=kernel.type,
+            min=kernel.min,
+            max=kernel.max,
+            confidence=kernel.confidence,
+            kernel=kernel.kernel,
+            properties=frozenset({k: tuple(v) if isinstance(v, list) else v for k, v in properties_to_keep.items()}.items()),
+        )
+
+    def node_bfs(self, edges, s):
+        nodes = defaultdict(set)
+        for x in edges:
+            nodes[x.source.id].add(x.target.id)
+
+        visited = set()
+        q = deque() # Create a queue for BFS
+
+        # Mark the source node as visited and enqueue it
+        visited.add(s)
+        q.append(s)
+
+        while q:
+            id = q.popleft()
+            for dst in nodes[id]:
+                if dst not in visited:
+                    visited.add(dst)
+                    q.append(dst)
+
+        return visited

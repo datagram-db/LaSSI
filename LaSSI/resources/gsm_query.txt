@@ -1,13 +1,15 @@
 
 implication = (V)--[l:nsubj||csubj||nsubj]->(subject)
         where ((V unmatched p3 . V) ∧ ((V unmatched p3pass . V) ∧ ((V unmatched p3expl3 . V) ∧ ((V unmatched p3expl3 . V) ∧ (V unmatched p3expl3 . V) ∧ (V unmatched p3expl3 . V) ∧ (V unmatched fauxcop . V)))))
-       ↪  set (𝜋 action @ subject) as (𝜉 0 @ V)
+       ↪  set (𝜋 action @ subject) as if ( ℓ 0 @ V = verb ) over V then (𝜉 0 @ V) else nothing
+          set(   𝜋 root @ V) as SCRIPT "\"root\""
           (V);
 
 
 passivity = (V)--[l:nsubjpass]->(subject)
         where ((V unmatched p3 . V) ∧ ((V unmatched p3pass . V) ∧ ((V unmatched p3expl3 . V) ∧ ((V unmatched p3expl3 . V) ∧ (V unmatched p3expl3 . V) ∧ (V unmatched p3expl3 . V) ∧ (V unmatched fauxcop . V)))))
-       ↪  set (𝜋 action @ subject) as (𝜉 0 @ V)
+       ↪  set (𝜋 action @ subject) as if ( ℓ 0 @ V = verb ) over V then (𝜉 0 @ V) else nothing
+          set(   𝜋 root @ V) as SCRIPT "\"root\""
           (V);
 
        // Case matching the sentences having no subject!
@@ -21,10 +23,12 @@ p4 = (>> V)<-[∀ ? w:]--(B)
      (Z)--[? case]->(T)
       where ((V unmatched p3 . V) ∧ ((V unmatched p3pass . V) ∧ ((V unmatched p3expl3 . V) ∧ (ℓ 0 @ V = verb))))
      ↪  new j
+        set (𝜋 kernel @ h) as kernel
         set(φ when , j) as TN
         set(𝜋 expl @ j) as (ℓ 0 @ E)
-       set (𝜋 adv @ j) as (𝜉 0 @ ADM)
-       set (φ iobj , j) as IOA
+        set (𝜋 adv @ j) as (𝜉 0 @ ADM)
+        set (φ iobj , j) as IOA
+        set(   𝜋 root @ j) as SCRIPT "\"root\""
        //set (φ dep , j) as XC
         set(φ (if ((label l ) = nmod) over l then    // Defining the label in function of T, if this exists,
                                                                               // otherwise using V
@@ -38,7 +42,7 @@ p4 = (>> V)<-[∀ ? w:]--(B)
        del ADM
        (j);                                              // Instance of reference to be returned
 
-p0 = (>> Compl)<-[∀obl||xcomp]--(WithObl)
+p0 = (>> Compl)<-[∀obl||xcomp||dep]--(WithObl)
 
      ↪  new h
        set (ℓ 0 @ h) as SCRIPT "\"multipleindobj\""
@@ -48,11 +52,11 @@ p0 = (>> Compl)<-[∀obl||xcomp]--(WithObl)
 
        (h);
 
-p1 = (X)--[l:det||nmod_poss||amod||mark||case||punct||advmod||advcl||cc||dep||punct]->(Y)                   // Graph matching, First pattern
-      where ((TEST "= |𝜑 ⦃\"Y\"⦄ | 0 ") ∧ (ℓ 0 @ Y ≠ CC)) // ∧ ((Y unmatched p2 . K) ∧ ((Y unmatched p3 . T) ∧ ((Y unmatched p2 . Z) ∧ ((ℓ 0 @ Y ≠ noun) ∧ ((ℓ 0 @ Y ≠ CC) ∧ (ℓ 0 @ Y ≠ verb)))))))
+p1 = (X)--[l:det||nmod_poss||amod||mark||case||punct||advmod||advcl||cc||punct||neg]->(Y)                   // Graph matching, First pattern
+      where (FILL ((X unmatched p3fauxcop . V) ∧ ((X unmatched p3simple . V) ∧ ((X unmatched p3 . V) ∧ ((X unmatched p3expl . V) ∧ (X unmatched p3pass . V)))))) ∨ (( FILL (label l ≠ neg)) ∧ ((TEST "= |𝜑 ⦃\"Y\"⦄ | 0 ") ∧ ( ( FILL (ℓ 0 @ Y ≠ CC) ) ∧ (( FILL (ℓ 0 @ X ≠ verb)) ∨ (( FILL (label l ≠ mark)) ∨ ((TEST "= |𝜑 ⦃\"X\"⦄ | 1 "))))))) // ∧ ((Y unmatched p2 . K) ∧ ((Y unmatched p3 . T) ∧ ((Y unmatched p2 . Z) ∧ ((ℓ 0 @ Y ≠ noun) ∧ ((ℓ 0 @ Y ≠ CC) ∧ (ℓ 0 @ Y ≠ verb)))))))
      ↪  set (𝜋 (label l) @ X) as (𝜉 0 @ Y)                        // Property extension
+       X inheritpropfrom Y // Property inheritance, with no key overlaps
        del Y                                             // Removing a node
-
        (X);                                              // Instance of reference to be returned
 docop = (target)--[cop]->(V)
                 --[l:nsubj||csubj||nsubj]->(subject)
@@ -68,6 +72,7 @@ docop = (target)--[cop]->(V)
           set (φ inherit_edge , b) as target
           del l
           del V
+          set (𝜋 kernel @ a) as SCRIPT "\"kernel\""
           (a);
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -102,13 +107,16 @@ p3fauxcop = (V)--[∀n:nsubj]->(S)
             where ((( FILL ( 𝜋 lemma @ A )= be ) ∨ (( FILL ( 𝜋 lemma @ A )= do ) ∨  (( FILL ( 𝜋 lemma @ A )= have ) ∨  (( FILL ( 𝜉 0 @ A )= have ) ∨ ( FILL ( 𝜉 0 @ A )= do ))))) ∧ ((V unmatched p4 . V) ∧((V unmatched p3 . V) ∧ ((V unmatched p3pass . V) ∧ ((V unmatched p3expl . V) ∧((ℓ 0 @ V = verb)))))))
 ↪  new h
    set (𝜋 action @ h) as (SCRIPT "(^(^(^(^ (^ ( [(𝜉 ⦃\"A\"⦄) 0])  \" \") ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])) \" \")")                        // Property extension
-   set (𝜋 begin @ h) as (𝜋 begin @ V)                        // Property extension
-   set (𝜋 end @ h) as (𝜋 end @ V)                        // Property extension
-   set (𝜉 0 @ h) as (𝜉 0 @ S)                        // Property extension
-   set (ℓ 0 @ h) as (ℓ 0 @ S)                        // Property extension
-   set (ℓ 1 @ h) as (SCRIPT "\"root\"")                       // Property extension
-         del A                                             // Removing a node
+   set (𝜋 begin @ h) as (𝜋 begin @ S)                        // Property extension
+   set (𝜋 end @ h) as (𝜋 end @ S)                            // Property extension
+   set (𝜉 0 @ h) as (𝜉 0 @ S)                                // Property extension
+   set (ℓ 0 @ h) as (ℓ 0 @ S)                               // Property extension
+   h inheritpropfrom S
+   set (ℓ 1 @ h) as (SCRIPT "\"root\"")                     // Property extension
+         del A                                              // Removing a node
    set (φ inherit_partial , h) as V
+   set (𝜋 kernel @ h) as kernel
+   set(   𝜋 root @ h) as SCRIPT "\"root\""
          (h);                                              // Instance of reference to be returned
 
 
@@ -121,14 +129,14 @@ p3simple = (V)--[∀n:nsubj]->(>>S)
      where ((V unmatched p3pass . V) ∧ ((V unmatched p3expl . V) ∧((V unmatched p3 . V) ∧((ℓ 0 @ V = verb)))))
      ↪
         //new s
-        set(φ (SCRIPT "(^(^(^(^(^ (^ ( [(𝜉 ⦃\"A\"⦄) 0])  \" \") ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])) \" \") ([ (𝜉 ⦃\"T\"⦄)  0]))") , S) as Z
+        set(φ (SCRIPT "(^(^(^(^(^ (^ ( [(𝜉 ⦃\"M\"⦄) 0])  \" \") ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])) \" \") ([ (𝜉 ⦃\"T\"⦄)  0]))") , S) as Z
         //set(   𝜋 mark @ s) as (𝜉 0 @ M)
         //set(   φ orig , s) as S
         //set(   𝜉 0 @ s) as (𝜉 0 @ S)
        del V
        del T
        del M
-
+       set (𝜋 kernel @ S) as kernel
        (S) ;
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -150,7 +158,7 @@ p3 = (>> V)<-[∀ ? w:]--(B)
      where ((V unmatched p3pass . V) ∧ ((V unmatched p3expl . V) ∧((ℓ 0 @ V = verb))))
      ↪
         //new s
-        set(φ (SCRIPT "[(° (fun y → { l cp (fun x → { ^ (^ ([⦃x⦄ 0]) \" \") ([⦃x⦄ 1]) }) (\" \")  y } ) ( zip ( a {   (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.A\"⦄)  ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.N\"⦄) ;  (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.V\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.T\"⦄) } ) )) 0]"), S) as Z
+        set(φ (SCRIPT "[(° (fun y → { l cp (fun x → { ^ (^ ([⦃x⦄ 0]) \" \") ([⦃x⦄ 1]) }) (\" \")  y } ) ( zip ( a {   (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.M\"⦄)  ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.N\"⦄) ;  (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.V\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.T\"⦄) } ) )) 0]"), S) as Z
         //set(   𝜋 mark @ s) as (𝜉 0 @ M)
         //set(   φ orig , s) as S
         //set(   𝜉 0 @ s) as (𝜉 0 @ S)
@@ -164,6 +172,7 @@ p3 = (>> V)<-[∀ ? w:]--(B)
        del A
        del E
        del NN
+     set (𝜋 kernel @ S) as kernel
        (S);
 
 p3expl = (V)--[∀n:nsubj]->(>> S)
@@ -182,20 +191,22 @@ p3expl = (V)--[∀n:nsubj]->(>> S)
         //new s
         set(φ (if ((label l ) = nmod) over l then    // Defining the label in function of T, if this exists,
                                                                       // otherwise using V
-                                              SCRIPT "(^(^(^(^(^(^ (^ ( [(𝜉 ⦃\"A\"⦄) 0])  \" \") ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ([⦃\"S.NN\"⦄ 0]))  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])) \" \") ([ (𝜉 ⦃\"T\"⦄)  0])"
+                                              SCRIPT "(^(^(^(^(^(^ (^ ( [(𝜉 ⦃\"M\"⦄) 0])  \" \") ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ([⦃\"S.NN\"⦄ 0]))  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])) \" \") ([ (𝜉 ⦃\"T\"⦄)  0])"
                                              else
-                                              SCRIPT "^(^(^ (^(^(^ ( [(𝜉 ⦃\"A\"⦄) 0])  \" \") ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ([⦃\"S.NN\"⦄ 0]))  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])"
+                                              SCRIPT "^(^(^ (^(^(^ ( [(𝜉 ⦃\"M\"⦄) 0])  \" \") ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ([⦃\"S.NN\"⦄ 0]))  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])"
                                              ), S) as Z
-        set(𝜋 expl @ S) as (ℓ 0 @ Z)
+       set(𝜋 expl @ S) as (ℓ 0 @ Z)
        set (φ iobj , S) as IOW
        set (𝜋 adv @ S) as (𝜉 0 @ ADM)
-      set (φ dep , S) as XC
+       set (φ dep , S) as XC
+       set(   𝜋 root @ S) as SCRIPT "\"root\""
        del V
        del T
        del M
        del A
        del NN
        del ADM
+       set (𝜋 kernel @ S) as kernel
        (S);
 
 p3pass = (V)--[∀n:nsubjpass]->(>> S)
@@ -214,15 +225,16 @@ p3pass = (V)--[∀n:nsubjpass]->(>> S)
         //new s
         set(φ (if ((label l ) = nmod) over l then    // Defining the label in function of T, if this exists,
                                                                       // otherwise using V
-                                              SCRIPT "(^(^(^(  ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])) \" \") ([ (𝜉 ⦃\"T\"⦄)  0])"
+                                              SCRIPT "^(^(^(^(^(^(  ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ⦃\"M\"⦄)  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])) \" \") ([ (𝜉 ⦃\"T\"⦄)  0])"
                                              else
-                                              SCRIPT "^(^( ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])"
+                                              SCRIPT "^(^(^(^(  ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ⦃\"M\"⦄)  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])"
                                              ), Z) as S
     set(   𝜉 1 @ Z) as (SCRIPT "\"subjpass\"")
        set (φ iobj , Z) as IOB
        set (𝜋 adv @ Z) as (𝜉 0 @ ADM)
        //set (φ dep , Z) as XC
-        set(𝜋 expl @ s) as (ℓ 0 @ E)
+       set(𝜋 expl @ s) as (ℓ 0 @ E)
+       set(   𝜋 root @ Z) as SCRIPT "\"root\""
        del V
        del T
        del M
@@ -230,6 +242,7 @@ p3pass = (V)--[∀n:nsubjpass]->(>> S)
        del E
        del NN
        del ADM
+       //set (𝜋 kernel @ S) as kernel
        (S)
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

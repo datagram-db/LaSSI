@@ -2,8 +2,8 @@ from typing import List
 
 from LaSSI.external_services.Services import Services
 from LaSSI.ner.AssignTypeToSingleton import AssignTypeToSingleton
+from LaSSI.structures.internal_graph.EntityRelationship import Singleton
 from LaSSI.structures.internal_graph.Graph import Graph
-from LaSSI.structures.kernels.Sentence import Sentence
 
 
 class GraphProvenance:
@@ -35,7 +35,6 @@ class GraphProvenance:
                                                                            non_verbs)
         return self._internal_graph
 
-    def sentence(self) -> List[Sentence]:
-        transitive_verbs = self.parmenides.getTransitiveVerbs()
-        self._sentence = self.atts_global.constructSentence(transitive_verbs)
+    def sentence(self) -> List[Singleton]:
+        self._sentence = self.atts_global.constructSentence()
         return self._sentence
