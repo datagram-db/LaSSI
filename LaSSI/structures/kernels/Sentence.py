@@ -472,8 +472,8 @@ def is_case_in_props(node_props):
     # Ignore "by" as passive sentence: https://www.uc.utoronto.ca/passive-voice
     # Ignore "of" and "'s" as "possessive": https://en.m.wikipedia.org/wiki/English_possessive
     ignore_cases = ['by', "'s", 'of']
-    return node_props is not None and "case" in node_props and (
-                node_props['case'] not in ignore_cases and not 'subjpass' in node_props)
+    return node_props is not None and "case" in node_props and node_props['case'] not in ignore_cases
+            # and not 'subjpass' in node_props  # TODO: Is this needed?
 
 def create_edge_kernel(node):
     return Singleton(
@@ -494,7 +494,12 @@ def create_edge_kernel(node):
 
 def is_kernel_in_props(node):
     if isinstance(node, SetOfSingletons):
-        return node.root
+        # If the Set has a true root, return, otherwise check children for root
+        if node.root:
+            return node.root
+        else:
+            for entity in node.entities:
+                return is_kernel_in_props(entity)
     return (('kernel' in dict(node.properties) or 'root' in dict(node.properties)) and 'JJ' not in node.type) or 'verb' in node.type
     # TODO: Do we need to check if the JJ is/not a verb?
     # ('JJ' not in x.type or ('JJ' in x.type and self.is_label_verb(x.named_entity))))

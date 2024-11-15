@@ -1,0 +1,77 @@
+// Alice and Bob
+Alice plays football ⇒ play(Alice, football)
+Bob plays football ⇒ play(Bob, football)
+Alice and Bob play football ⇒ play(AND(Alice, Bob), football)
+Alice or Bob play football ⇒ play(OR(Bob, Alice), football)
+Alice doesn't play football ⇒ NOT(play(Alice, football))
+Bob doesn't play football ⇒ NOT(play(Bob, football))
+Dan plays football ⇒ play(Dan, football)
+Neither Alice nor Bob play football ⇒ play(NEITHER(Bob, Alice), football)
+
+// But not
+Alice is playing but not joking ⇒ play(Alice[(action:playing)], ?1)[(AND:Alice[(action:is  playing )]), (AND:NOT(joking[(neg:not)]))]
+Alice is playing but not in Newcastle ⇒ play(Alice, AND(NOT(Newcastle[(case:in)])))
+
+// Cat and mouse
+The cat eats the mouse ⇒ eat(cat[(det:The)], mouse[(det:the)])
+The mouse is eaten by the cat ⇒ eat(cat[(subjpass:subjpass), (det:the), (case:by)], mouse[(det:The)])
+The mouse eats the cat ⇒ eat(mouse[(det:The)], cat[(det:the)])
+The cat is eaten by the mouse ⇒ eat(mouse[(subjpass:subjpass), (det:the), (case:by)], cat[(det:The)])
+The cat doesn't eat the mouse ⇒ NOT(eat(cat[(det:The)], mouse[(det:the)]))
+The mouse doesn't eat the cat ⇒ NOT(eat(mouse[(det:The)], cat[(det:the)]))
+
+The cat eats ⇒ eat(cat[(det:The), (action:eats)], ?1)
+The cat is eaten ⇒ eat(?2[(subjpass:subjpass)], cat[(det:The)])
+The cat snores ⇒ snore(cat[(det:The), (action:snores)], None)
+
+// Compounds
+The Golden Gate Bridge is fabulous! ⇒ be(Golden Gate Bridge[(det:The)], fabulous[(punct:!)])
+
+// Newcastle
+The busy Newcastle city centre is closed for traffic ⇒ close(None, Newcastle[(amod:busy), (extra:city centre), (det:The)])[(ENTITY:traffic[(subjpass:subjpass), (case:for)])]
+
+Newcastle city centre is trafficked ⇒ traffic(?2[(subjpass:subjpass)], None)[(GPE:Newcastle[(extra:city centre)])]
+In Newcastle city center on saturdays, traffic is flowing ⇒ flow(traffic, None)[(DATE:saturdays[(case:on)]), (GPE:Newcastle[(case:In), (extra:city center)])]
+Traffic is flowing in Newcastle city centre, on Saturdays ⇒ flow(Traffic, None)[(GPE:Newcastle[(extra:city centre), (case:in)]), (DATE:Saturdays[(case:on)])]
+On Saturdays, traffic is flowing in Newcastle city centre ⇒ flow(traffic, None)[(DATE:Saturdays[(case:On)]), (GPE:Newcastle[(extra:city centre), (case:in)])]
+There is traffic in the Newcastle city centre ⇒ be(traffic[(action:is)], ?1)[(GPE:Newcastle[(det:the), (extra:city centre), (case:in)])]
+In the Newcastle city centre there is traffic ⇒ be(traffic, ?2)[(GPE:Newcastle[(det:the), (extra:city centre), (case:In)])]
+Newcastle city centre has traffic ⇒ have(Newcastle[(extra:city centre)], traffic)
+There is traffic but not in the Newcastle city centre ⇒ be(traffic, ?3)[(AND:NOT(Newcastle[(extra:city centre), (det:the), (case:in)]))]
+Newcastle has traffic but not in the city centre ⇒ have(Newcastle, AND(NOT(city centre[(det:the), (neg:not), (case:in)]), traffic))
+Newcastle city center does not have traffic ⇒ NOT(have(Newcastle[(extra:city center)], traffic))
+It is busy in Newcastle ⇒ be(It, busy)[(GPE:Newcastle[(case:in)])]
+Saturdays have usually busy city centers ⇒ have(Saturdays, city centers[(amod:busy), (advmod:usually)])
+
+// Negations
+I like non green books ⇒ like(I, NOT(books[(neg:non), (amod:green)]))
+I do not skate ⇒ NOT(skate(I[(action:skate)], None))
+
+// Sentences
+This is a beautiful world ⇒ be(This[(det:det)], world[(amod:beautiful), (det:a)])
+This world is beautiful ⇒ be(world, beautiful)
+The Golden Gate Bridge is fabulous! ⇒ be(Golden Gate Bridge[(det:The)], fabulous[(punct:!)])
+This is a fabulous Golden Gate Bridge picture ⇒ be(This[(det:det)], picture[(extra:Golden Gate Bridge), (amod:fabulous)])
+
+//
+To live freely you need to fight ⇒ need(you, fight[(mark:to)](None, None)[(mark:to)][(mark:to)])[(SENTENCE:live[(advmod:freely), (mark:To)](None, None))]
+to fight ⇒ fight[(mark:to)](None, None)
+to be, or not to be, that is the question ⇒ be(that[(det:det)], question[(punct:,), (det:the)])[(OR:be[(mark:to), (punct:,)]), (OR:NOT(be[(neg:not), (mark:to)]))]
+
+// Single node
+the dog ⇒ be(dog[(det:the)], ?1)
+the roof ⇒ be(roof, ?2)
+to fight ⇒ fight[(mark:to)](None, None)
+to be ⇒ be[(mark:to)](None, None)
+
+// Short sentences
+waste your time ⇒ waste(?1, time[(nmod_poss:your)])
+coming to false conclusions ⇒ come(None, None)[(ENTITY:conclusions[(amod:false), (case:to)])]
+bolt from blue ⇒ be(bolt, ?3[(case:from), (cop:blue[(case:from)])])
+things to be neat and orderly ⇒ be(things, AND(neat[(mark:to)], orderly))[(ENTITY:things)]
+characters in movies ⇒ be(characters, ?4)[(ENTITY:movies[(case:in)])]
+you like quilts ⇒ like(you, quilts)
+buy dinner ⇒ buy(?5, dinner)
+the hot water to run out ⇒ be(water[(amod:hot), (det:the)], ?)[(SENTENCE:run out[(mark:to)](None, None))]
+you become fatigued ⇒ become(you[(cop:fatigued)], None)
+attempt to steal someone's husband ⇒ be(attempt, ?8)[(SENTENCE:to steal(None, husband[(nmod_poss:someone), (case:'s)]))]

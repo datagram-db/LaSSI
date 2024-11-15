@@ -228,7 +228,7 @@ class AssignTypeToSingleton:
             norm_confidence = 1.0
 
             # TODO: Change this property to broader name?
-            if len(gsm_item['xi']) > 1 and 'subjpass' in gsm_item['xi']:
+            if len(gsm_item['xi']) > 1 and 'subjpass' in gsm_item['xi'][1]:
                 gsm_item['properties']['subjpass'] = gsm_item['xi'][1]
 
             # Get all nodes from edges of root node
@@ -243,6 +243,7 @@ class AssignTypeToSingleton:
                         # TODO: Should we really only be merging desired properties like 'kernel' (e.g. we now get conj property in children)?
                         if isinstance(node, Singleton):
                             node_props = merge_properties(gsm_item['properties'], dict(node.properties))
+                            # gsm_item['properties'] = node_props
                             self.nodes[node_id] = Singleton.update_node_props(node, node_props)
 
                         grouped_nodes.append(self.nodes[node_id])
@@ -348,7 +349,7 @@ class AssignTypeToSingleton:
                 if len(gsm_item['ell']) > 1:
                     gsm_item['properties']['kernel'] = gsm_item['ell'][1]
 
-                if len(gsm_item['xi']) > 1 and 'subjpass' in gsm_item['xi']:
+                if len(gsm_item['xi']) > 1 and 'subjpass' in gsm_item['xi'][1]:
                     gsm_item['properties']['subjpass'] = gsm_item['xi'][1]
 
                 # Add 'det' to properties
@@ -576,6 +577,11 @@ class AssignTypeToSingleton:
     def associateNodeToMeuMatches(self, node):
         # If key is SetOfSingletons, loop over each Singleton and make association to type
         # Giacomo: FIX, but only if they are not logical predicates
+
+        # If we already have the association, remove it to re-add
+        if node.id in [x.id for x in self.associations]:
+            self.associations = {item for item in self.associations if item.id != node.id}
+
         from LaSSI.structures.internal_graph.EntityRelationship import SetOfSingletons
         if isinstance(node, SetOfSingletons) and ((node.type == Grouping.NONE) or (node.type == Grouping.GROUPING)):
             for entity in node.entities:
@@ -1049,7 +1055,7 @@ class AssignTypeToSingleton:
         else:
             return min(filter(lambda y: y > -1, map(lambda x: self.get_min_position(x), node.entities)))
 
-    def constructSentence(self) -> List[Singleton]:
+    def constructSentence(self) -> Singleton:
         from LaSSI.structures.kernels.Sentence import create_sentence_obj
 
         found_proposition_labels = {}

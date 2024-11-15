@@ -43,6 +43,7 @@ class LaSSI():
                  precision_threshold=0.8,
                  force=False
                  ):
+        self.string_rep_dir = None
         self.create_catabolites_dir(dataset_name)
         self.dataset_name = dataset_name
         self.web_dir = web_dir
@@ -105,6 +106,10 @@ class LaSSI():
             name_arr = self.catabolites_dir.split(".")
             self.catabolites_dir = name_arr[0]
 
+        self.string_rep_dir = os.path.join("catabolites", self.catabolites_dir, "string_rep.txt")
+        if os.path.exists(self.string_rep_dir):
+            os.remove(self.string_rep_dir)
+
     def apply_graph_grammars(self, n):
         from PyDatagramDB import DatagramDB
         d = DatagramDB(self.gsmDB,
@@ -127,16 +132,25 @@ class LaSSI():
 
         return L
 
+    def write_variable_to_file(self, text):
+        try:
+            with open(self.string_rep_dir, 'a') as file:
+                file.write(str(text))
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
     def _internal_graph(self, meu_dbs, gsm_list):
         internal_representations = []
         for graph, meu_db in zip(gsm_list, meu_dbs):
             from LaSSI.structures.provenance.GraphProvenance import GraphProvenance
             g = GraphProvenance(graph, meu_db, self.transformation == SentenceRepresentation.SimpleGraph)
             self.logger(f"{meu_db.first_sentence}")
+            self.write_variable_to_file(meu_db.first_sentence)
             internal_graph = g.internal_graph()
             final_form = internal_graph
             if self.transformation == SentenceRepresentation.Logical:
                 final_form = g.sentence()
+                self.write_variable_to_file(f" ⇒ {final_form.to_string()}\n")
             internal_representations.append(InternalRepresentation(internal_graph, final_form))
         return internal_representations
 
