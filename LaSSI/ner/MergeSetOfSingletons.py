@@ -114,8 +114,7 @@ def GraphNER_withProperties(node, is_simplistic_rewriting, meu_db_row, parmenide
         norm_confidence *= entity.confidence
 
         merge_properties(dict(entity.properties), fusion_properties)
-        # fusion_properties = fusion_properties | dict(entity.properties)  # TODO: Most properties are overwritten?
-        if entity.named_entity == list(d.values())[0]:
+        if entity.named_entity == list(d.values())[0] and len(resolved_d) > 0:
             chosen_entity = entity
         else:
             extra = " ".join((extra, entity.named_entity))  # Ensure there is no leading space

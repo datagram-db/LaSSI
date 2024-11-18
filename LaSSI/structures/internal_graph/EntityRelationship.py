@@ -134,6 +134,17 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
 
     @staticmethod
     def strip_root_properties(node):
+        if isinstance(node, SetOfSingletons):
+            return SetOfSingletons(
+                id=node.id,
+                type=node.type,
+                entities=tuple(Singleton.strip_root_properties(entity) for entity in node.entities),
+                min=node.min,
+                max=node.max,
+                confidence=node.confidence,
+                root=False
+            )
+
         sing_props = dict(node.properties)
         if 'kernel' in sing_props:
             sing_props.pop('kernel')
@@ -157,13 +168,13 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
                    properties={k: [deserialize_NodeEntryPoint(x) for x in v] for k, v in c.get('properties').items()}
                    )
 
-    # Rewrite Singleton(kernel) in form edgeLabel(source[props], target[props])[props]
+    # Rewrite Singleton(kernel) in form edgeLabel[props](source[props], target[props])[props]
     def to_string(self, node=None):
         def get_node_properties_string(node_to_use):
             if node_to_use is None or not isinstance(node_to_use, Singleton):
                 return ''
 
-            props_to_ignore = ['begin', 'pos', 'end', 'kernel', 'lemma', 'specification', 'number', 'root', 'expl']
+            props_to_ignore = ['begin', 'pos', 'end', 'kernel', 'lemma', 'specification', 'number', 'root', 'expl', 'cc', 'conj']
             properties_list = []
             for key in dict(node_to_use.properties):
                 if key not in props_to_ignore:
@@ -194,15 +205,15 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
             node_string = node.named_entity if node is not None and isinstance(node, Singleton) else 'None'
 
             # If node_string is empty, it is a kernel so return that
-            node_string = node.to_string(node) if node_string == "" else node_string
+            if node_string == '':
+                node_string = node.to_string(node) if node_string == "" else node_string
+            else:
+                # Join SetOfSingletons
+                node_string = f"{node.type.name}({', '.join(get_node_string(entity) for entity in node.entities)})" if isinstance(
+                    node, SetOfSingletons) and node_string == 'None' else node_string
 
-            # Join SetOfSingletons
-            node_string = f"{node.type.name}({', '.join(get_node_string(entity) for entity in node.entities)})" if isinstance(
-                node, SetOfSingletons) and node_string == 'None' else node_string
-
-            # Add properties
-            node_string = f"{node_string}{get_node_properties_string(node)}"
-
+                # Add properties
+                node_string = f"{node_string}{get_node_properties_string(node)}"
             return node_string
 
         if node is None:

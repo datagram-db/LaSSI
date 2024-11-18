@@ -14,12 +14,12 @@ passivity = (V)--[l:nsubjpass]->(subject)
 
        // Case matching the sentences having no subject!
 p4 = (>> V)<-[∀ ? w:]--(B)
-        --[∀l:dobj||ccomp||nmod||dep||obj||xcomp]->(Z)
+        --[∀l:dobj||ccomp||nmod||dep||obj||xcomp||obl]->(Z)
         --[? nmod_tmod]->(TN)
         --[? expl]->(E)
         --[? iobj]->(IOA)
         --[? advmod||advcl]->(>> ADM)
-        --[? compound_ptr]->(TB)
+        --[? compound_prt||mark]->(TB)
      (Z)--[? case]->(T)
       where ((V unmatched p3 . V) ∧ ((V unmatched p3pass . V) ∧ ((V unmatched p3expl3 . V) ∧ (ℓ 0 @ V = verb))))
      ↪  new j
@@ -32,9 +32,9 @@ p4 = (>> V)<-[∀ ? w:]--(B)
        //set (φ dep , j) as XC
         set(φ (if ((label l ) = nmod) over l then    // Defining the label in function of T, if this exists,
                                                                               // otherwise using V
-                                                      SCRIPT "° (fun y → { l cp (fun x → { ^ (^ ([⦃x⦄ 0]) \" \") ([⦃x⦄ 1]) }) (\" \")  y } ) ( zip ( a {   (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.V\"⦄)  ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.T\"⦄) } ))"
+                                                      SCRIPT "^(^ ([(° (fun y → { l cp (fun x → { ^ (^ ([⦃x⦄ 0]) \" \") ([⦃x⦄ 1]) }) (\" \")  y } ) ( zip ( a {  (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.V\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.T\"⦄) } ) )) 0]) \" \") ([ (𝜉 ([⦃\"*.TB\"⦄ 0]))  0])"
                                                      else
-                                                      (𝜉 0 @ V)
+                                                      SCRIPT "^(^ ([(° (fun y → { l cp (fun x → { ^ (^ ([⦃x⦄ 0]) \" \") ([⦃x⦄ 1]) }) (\" \")  y } ) ( zip ( a {   (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.V\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.T\"⦄) } ) )) 0]) \" \") ([ (𝜉 ([⦃\"*.TB\"⦄ 0]))  0])"
                                                      ), j) as Z
        del V                                             // Removing a node
        del T
@@ -42,8 +42,8 @@ p4 = (>> V)<-[∀ ? w:]--(B)
        del ADM
        (j);                                              // Instance of reference to be returned
 
-p0 = (>> Compl)<-[∀obl||xcomp||dep]--(WithObl)
-
+p0 = (>> Compl)<-[∀obl||xcomp||dep||obj]--(WithObl)
+       where ((WithObl unmatched p2 . X))
      ↪  new h
        set (ℓ 0 @ h) as SCRIPT "\"multipleindobj\""
        set (φ orig , h) as Compl
@@ -52,9 +52,9 @@ p0 = (>> Compl)<-[∀obl||xcomp||dep]--(WithObl)
 
        (h);
 
-p1 = (X)--[l:det||nmod_poss||amod||mark||case||punct||advmod||advcl||cc||punct||neg]->(Y)                   // Graph matching, First pattern
-      where (FILL ((X unmatched p3fauxcop . V) ∧ ((X unmatched p3simple . V) ∧ ((X unmatched p3 . V) ∧ ((X unmatched p3expl . V) ∧ (X unmatched p3pass . V)))))) ∨ (( FILL (label l ≠ neg)) ∧ ((TEST "= |𝜑 ⦃\"Y\"⦄ | 0 ") ∧ ( ( FILL (ℓ 0 @ Y ≠ CC) ) ∧ (( FILL (ℓ 0 @ X ≠ verb)) ∨ (( FILL (label l ≠ mark)) ∨ ((TEST "= |𝜑 ⦃\"X\"⦄ | 1 "))))))) // ∧ ((Y unmatched p2 . K) ∧ ((Y unmatched p3 . T) ∧ ((Y unmatched p2 . Z) ∧ ((ℓ 0 @ Y ≠ noun) ∧ ((ℓ 0 @ Y ≠ CC) ∧ (ℓ 0 @ Y ≠ verb)))))))
-     ↪  set (𝜋 (label l) @ X) as (𝜉 0 @ Y)                        // Property extension
+p1 = (X)--[l:det||nmod_poss||amod||mark||case||punct||advmod||advcl||cc||punct||neg||nummod]->(Y)                   // Graph matching, First pattern
+      where ((FILL ((ℓ 0 @ X = verb) ∧ ((X unmatched p3fauxcop . V) ∧ ((X unmatched p3simple . V) ∧ ((X unmatched p3 . V) ∧ ((X unmatched p3expl . V) ∧ ((X unmatched p4 . V) ∧ (X unmatched p3pass . V)))))))) ∧ (FILL ((ℓ 0 @ X = verb) ∧ ((Y unmatched p3fauxcop . V) ∧ ((Y unmatched p3simple . V) ∧ ((Y unmatched p3 . V) ∧ ((Y unmatched p3expl . V) ∧ ((Y unmatched p4 . V) ∧ (Y unmatched p3pass . V))))))))) ∨ (( FILL (label l ≠ neg)) ∧ ((TEST "= |𝜑 ⦃\"Y\"⦄ | 0 ") ∧ ( ( FILL (ℓ 0 @ Y ≠ CC) ) ∧ (( FILL (ℓ 0 @ X ≠ verb)) ∨ (( FILL (label l ≠ mark)) ∨ ((TEST "= |𝜑 ⦃\"X\"⦄ | 1 "))))))) // ∧ ((Y unmatched p2 . K) ∧ ((Y unmatched p3 . T) ∧ ((Y unmatched p2 . Z) ∧ ((ℓ 0 @ Y ≠ noun) ∧ ((ℓ 0 @ Y ≠ CC) ∧ (ℓ 0 @ Y ≠ verb)))))))
+     ↪  set (𝜋 if (( ℓ 0 @ Y ) = verb) over Y then SCRIPT "\"actioned\"" else (label l) @ X) as (𝜉 0 @ Y)                        // Property extension
        X inheritpropfrom Y // Property inheritance, with no key overlaps
        del Y                                             // Removing a node
        (X);                                              // Instance of reference to be returned
@@ -121,7 +121,7 @@ p3fauxcop = (V)--[∀n:nsubj]->(S)
 
 
 p3simple = (V)--[∀n:nsubj]->(>>S)
-        --[? mark]->(M)
+        --[? mark||compound_prt]->(M)
         --[? aux]->(A)
         --[? neg]->(N)
         --[∀l:dobj||ccomp||nmod]->(>>Z) // Future work: nested join between >>Z and >>Z from the join, when required. This might require to re-do the join semantics
@@ -146,7 +146,7 @@ p3simple = (V)--[∀n:nsubj]->(>>S)
 
 p3 = (>> V)<-[∀ ? w:]--(B)
         --[n:nsubj]->(>> S)
-        --[? mark]->(M)
+        --[? mark||compound_prt]->(M)
         --[? aux]->(A)
         --[? neg]->(N)
         --[? expl]->(E)
@@ -176,7 +176,7 @@ p3 = (>> V)<-[∀ ? w:]--(B)
        (S);
 
 p3expl = (V)--[∀n:nsubj]->(>> S)
-        --[? mark]->(M)
+        --[? mark||compound_prt]->(M)
         --[? aux]->(A)
         --[? neg]->(N)
         --[? iobj]->(IOW)
@@ -210,7 +210,7 @@ p3expl = (V)--[∀n:nsubj]->(>> S)
        (S);
 
 p3pass = (V)--[∀n:nsubjpass]->(>> S)
-        --[? mark]->(M)
+        --[? mark||compound_prt]->(M)
         --[? auxpass]->(A)
         --[? neg]->(N)
         --[? expl]->(E)

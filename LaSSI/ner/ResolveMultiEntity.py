@@ -9,6 +9,7 @@ __status__ = "Production"
 from typing import List
 
 from LaSSI.similarities.levenshtein import lev
+from LaSSI.structures.kernels.Sentence import lemmatize_verb
 from LaSSI.structures.meuDB.meuDB import MeuDBEntry
 
 
@@ -63,7 +64,9 @@ class ResolveMultiNamedEntity:
         self.fa = fa
         self.result.clear()
         for sentence in nlp(stringa).sentences:
-            ls = [(token.text, token.start_char, token.end_char) for token in sentence.tokens]
+            # List of lemmatized and non-lemmatized words from sentence
+            ls = [(token.text, token.start_char, token.end_char) for token in sentence.tokens] + [
+                (lemmatize_verb(token.text), token.start_char, token.end_char) for token in sentence.tokens]
             for i in range(len(ls)):
                 m = None
                 if type is None:
