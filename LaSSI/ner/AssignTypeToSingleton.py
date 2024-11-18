@@ -7,16 +7,14 @@ __maintainer__ = "Oliver R. Fox, Giacomo Bergami"
 __status__ = "Production"
 
 import itertools
-import json
 import re
 from collections import defaultdict, deque
 from copy import copy
 from itertools import repeat
-from typing import List
+import numpy
 
 from LaSSI.Parmenides.paremenides import Parmenides
 from LaSSI.external_services.Services import Services
-from LaSSI.files.JSONDump import EnhancedJSONEncoder
 from LaSSI.ner.MergeSetOfSingletons import merge_properties
 from LaSSI.structures.internal_graph.EntityRelationship import Singleton, Grouping, SetOfSingletons, Relationship
 from LaSSI.structures.internal_graph.Graph import Graph
@@ -1013,20 +1011,34 @@ class AssignTypeToSingleton:
             if edge_label_name == non_verb.strip():
                 edge_type = "non_verb"
                 break
+
+        node_min = -1
+        node_max = -1
+        if 'properties' in gsm_item:
+            if 'begin' in gsm_item['properties']:
+                node_min = gsm_item['properties']['begin']
+            if 'end' in gsm_item['properties']:
+                node_max = gsm_item['properties']['end']
+
+        rejected_edges = {'amod', 'advmod', 'neg', 'conj', 'cc'}
+
         if self.nodes[self.get_node_id(source_node_id)].type == Grouping.MULTIINDIRECT:
             # TODO: I don't think this logic is correct (e.g. The mouse is eaten by the cat)
             for node in self.nodes[self.get_node_id(source_node_id)].entities:
                 self.edges.append(Relationship(
                     source=source_node,
                     target=self.resolve_node_id(node.id),
-                    edgeLabel=Singleton(id=gsm_item['id'], named_entity=edge_label_name,
-                                        properties=frozenset(dict().items()),
-                                        min=-1,
-                                        max=-1, type=edge_type,
-                                        confidence=self.nodes[gsm_item['id']].confidence),
+                    edgeLabel=Singleton(
+                        id=gsm_item['id'],
+                        named_entity=edge_label_name,
+                        properties=frozenset(dict().items()),
+                        min=node_min,
+                        max=node_max,
+                        type=edge_type,
+                        confidence=self.nodes[gsm_item['id']].confidence),
                     isNegated=has_negations
                 ))
-        elif 'amod' not in edge_label_name and 'advmod' not in edge_label_name and 'neg' not in edge_label_name:
+        elif edge_label_name not in rejected_edges:
             self.edges.append(Relationship(
                 source=source_node,
                 target=target_node,
@@ -1034,8 +1046,8 @@ class AssignTypeToSingleton:
                     id=gsm_item['id'],
                     named_entity=edge_label_name,
                     properties=frozenset(dict().items()),
-                    min=-1,
-                    max=-1,
+                    min=node_min,
+                    max=node_max,
                     type=edge_type,
                     confidence=self.nodes[self.get_node_id(gsm_item['id'])].confidence
                 ),
@@ -1133,8 +1145,8 @@ class AssignTypeToSingleton:
                         new_target = SetOfSingletons(
                             id=edge.target.id,
                             type=edge.target.type,
-                            # entities=tuple(Singleton.strip_root_properties(entity) for entity in edge.target.entities),
-                            entities=edge.target.entities,
+                            entities=tuple(Singleton.strip_root_properties(entity) for entity in edge.target.entities),
+                            # entities=edge.target.entities,
                             min=edge.target.min,
                             max=edge.target.max,
                             confidence=edge.target.confidence,
@@ -1156,6 +1168,7 @@ class AssignTypeToSingleton:
         filtered_nodes = set()
         filtered_top_node_ids = set()
         remove_set = set()
+        # new_edges = list(set(new_edges)) # Remove duplicate edges
 
         # Loop over every source and target for every edge
         for edge_node in itertools.chain.from_iterable(map(lambda x: [x.source, x.target], new_edges)):
@@ -1179,7 +1192,8 @@ class AssignTypeToSingleton:
         filtered_top_node_ids = [x.id for x in self.nodes.values() if x.id in filtered_nodes] # Filter node IDs in topological order based on self.nodes order
 
         if len(filtered_top_node_ids) == 0:
-            filtered_top_node_ids = [self.nodes[len(self.nodes) - 1].id]
+            filtered_top_node_ids = [list(self.nodes)[-1]] if len(self.nodes) == 1 else [self.get_node_id(self.nodes[x].id) for x in self.nodes if is_kernel_in_props(self.nodes[x], False)]  # Get last node
+            filtered_top_node_ids = list(map(int, numpy.unique(filtered_top_node_ids)))
 
         for node_id in filtered_top_node_ids:
             descendant_nodes = self.node_bfs(new_edges, node_id)
@@ -1194,26 +1208,25 @@ class AssignTypeToSingleton:
             # Re-instantiate new node properties across all relationships
             new_edges = [Relationship.from_nodes(r, self.nodes) for r in new_edges]
 
-        # return create_sentence_obj(self.edges, self.nodes, self.negations)
-
-        # Return the last node ('highest' kernel), with duplicate properties removed
+        # Return the last node ('highest' kernel)
         final_kernel = self.nodes[filtered_top_node_ids[-1]]
-        # final_kernel = self.remove_duplicate_properties(final_kernel)
 
-        if final_kernel.kernel is None:
+        if not hasattr(final_kernel, 'kernel') or final_kernel.kernel is None:
             if final_kernel.type == 'verb':
                 final_kernel = create_edge_kernel(final_kernel)
                 final_kernel = self.kernel_post_processing(final_kernel, position_pairs)
             else:
                 edges = []
                 nodes = {final_kernel.id: final_kernel}
-                if not 'action' in dict(final_kernel.properties):
+                if not hasattr(final_kernel, 'properties') or (not 'action' in dict(final_kernel.properties) and not 'actioned' in dict(final_kernel.properties)):
                     create_existential(edges, nodes)
                     final_kernel = create_sentence_obj(edges, nodes, self.negations, final_kernel.id, {})
                     final_kernel = self.kernel_post_processing(final_kernel, position_pairs)
                 else:
                     # Get label from action prop
-                    lemma_node_edge_label_name = lemmatize_verb(dict(final_kernel.properties)['action'])
+                    final_kernel_props = dict(final_kernel.properties)
+                    actioned = 'actioned' in final_kernel_props
+                    lemma_node_edge_label_name = lemmatize_verb(final_kernel_props['actioned']) if actioned else lemmatize_verb(final_kernel_props['action'])
 
                     # Remove negation from label
                     query_words = lemma_node_edge_label_name.split()
@@ -1224,21 +1237,21 @@ class AssignTypeToSingleton:
                         id=final_kernel.id,
                         named_entity='',
                         type='SENTENCE',
-                        min=-1,
-                        max=-1,
+                        min=final_kernel.min,
+                        max=final_kernel.max,
                         confidence=1,
                         kernel=Relationship(
-                            source=final_kernel,
-                            target=None,
+                            source=final_kernel if not actioned else None,
+                            target=final_kernel if actioned else None,
                             edgeLabel=Singleton(
                                 id=-1,
                                 named_entity=refactored_lemma_node_edge_label_name,
                                 type='verb',
-                                min=-1,
-                                max=-1,
+                                min=final_kernel.min,
+                                max=final_kernel.max,
                                 confidence=1,
                                 kernel=None,
-                                properties={},
+                                properties={}, # TODO: Keep properties
                             ),
                             isNegated=lemma_node_edge_label_name != refactored_lemma_node_edge_label_name,
                         ),
@@ -1248,8 +1261,19 @@ class AssignTypeToSingleton:
         else:
             final_kernel = self.remove_duplicate_properties(final_kernel)
 
+        final_kernel = self.check_if_empty_kernel(final_kernel)
+
         print(f"{final_kernel.to_string()}\n")
         return final_kernel
+
+    def check_if_empty_kernel(self, kernel):
+        if kernel.kernel is not None and kernel.kernel.edgeLabel is not None and kernel.kernel.edgeLabel.named_entity == "be" and kernel.kernel.source is not None and kernel.kernel.source.type == 'existential' and kernel.kernel.target is not None and kernel.kernel.target.type == 'existential':
+            node_props = dict(kernel.properties)
+            if node_props is not None and 'SENTENCE' in node_props:
+                new_kernel = node_props['SENTENCE'][0]
+                return self.check_if_empty_kernel(new_kernel)
+        else:
+            return kernel
 
     def kernel_post_processing(self, kernel, position_pairs):
         if not isinstance(kernel, Singleton) or kernel.kernel is None:
@@ -1258,7 +1282,7 @@ class AssignTypeToSingleton:
         # Check kernel positions
         properties_to_keep = dict(kernel.properties)
         new_target = kernel.kernel.target
-        if kernel.id in position_pairs and self.check_semi_modal(kernel.kernel.edgeLabel.named_entity):
+        if kernel.id in position_pairs and kernel.kernel.edgeLabel is not None and self.check_semi_modal(kernel.kernel.edgeLabel.named_entity):
             position_value = position_pairs[kernel.id]
             if 'SENTENCE' in dict(kernel.properties):
                 properties_to_keep['SENTENCE'] = []
@@ -1309,7 +1333,10 @@ class AssignTypeToSingleton:
             else:
                 for node in properties_key_:
                     if key == 'SENTENCE':
-                        properties_to_keep[key].append(self.remove_duplicate_properties(node, kernel_nodes))
+                        if not is_node_in_kernel_nodes(node, kernel_nodes):
+                            properties_to_keep[key].append(self.remove_duplicate_properties(node, kernel_nodes))
+                        else:
+                            self.remove_duplicate_properties(node, kernel_nodes)
                     elif not is_node_in_kernel_nodes(node, kernel_nodes):
                         properties_to_keep[key].append(node)
 

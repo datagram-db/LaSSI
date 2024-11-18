@@ -26,7 +26,8 @@ class TestLaSSI(unittest.TestCase):
                     filepath = os.path.join(subdir, file)
                     with open(filepath, 'r') as f:
                         for line in f:
-                            found_assertions.append(self.replace_existential(line).lower())
+                            if not "//" in line and line.strip() != "":
+                                found_assertions.append(self.replace_existential(line.strip()).lower())
 
         for assertion in found_assertions:
             split_check_assertion = re.split(" ⇒ ", assertion)
@@ -40,15 +41,28 @@ class TestLaSSI(unittest.TestCase):
                     # Check for groups
                     correct_groups, correct_rep = self.get_group_content(correct_rep)
                     check_groups, check_rep = self.get_group_content(check_rep)
-                    self.assertEqual(collections.Counter(correct_groups), collections.Counter(check_groups), f"{assertion}")
+                    self.assertEqual(collections.Counter(correct_groups), collections.Counter(check_groups),
+                                     f"{assertion}")
+                    # try:
+                    #     self.assertEqual(collections.Counter(correct_groups), collections.Counter(check_groups), f"{assertion}")
+                    # except AssertionError as e:
+                    #     print(e)
 
                     # Check reps are equal without props or groups
                     self.assertEqual(correct_rep.lower(), check_rep.lower(), f"{assertion}")
+                    # try:
+                    #     self.assertEqual(correct_rep.lower(), check_rep.lower(), f"{assertion}")
+                    # except AssertionError as e:
+                    #     print(e)
 
                     # Check properties are equal
                     args1 = self.get_properties(split_check_assertion[1])
                     args2 = self.get_properties(correct_assertion)
                     self.assertEqual(collections.Counter(args1), collections.Counter(args2), f"{assertion}")
+                    # try:
+                    #     self.assertEqual(collections.Counter(args1), collections.Counter(args2), f"{assertion}")
+                    # except AssertionError as e:
+                    #     print(e)
             except KeyError as e:
                 raise Exception(f"Cannot find assertion for {assertion}")
 
@@ -57,8 +71,11 @@ class TestLaSSI(unittest.TestCase):
         if new_args is None:
             new_args = []
         for arg in re.findall(r"\[[^\[\]]*]", rep):
-            inner_arg = arg.strip('[]').split(', ')
-            new_args.extend(inner_arg)
+            # inner_arg = re.sub(r'\(det:\w+\)', '', arg) # Omit 'det' property (TODO: Fix inheritance in GSM?)
+            # inner_arg = list(filter(None, inner_arg.strip('[]').split(', ')))
+            inner_arg = list(filter(None, arg.strip('[]').split(', ')))
+            if inner_arg is not None:
+                new_args.extend(inner_arg)
 
         removed_props_rep = re.sub(r"\[[^\[\]]*]", "", rep) # Check for
         if re.findall(r"\[[^\[\]]*]", removed_props_rep):
@@ -87,7 +104,7 @@ class TestLaSSI(unittest.TestCase):
 
     # ?1 is replaced with ?
     def replace_existential(self, line):
-        return re.sub(r"\?\d", "?", line.strip())
+        return re.sub(r"\?\d+", "?", line.strip())
 
 
 if __name__ == '__main__':

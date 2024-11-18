@@ -35,6 +35,6 @@ class GraphProvenance:
                                                                            non_verbs)
         return self._internal_graph
 
-    def sentence(self) -> List[Singleton]:
+    def sentence(self) -> Singleton:
         self._sentence = self.atts_global.constructSentence()
         return self._sentence

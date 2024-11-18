@@ -37,6 +37,9 @@ parmenides:absent a parmenides:PrototypicalPreposition ;
 parmenides:accept a parmenides:TransitiveVerb ;
     rdfs:label "accept"^^xsd:string .
 
+parmenides:accumulate a parmenides:TransitiveVerb ;
+    rdfs:label "accumulate"^^xsd:string .
+
 parmenides:acknowledge a parmenides:TransitiveVerb ;
     rdfs:label "acknowledge"^^xsd:string .
 
@@ -556,6 +559,9 @@ parmenides:feel a parmenides:TransitiveVerb ;
 parmenides:fight a parmenides:TransitiveVerb ;
     rdfs:label "fight"^^xsd:string .
 
+parmenides:figure a parmenides:TransitiveVerb ;
+    rdfs:label "figure"^^xsd:string .
+
 parmenides:file a parmenides:TransitiveVerb ;
     rdfs:label "file"^^xsd:string .
 
@@ -771,6 +777,9 @@ parmenides:intimidate a parmenides:TransitiveVerb ;
 
 parmenides:into a parmenides:PrototypicalPreposition ;
     rdfs:label "into"^^xsd:string .
+
+parmenides:invest a parmenides:TransitiveVerb ;
+    rdfs:label "invest"^^xsd:string .
 
 parmenides:involve a parmenides:TransitiveVerb ;
     rdfs:label "involve"^^xsd:string .
@@ -1069,6 +1078,9 @@ parmenides:ontop a parmenides:PrototypicalPreposition ;
 parmenides:open a parmenides:TransitiveVerb ;
     rdfs:label "open"^^xsd:string .
 
+parmenides:oppose a parmenides:TransitiveVerb ;
+    rdfs:label "oppose"^^xsd:string .
+
 parmenides:opposite a parmenides:PrototypicalPreposition ;
     rdfs:label "opposite"^^xsd:string .
 
@@ -1154,6 +1166,9 @@ parmenides:pin a parmenides:TransitiveVerb ;
 parmenides:place a parmenides:TransitiveVerb ;
     rdfs:label "place"^^xsd:string .
 
+parmenides:plan a parmenides:TransitiveVerb ;
+    rdfs:label "plan"^^xsd:string .
+
 parmenides:play a parmenides:TransitiveVerb ;
     rdfs:label "play"^^xsd:string .
 
@@ -1199,6 +1214,9 @@ parmenides:promise a parmenides:TransitiveVerb ;
 parmenides:protect a parmenides:TransitiveVerb ;
     rdfs:label "protect"^^xsd:string .
 
+parmenides:provide a parmenides:TransitiveVerb ;
+    rdfs:label "provide"^^xsd:string .
+
 parmenides:pull a parmenides:TransitiveVerb ;
     rdfs:label "pull"^^xsd:string .
 
@@ -1216,6 +1234,9 @@ parmenides:purchase a parmenides:TransitiveVerb ;
 
 parmenides:push a parmenides:TransitiveVerb ;
     rdfs:label "push"^^xsd:string .
+
+parmenides:put a parmenides:TransitiveVerb ;
+    rdfs:label "put"^^xsd:string .
 
 parmenides:puzzle a parmenides:TransitiveVerb ;
     rdfs:label "puzzle"^^xsd:string .
@@ -1255,6 +1276,9 @@ parmenides:refill a parmenides:TransitiveVerb ;
 
 parmenides:regarding a parmenides:PrototypicalPreposition ;
     rdfs:label "regarding"^^xsd:string .
+
+parmenides:reinforce a parmenides:TransitiveVerb ;
+    rdfs:label "reinforce"^^xsd:string .
 
 parmenides:relax a parmenides:TransitiveVerb ;
     rdfs:label "relax"^^xsd:string .
@@ -1531,6 +1555,9 @@ parmenides:swallow a parmenides:TransitiveVerb ;
 
 parmenides:switch a parmenides:TransitiveVerb ;
     rdfs:label "switch"^^xsd:string .
+
+parmenides:take a parmenides:TransitiveVerb ;
+    rdfs:label "take"^^xsd:string .
 
 parmenides:tape a parmenides:TransitiveVerb ;
     rdfs:label "tape"^^xsd:string .

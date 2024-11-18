@@ -359,3 +359,12 @@ wipe
 wrack
 wrap
 wreck
+reinforce
+figure
+invest
+plan
+accumulate
+put
+provide
+take
+oppose

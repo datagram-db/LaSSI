@@ -37,7 +37,8 @@ dependencies = [
     "dacite",
     "websockets==13.0.1",
     "fastapi==0.115.0",
-    "uvicorn==0.30.6"
+    "uvicorn==0.30.6",
+    "numpy"
 ]
 
 #[tool.scikit-build]

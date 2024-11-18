@@ -48,11 +48,11 @@ def replaceNamed(entity: Singleton, s: str) -> Singleton:
 def create_existential(edges, nodes):
     for key in nodes:
         node = nodes[key]
-        if isinstance(node, SetOfSingletons):
+        if isinstance(node, SetOfSingletons) and len(node.entities) == 1:
             node = node.entities[0]
 
-        node_props = dict(node.properties)
-        if 'kernel' in node_props or 'root' in node_props or len(nodes) == 1:
+        # node_props = dict(node.properties)
+        if is_kernel_in_props(node) or len(nodes) == 1:
             edges.append(Relationship(
                 source=node,
                 target=Singleton(
@@ -171,12 +171,6 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
     elif len(edges) <= 0:
         return root_node
 
-        # if is_kernel_in_props(root_node):
-        #     return root_node
-        # else:
-        #     create_existential(edges, nodes)
-
-
     # With graph created, make the 'Sentence' object
     kernel = None
     kernel, properties = assign_kernel(edges, kernel, negations, nodes, root_sentence_id, found_proposition_labels)
@@ -197,16 +191,27 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
 
     edge_label = replaceNamed(kernel.edgeLabel, lemmatize_verb(kernel.edgeLabel.named_entity)) if kernel.edgeLabel is not None else None
 
-    # if kernel.edgeLabel.type != "verb":
-    #     raise Exception("Relationships in the kernel should be verbs")
+    properties_to_keep = defaultdict()
+    new_kernel = None
+    for key in properties:
+        if key == 'verb': # TODO: Check for "NOT" prop / SetOfSingletons
+            verbs_to_keep = []
+            for node in properties['verb']:
+                if not 'mark' in node.properties and root_sentence_id == node.id:
+                    new_kernel = node
+                else:
+                    verbs_to_keep.append(node)
+            properties_to_keep[key] = verbs_to_keep
+        else:
+            properties_to_keep[key] = properties[key]
 
-    ## TODO: this is done for future work, where a phrase might contain more than one sentence
-    return Singleton(
+    valid_nodes = get_valid_nodes([kernel.source, kernel.target])
+    final_kernel = Singleton(
         id=root_sentence_id,
         named_entity="",
         type="SENTENCE",
-        min=-1,
-        max=-1,
+        min=min(valid_nodes, key=lambda x: x.min).min if valid_nodes != -1 else -1,
+        max=max(valid_nodes, key=lambda x: x.max).max if valid_nodes != -1 else -1,
         confidence=1,
         kernel=Relationship(
             source=kernel.source,
@@ -214,9 +219,48 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
             edgeLabel=edge_label,
             isNegated=kernel.isNegated
         ),
-        properties=frozenset({k: tuple(v) if isinstance(v, list) else v for k, v in properties.items()}.items()),
+        properties=frozenset({k: tuple(v) if isinstance(v, list) else v for k, v in properties_to_keep.items()}.items()),
     )
 
+    if new_kernel is not None:
+        valid_nodes = get_valid_nodes([kernel.source, kernel.target])
+        return Singleton(
+            id=root_sentence_id,
+            named_entity="",
+            type="SENTENCE",
+            min=min(valid_nodes, key=lambda x: x.min).min if valid_nodes != -1 else -1,
+            max=max(valid_nodes, key=lambda x: x.max).max if valid_nodes != -1 else -1,
+            confidence=1,
+            kernel=Relationship(
+                source=Singleton(
+                    id=-1,
+                    named_entity="?" + str(Services.getInstance().getExistentials().increaseAndGetExistential()),
+                    properties=frozenset(dict().items()),
+                    min=-1,
+                    max=-1,
+                    type="existential",
+                    confidence=-1
+                ),
+                target=final_kernel,
+                edgeLabel=new_kernel,
+                isNegated=False, # TODO
+            ),
+            properties=frozenset(
+                {k: tuple(v) if isinstance(v, list) else v for k, v in properties_to_keep.items()}.items()),
+        )
+    else:
+        return final_kernel
+
+def get_valid_nodes(nodes):
+    valid_nodes = []
+    for node in nodes:
+        if node is not None:
+            valid_nodes.append(node)
+
+    if len(valid_nodes) > 0:
+        return valid_nodes
+    else:
+        return -1
 
 def analyse_kernel_node(kernel, kernel_nodes, kernel_node_type):
     if kernel_node_type == 'source':
@@ -278,8 +322,10 @@ def lemmatize_verb(edge_label_name):
         return ""
     stNLP = Services.getInstance().getStanzaSTNLP()
     lemmatizer = Services.getInstance().getWTLemmatizer()
-    return " ".join(map(lambda y: y["lemma"], filter(lambda x: x["upos"] != "AUX", stNLP(
-        lemmatizer.lemmatize(edge_label_name, 'v')).to_dict()[0])))
+    try:
+        return " ".join(map(lambda y: y["lemma"], filter(lambda x: x["upos"] != "AUX", stNLP(lemmatizer.lemmatize(edge_label_name, 'v')).to_dict()[0])))
+    except KeyError as e:
+        return edge_label_name
 
 
 def add_to_properties(kernel, node, source_or_target, kernel_nodes, properties, negations, type_key = None):
@@ -394,8 +440,7 @@ def assign_kernel(edges, kernel, negations, nodes, root_sentence_id, found_propo
                         break
 
             # If not a transitive verb, remove target as target reflects direct object
-            if len(Services.getInstance().lemmatize_sentence(edge_label.named_entity).intersection(
-                    Services.getInstance().getParmenides().getTransitiveVerbs())) == 0:
+            if len({lemmatize_verb(x) for x in Services.getInstance().lemmatize_sentence(edge_label.named_entity)}.intersection(Services.getInstance().getParmenides().getTransitiveVerbs())) == 0:
                 kernel = Relationship(
                     source=edge_source,
                     target=None,
@@ -407,7 +452,7 @@ def assign_kernel(edges, kernel, negations, nodes, root_sentence_id, found_propo
                 kernel = Relationship(
                     source=edge_source,
                     target=edge_target,
-                    edgeLabel=edge.edgeLabel,
+                    edgeLabel=edge_label,
                     isNegated=edge.isNegated
                 )
                 break
@@ -473,15 +518,14 @@ def is_case_in_props(node_props):
     # Ignore "of" and "'s" as "possessive": https://en.m.wikipedia.org/wiki/English_possessive
     ignore_cases = ['by', "'s", 'of']
     return node_props is not None and "case" in node_props and node_props['case'] not in ignore_cases
-            # and not 'subjpass' in node_props  # TODO: Is this needed?
 
 def create_edge_kernel(node):
     return Singleton(
         id=node.id,
         named_entity="",
         type="SENTENCE",
-        min=-1,
-        max=-1,
+        min=node.min,
+        max=node.max,
         confidence=1,
         kernel=Relationship(
             source=None,
@@ -492,7 +536,7 @@ def create_edge_kernel(node):
         properties=node.properties,
     )
 
-def is_kernel_in_props(node):
+def is_kernel_in_props(node, check_jj=True):
     if isinstance(node, SetOfSingletons):
         # If the Set has a true root, return, otherwise check children for root
         if node.root:
@@ -500,6 +544,6 @@ def is_kernel_in_props(node):
         else:
             for entity in node.entities:
                 return is_kernel_in_props(entity)
-    return (('kernel' in dict(node.properties) or 'root' in dict(node.properties)) and 'JJ' not in node.type) or 'verb' in node.type
+    return (('kernel' in dict(node.properties) or 'root' in dict(node.properties)) and ('JJ' not in node.type and check_jj or not check_jj)) or 'verb' in node.type
     # TODO: Do we need to check if the JJ is/not a verb?
     # ('JJ' not in x.type or ('JJ' in x.type and self.is_label_verb(x.named_entity))))
