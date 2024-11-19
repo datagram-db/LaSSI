@@ -68,7 +68,7 @@ to be ⇒ be[(mark:to)](None, None)
 waste your time ⇒ waste(?1, time[(nmod_poss:your)])
 coming to false conclusions ⇒ come(?3, None)[(ENTITY:conclusions[(amod:false), (case:to)])]
 bolt from blue ⇒ be(bolt, ?3[(case:from), (cop:blue[(case:from)])])
-things to be neat and orderly ⇒ be(things, AND(neat[(mark:to)], orderly))[(ENTITY:things)]
+things to be neat and orderly ⇒ be(things, AND(neat[(mark:to)], orderly))
 characters in movies ⇒ be(characters, ?4)[(ENTITY:movies[(case:in)])]
 you like quilts ⇒ like(you, quilts)
 buy dinner ⇒ buy(?5, dinner)
@@ -78,15 +78,19 @@ attempt to steal someone's husband ⇒ be(attempt, ?8)[(SENTENCE:to steal(None, 
 
 // Part 2
 plan your week ⇒ plan(?1, week[(nmod_poss:your)])
-privately administered region ⇒ be(region[(amod:administered), (advmod:privately)], ?1)
+//privately administered region ⇒ be(region[(amod:administered), (advmod:privately)], ?1) with query without "actioned"
+privately administered region ⇒ administer(None, region[(advmod:privately), (actioned:administered)])
 accumulate fuel in a central location ⇒ accumulate(?4, fuel)[(ENTITY:location[(case:in), (amod:central), (det:a)])]
 going off reservation ⇒ go off(?4, None)[(ENTITY:reservation)]
 you become more wise ⇒ become(you[(cop:wise[(advmod:more)])], None)
 going across the street ⇒ go(?9, None)[(ENTITY:street[(case:across), (det:the)])]
 eat a healthy salad ⇒ eat(?6, salad[(amod:healthy), (det:a)])
 propulsion of aircraft ⇒ be(propulsion, ?8)[(ENTITY:aircraft[(case:of)])]
-//emilia's short tailed opossum ⇒ be(opossum[(case:'s), (nmod_poss:emilia)], ?10)
-//If you move you ⇒ if move(you, you)
+
+// This is not correct
+emilia's short tailed opossum ⇒ tail(?13[(cop:short)], None)
+
+If you move you ⇒ if move(you, you)
 eating potato crisps ⇒ eat(?11, potato crisps)
 reinforce it ⇒ reinforce(?13, it)
 figuring out derivatives and integrals ⇒ figure out(?15, AND(derivatives, integrals))
@@ -97,3 +101,26 @@ get one quart beer bottles ⇒ get(?27, quart beer bottles[(nummod:one)])
 go to dogs ⇒ go(?29, None)[(ENTITY:dogs[(case:to)])]
 a band classroom ⇒ be(band classroom[(det:a)], ?31)
 buying a beer ⇒ buy(?24, beer[(det:a)])
+
+// Part 3
+A "Life Saver" candy ⇒ be(candy[(det:A), (extra:Life Saver), (punct:")], ?1)
+slip of tongue ⇒ slip(None, None)[(ENTITY:tongue[(case:of)])]
+more durable than latex ⇒ None(durable[(advmod:more)], None)[(ENTITY:latex[(case:than)])]
+Few art gallery patrons ⇒ be(art[(amod:Few)], ?2)[(ENTITY:gallery patrons)]
+a capatin ⇒ be(capatin[(det:a)], ?3)
+try to work ⇒ try(?4, work[(mark:to)](None, None)[(mark:to)])
+putting trash in it ⇒ put(?6, trash)[(ENTITY:it[(case:in)])]
+pocket sized notebooks ⇒ be(pocket, ?8[(cop:sized)])[(ENTITY:notebooks)]
+cancer is a sickness and cure ⇒ be(cancer, AND(sickness[(det:a)], cure))
+if they are rotten they ⇒ be(they[(cop:rotten[(mark:if)])], None)[(ENTITY:they)]
+one person's grade ⇒ be(grade[(nmod_poss:person), (case:'s), (nummod:one)], ?9)
+practice and discipline ⇒ be(AND(practice, discipline), ?10)
+fish in the water ⇒ be(fish, ?11)[(ENTITY:water[(case:in), (det:the)])]
+providing information to others ⇒ provide(?12, information)[(ENTITY:others[(case:to)])]
+a learning experience ⇒ be(learning experience[(det:a)], ?14)
+Taking classes in fencing ⇒ take(?15, classes)[(ENTITY:fencing[(case:in)])]
+washing clothes ⇒ wash(None, clothes[(actioned:washing)])
+group of reindeer ⇒ be(group, ?17)[(ENTITY:reindeer[(case:of)])]
+attack opposing armies ⇒ attack(?18, oppose(None, armies))
+A mixed breed dog ⇒ be(breed dog[(det:A), (amod:mixed)], ?19)
+you set the timer ⇒ set(you, timer[(det:the)])

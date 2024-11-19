@@ -11,13 +11,11 @@ import json
 import re
 from collections import defaultdict
 from copy import copy
-from dataclasses import dataclass, field
-from typing import List
 
 from LaSSI.external_services.Services import Services
 from LaSSI.files.JSONDump import json_dumps
-from LaSSI.structures.internal_graph.EntityRelationship import Relationship, NodeEntryPoint, Singleton, SetOfSingletons, \
-    Grouping, deserialize_NodeEntryPoint
+from LaSSI.ner.string_functions import lemmatize_verb
+from LaSSI.structures.internal_graph.EntityRelationship import Relationship,  Singleton, SetOfSingletons, Grouping
 
 
 # @dataclass(order=True, frozen=True, eq=True)
@@ -164,7 +162,7 @@ def create_cop(node, kernel, target_or_source):
         )
     return kernel
 
-def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposition_labels) -> Singleton:
+def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposition_labels, node_functions) -> Singleton:
     root_node = nodes[root_sentence_id]
     if root_node.type == 'verb' and len(edges) <= 0:
         return create_edge_kernel(root_node)
@@ -184,10 +182,10 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
 
     for edge in edges:
         # Source
-        kernel, properties, kernel_nodes = add_to_properties(kernel, edge.source, 'source', kernel_nodes, properties, negations)
+        kernel, properties, kernel_nodes = add_to_properties(kernel, edge.source, 'source', kernel_nodes, properties, negations, node_functions)
 
         # Target
-        kernel, properties, kernel_nodes = add_to_properties(kernel, edge.target, 'target', kernel_nodes, properties, negations)
+        kernel, properties, kernel_nodes = add_to_properties(kernel, edge.target, 'target', kernel_nodes, properties, negations, node_functions)
 
     edge_label = replaceNamed(kernel.edgeLabel, lemmatize_verb(kernel.edgeLabel.named_entity)) if kernel.edgeLabel is not None else None
 
@@ -205,7 +203,7 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
         else:
             properties_to_keep[key] = properties[key]
 
-    valid_nodes = get_valid_nodes([kernel.source, kernel.target])
+    valid_nodes = node_functions.get_valid_nodes([kernel.source, kernel.target])
     final_kernel = Singleton(
         id=root_sentence_id,
         named_entity="",
@@ -223,7 +221,7 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
     )
 
     if new_kernel is not None:
-        valid_nodes = get_valid_nodes([kernel.source, kernel.target])
+        valid_nodes = node_functions.get_valid_nodes([kernel.source, kernel.target])
         return Singleton(
             id=root_sentence_id,
             named_entity="",
@@ -250,17 +248,6 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
         )
     else:
         return final_kernel
-
-def get_valid_nodes(nodes):
-    valid_nodes = []
-    for node in nodes:
-        if node is not None:
-            valid_nodes.append(node)
-
-    if len(valid_nodes) > 0:
-        return valid_nodes
-    else:
-        return -1
 
 def analyse_kernel_node(kernel, kernel_nodes, kernel_node_type):
     if kernel_node_type == 'source':
@@ -317,18 +304,8 @@ def add_to_kernel_nodes(node, kernel_nodes):
 
     return kernel_nodes
 
-def lemmatize_verb(edge_label_name):
-    if len(edge_label_name) == 0:
-        return ""
-    stNLP = Services.getInstance().getStanzaSTNLP()
-    lemmatizer = Services.getInstance().getWTLemmatizer()
-    try:
-        return " ".join(map(lambda y: y["lemma"], filter(lambda x: x["upos"] != "AUX", stNLP(lemmatizer.lemmatize(edge_label_name, 'v')).to_dict()[0])))
-    except KeyError as e:
-        return edge_label_name
 
-
-def add_to_properties(kernel, node, source_or_target, kernel_nodes, properties, negations, type_key = None):
+def add_to_properties(kernel, node, source_or_target, kernel_nodes, properties, negations, node_functions, type_key = None):
     lemma_kernel_edge_label_name = lemmatize_verb(kernel.edgeLabel.named_entity) if kernel.edgeLabel is not None else ""
 
     # Check if action matched edge label, and if it contains a negation, negate the kernel
@@ -366,7 +343,7 @@ def add_to_properties(kernel, node, source_or_target, kernel_nodes, properties, 
     # Check for a SetOfSingletons, or if the node name or action label is not equal to the kernel edge label
     if (isinstance(node, SetOfSingletons)) or (node is not None and lemma_node_edge_label_name != lemma_kernel_edge_label_name):
         if type_key is None:
-            type_key = get_node_type(node)
+            type_key = node_functions.get_node_type(node)
         if (type_key == 'JJ' or type_key == 'JJS') and not is_node_in_kernel_nodes(node, kernel_nodes):
             kernel_nodes = add_to_kernel_nodes(node, kernel_nodes)
             kernel = create_cop(node, kernel, source_or_target)
@@ -374,7 +351,7 @@ def add_to_properties(kernel, node, source_or_target, kernel_nodes, properties, 
             if (
                     (node.type == Grouping.MULTIINDIRECT) or
                     (isinstance(node, Singleton) and (node.named_entity == "but" or node.named_entity == "and")) or
-                    (isinstance(node, SetOfSingletons) and node.type == Grouping.AND and 'NEG' in get_node_type(node.entities[0]) and len(node.entities) == 1)
+                    (isinstance(node, SetOfSingletons) and node.type == Grouping.AND and 'NEG' in node_functions.get_node_type(node.entities[0]) and len(node.entities) == 1)
             ):
                 return kernel, properties, kernel_nodes
             elif not is_node_in_kernel_nodes(node, kernel_nodes) and node not in properties[type_key]:
@@ -402,9 +379,6 @@ def is_node_in_kernel_nodes(check_node, kernel_nodes):
                 return True
 
     return False
-
-def get_node_type(node):
-    return node.type if isinstance(node.type, str) else node.type.name
 
 
 def assign_kernel(edges, kernel, negations, nodes, root_sentence_id, found_proposition_labels):
