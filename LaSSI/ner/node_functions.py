@@ -18,6 +18,19 @@ class NodeFunctions:
         else:
             return None
 
+    def get_node_parents(self, node, gsm_json):
+        parents = []
+        number_of_nodes = range(len(gsm_json))
+        for row in number_of_nodes:
+            gsm_item = gsm_json[row]
+            if len(gsm_item['phi']) > 0:
+                for edge in gsm_item['phi']:
+                    if edge['score']['child'] == node.id:
+                        parents.append(edge['score']['parent'])
+
+        return parents
+
+
     def get_node_id(self, node_id):
         value = self.node_id_map.get(node_id, node_id)
         if value is not None and value in self.node_id_map.keys():  # Check if value exists and is a key
@@ -50,12 +63,12 @@ class NodeFunctions:
         else:
             return nodes[self.get_node_id(node_id)]
 
-    def freshId(self):
+    def fresh_id(self):
         self.max_id += 1
         return self.max_id
 
-    def freshIdAndAddToNodeMap(self, id_to_map):
-        fresh_id = self.freshId()
+    def fresh_id_and_add_to_node_map(self, id_to_map):
+        fresh_id = self.fresh_id()
         self.node_id_map[id_to_map] = fresh_id
         return fresh_id
 

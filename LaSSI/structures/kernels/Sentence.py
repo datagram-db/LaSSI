@@ -82,14 +82,12 @@ def create_cop(node, kernel, target_or_source):
         # TODO: Ollie: Is it correct to say if target is None add to source otherwise add to target?
         if kernel.target is None:
             temp_prop = dict(copy(kernel.source.properties))
-            target_json = json_dumps(node)
-            target_dict = dict(json.loads(target_json))
-            temp_prop['cop'] = target_dict
+            temp_prop['cop'] = node
 
             new_source = Singleton(
                 id=kernel.source.id,
                 named_entity=kernel.source.named_entity,
-                properties=temp_prop,
+                properties=frozenset({k: tuple(v) if isinstance(v, list) else v for k, v in temp_prop.items()}.items()),
                 min=kernel.source.min,
                 max=kernel.source.max,
                 type=kernel.source.type,
@@ -106,15 +104,13 @@ def create_cop(node, kernel, target_or_source):
             #     temp_prop = dict(copy(node.entities[0].properties))
             # else:
             temp_prop = dict(copy(node.properties))
-            target_json = json_dumps(node)
-            target_dict = dict(json.loads(target_json))
-            temp_prop['cop'] = target_dict
+            temp_prop['cop'] = node
 
             if isinstance(kernel.target, Singleton):
                 new_target = Singleton(
                     id=kernel.target.id,
                     named_entity=kernel.target.named_entity,
-                    properties=temp_prop,
+                    properties=frozenset({k: tuple(v) if isinstance(v, list) else v for k, v in temp_prop.items()}.items()),
                     min=kernel.target.min,
                     max=kernel.target.max,
                     type=kernel.target.type,
@@ -136,9 +132,7 @@ def create_cop(node, kernel, target_or_source):
             )
     else:
         temp_prop = dict(copy(kernel.source.properties))
-        target_json = json_dumps(node)
-        target_dict = dict(json.loads(target_json))
-        temp_prop['cop'] = target_dict
+        temp_prop['cop'] = node
 
         # Only add the copula if it differs from the target name
         kernel_target = kernel.target
@@ -186,6 +180,26 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
 
         # Target
         kernel, properties, kernel_nodes = add_to_properties(kernel, edge.target, 'target', kernel_nodes, properties, negations, node_functions)
+
+        # Add edge
+        if edge.edgeLabel.named_entity in {'acl_relcl', 'nmod'}:
+            valid_nodes = node_functions.get_valid_nodes([kernel.source, kernel.target])
+            edge_kernel = Singleton(
+                id=edge.edgeLabel.id,
+                named_entity="",
+                type="SENTENCE",
+                min=min(valid_nodes, key=lambda x: x.min).min if valid_nodes != -1 else -1,
+                max=max(valid_nodes, key=lambda x: x.max).max if valid_nodes != -1 else -1,
+                confidence=1,
+                kernel=Relationship(
+                    source=edge.source,
+                    target=edge.target,
+                    edgeLabel=edge.edgeLabel,
+                    isNegated=edge.isNegated
+                ),
+                properties=frozenset(dict()),
+            )
+            kernel, properties, kernel_nodes = add_to_properties(kernel, edge_kernel, 'edgeLabel', kernel_nodes, properties, negations, node_functions)
 
     edge_label = replaceNamed(kernel.edgeLabel, lemmatize_verb(kernel.edgeLabel.named_entity)) if kernel.edgeLabel is not None else None
 
@@ -243,8 +257,7 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
                 edgeLabel=new_kernel,
                 isNegated=False, # TODO
             ),
-            properties=frozenset(
-                {k: tuple(v) if isinstance(v, list) else v for k, v in properties_to_keep.items()}.items()),
+            properties=frozenset({k: tuple(v) if isinstance(v, list) else v for k, v in properties_to_keep.items()}.items()),
         )
     else:
         return final_kernel
@@ -339,11 +352,16 @@ def add_to_properties(kernel, node, source_or_target, kernel_nodes, properties, 
             lemma_node_edge_label_name = lemmatize_verb(node_props['action'])
         else:
             lemma_node_edge_label_name = lemmatize_verb(node.named_entity)
+    else:
+        lemma_node_edge_label_name = None
 
     # Check for a SetOfSingletons, or if the node name or action label is not equal to the kernel edge label
     if (isinstance(node, SetOfSingletons)) or (node is not None and lemma_node_edge_label_name != lemma_kernel_edge_label_name):
         if type_key is None:
-            type_key = node_functions.get_node_type(node)
+            if source_or_target == 'edgeLabel':
+                type_key = node.kernel.edgeLabel.named_entity
+            else:
+                type_key = node_functions.get_node_type(node)
         if (type_key == 'JJ' or type_key == 'JJS') and not is_node_in_kernel_nodes(node, kernel_nodes):
             kernel_nodes = add_to_kernel_nodes(node, kernel_nodes)
             kernel = create_cop(node, kernel, source_or_target)
@@ -488,10 +506,22 @@ def assign_kernel(edges, kernel, negations, nodes, root_sentence_id, found_propo
 
 
 def is_case_in_props(node_props):
+    if node_props is None:
+        return False
+
     # Ignore "by" as passive sentence: https://www.uc.utoronto.ca/passive-voice
     # Ignore "of" and "'s" as "possessive": https://en.m.wikipedia.org/wiki/English_possessive
     ignore_cases = ['by', "'s", 'of']
-    return node_props is not None and "case" in node_props and node_props['case'] not in ignore_cases
+
+    for key in node_props:
+        try:
+            case_position = float(key)
+            if node_props[key] not in ignore_cases:
+                return True
+        except ValueError:
+            continue
+
+    return False
 
 def create_edge_kernel(node):
     return Singleton(

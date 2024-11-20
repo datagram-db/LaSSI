@@ -17,7 +17,7 @@ from LaSSI.ner.string_functions import is_label_verb, does_string_have_negations
 from LaSSI.ner.topological_sort import topologicalSort
 from LaSSI.structures.internal_graph.EntityRelationship import Singleton, Grouping, SetOfSingletons, Relationship
 from LaSSI.structures.internal_graph.Graph import Graph
-from LaSSI.structures.kernels.Sentence import is_kernel_in_props
+from LaSSI.structures.kernels.Sentence import is_kernel_in_props, is_case_in_props
 
 
 # TODO: This is doing a bit more than "AssignTypeToSingleton", should move some functions into different classes?
@@ -65,7 +65,7 @@ class AssignTypeToSingleton:
             self.associateNodeToMeuMatches(self.nodes[key])
         # Phase 3
         for item in self.associations:
-            self.singletonTypeResolution(item)
+            self.singletonTypeResolution(item, gsm_json)
 
         # Phase 4
         self.resolveGraphNERs()
@@ -283,7 +283,7 @@ class AssignTypeToSingleton:
 
                 # TODO: Need to resolve grouped entities before merging, is there a more elegant way to do this? Could this thus be removed from the phases?
                 self.associteNodeToBestMeuMatches(self.nodes[gsm_item['id']])
-                self.singletonTypeResolution(self.nodes[gsm_item['id']])
+                self.singletonTypeResolution(self.nodes[gsm_item['id']], gsm_json)
 
     # Phase 1.2
     def get_relationship_entities(self, grouped_nodes, gsm_json, gsm_item, has_relationship, norm_confidence,
@@ -316,7 +316,7 @@ class AssignTypeToSingleton:
     def create_set_of_singletons(self, group_type, grouped_nodes, gsm_item, has_conj, has_multipleindobj, is_compound, has_compound_prt, norm_confidence, gsm_json, pos):
         new_node = None
         if has_conj:
-            new_id = self.node_functions.freshIdAndAddToNodeMap(gsm_item['id'])
+            new_id = self.node_functions.fresh_id_and_add_to_node_map(gsm_item['id'])
             new_node = SetOfSingletons(
                 id=new_id,
                 type=group_type,
@@ -328,7 +328,7 @@ class AssignTypeToSingleton:
             )
         elif is_compound:
             grouped_nodes.insert(0, self.nodes[self.node_functions.get_node_id(gsm_item['id'])])
-            new_id = self.node_functions.freshIdAndAddToNodeMap(gsm_item['id'])
+            new_id = self.node_functions.fresh_id_and_add_to_node_map(gsm_item['id'])
             new_node = SetOfSingletons(
                 id=new_id,
                 type=Grouping.GROUPING,
@@ -350,7 +350,7 @@ class AssignTypeToSingleton:
             )
         elif has_compound_prt:
             grouped_nodes.insert(0, self.nodes[self.node_functions.get_node_id(gsm_item['id'])])
-            new_id = self.node_functions.freshIdAndAddToNodeMap(gsm_item['id'])
+            new_id = self.node_functions.fresh_id_and_add_to_node_map(gsm_item['id'])
 
             sorted_entities = sorted(grouped_nodes, key=lambda x: float(dict(x.properties)['pos']))
             sorted_entity_names = list(map(getattr, sorted_entities, repeat('named_entity')))
@@ -437,7 +437,7 @@ class AssignTypeToSingleton:
         if isinstance(node, SetOfSingletons) and node.type == Grouping.NOT and node == grouped_nodes[0]:
             return
         if len(grouped_nodes) > 0:
-            new_id = self.node_functions.freshIdAndAddToNodeMap(gsm_item['id'])
+            new_id = self.node_functions.fresh_id_and_add_to_node_map(gsm_item['id'])
 
             # Create an AND grouping from given child nodes
             new_but_node = SetOfSingletons(
@@ -454,9 +454,9 @@ class AssignTypeToSingleton:
             if self.checkForSpecificNegation(gsm_json, node, create_node=False):
                 # Create new NOT node within nodes
                 if grouped_nodes[0].id != gsm_item['id']:
-                    new_new_id = self.node_functions.freshIdAndAddToNodeMap(grouped_nodes[0].id)
+                    new_new_id = self.node_functions.fresh_id_and_add_to_node_map(grouped_nodes[0].id)
                 else:
-                    new_new_id = self.node_functions.freshId()
+                    new_new_id = self.node_functions.fresh_id()
 
                 self.nodes[new_new_id] = SetOfSingletons(
                     id=new_new_id,
@@ -516,7 +516,7 @@ class AssignTypeToSingleton:
                     self.associations.add(item)
 
     # Phase 3
-    def singletonTypeResolution(self, item):
+    def singletonTypeResolution(self, item, gsm_json):
         if len(self.meu_entities[item]) > 0:
             if item.type == 'verb':
                 best_type = 'verb'
@@ -530,14 +530,7 @@ class AssignTypeToSingleton:
                 else:
                     # TODO: Fix typing information (e.g. Golden Gate Bridge has GPE (0.8) and ENTITY (1.0)
                     best_score = max(map(lambda y: y.confidence, self.meu_entities[item]))
-                    # best_items = [
-                    #     y for y in self.meu_entities[item]
-                    #     if (len(item.named_entity.split(' ')) == 1 and y.confidence == best_score) or
-                    #        (y.confidence == best_score and
-                    #         len(item.named_entity.split(' ')) > 1 and
-                    #         y.monad is not None and
-                    #        y.monad.lower() == item.named_entity.lower())
-                    # ]
+
                     # TODO: min and max might not be correct when coming from an inherit edge
                     best_items = [
                         y for y in self.meu_entities[item]
@@ -553,7 +546,14 @@ class AssignTypeToSingleton:
                         if len(best_types) == 1:
                             best_type = best_types[0]
                         ## TODO! type disambiguation, in future works, needs to take into account also the verb associated to it!
-                        elif "verb" in best_types:
+                        elif ("VERB" in best_types or "verb" in best_types) and (
+                                # If a node is marked with a det, never consider this as a verb
+                                'det' not in dict(item.properties) and
+                                (( # If a node is the last occurring in the root/kernel of all kernels and has no ingoing edges or if a node has at least one ingoing edge and comes with a case-derived float attribute
+                                        (len(self.node_functions.get_node_parents(item, gsm_json)) > 0 and is_case_in_props(self.node_functions.get_gsm_item_from_id(x, gsm_json)['properties']) for x in self.node_functions.get_node_parents(item, gsm_json)) or
+                                        (list(self.nodes)[0] == item and is_kernel_in_props(item) and len(self.node_functions.get_node_parents(item, gsm_json)) == 0)
+                                ))
+                        ):
                             best_type = "verb"
                         elif "PERSON" in best_types:
                             best_type = "PERSON"
@@ -734,7 +734,7 @@ class AssignTypeToSingleton:
                 found_negation = True
 
             if found_negation:
-                fresh_id = self.node_functions.freshIdAndAddToNodeMap(key)
+                fresh_id = self.node_functions.fresh_id_and_add_to_node_map(key)
                 self.nodes[fresh_id] = SetOfSingletons(
                     id=fresh_id,
                     type=Grouping.NOT,
@@ -799,7 +799,7 @@ class AssignTypeToSingleton:
 
             if found_negation:
                 if create_node:
-                    fresh_id = self.node_functions.freshIdAndAddToNodeMap(node_id)
+                    fresh_id = self.node_functions.fresh_id_and_add_to_node_map(node_id)
                     self.nodes[fresh_id] = SetOfSingletons(
                         id=fresh_id,
                         type=Grouping.NOT,
@@ -860,7 +860,7 @@ class AssignTypeToSingleton:
                         edge_label_name = source_properties['action']
                         is_verb = is_label_verb(edge_label_name)
                         if is_verb:
-                            self.create_edges(edge_label_name, gsm_item, non_verbs, source_node_id, target_node_id)
+                            self.create_edges(edge_label_name, gsm_item, non_verbs, source_node_id, target_node_id, gsm_json)
 
             for edge in gsm_item['phi']:
                 # Check if child node has 'multipleindobj' type, to reassign edges from each 'orig'
@@ -872,7 +872,7 @@ class AssignTypeToSingleton:
 
                     for child_edge in child_gsm_item['phi']:
                         target_node_id = child_edge['score']['child']
-                        self.create_edges(edge_label_name, gsm_item, non_verbs, source_node_id, target_node_id)
+                        self.create_edges(edge_label_name, gsm_item, non_verbs, source_node_id, target_node_id, gsm_json)
 
                 # Make sure current edge is not in list of rejected edges, e.g. 'compound'
                 if edge['containment'] not in rejected_edges:
@@ -881,7 +881,7 @@ class AssignTypeToSingleton:
 
                         source_node_id = edge['score']['parent']
                         target_node_id = edge['score']['child']
-                        self.create_edges(edge_label_name, gsm_item, non_verbs, source_node_id, target_node_id)
+                        self.create_edges(edge_label_name, gsm_item, non_verbs, source_node_id, target_node_id, gsm_json)
 
         # print(json.dumps(Graph(self.edges), cls=EnhancedJSONEncoder))
         return Graph(self.edges)
@@ -896,7 +896,7 @@ class AssignTypeToSingleton:
                     if 'orig' not in edge['containment']:
                         yield row, gsm_item, edge
 
-    def create_edges(self, edge_label_name, gsm_item, non_verbs, source_node_id, target_node_id):
+    def create_edges(self, edge_label_name, gsm_item, non_verbs, source_node_id, target_node_id, gsm_json):
         source_node = self.node_functions.resolve_node_id(source_node_id, self.nodes)
         target_node = self.node_functions.resolve_node_id(target_node_id, self.nodes)
 
@@ -923,6 +923,7 @@ class AssignTypeToSingleton:
                 node_max = gsm_item['properties']['end']
 
         rejected_edges = {'amod', 'advmod', 'neg', 'conj', 'cc'}
+        target_gsm_item = self.node_functions.get_gsm_item_from_id(self.node_functions.get_node_id(target_node.id), gsm_json)
 
         if self.nodes[self.node_functions.get_node_id(source_node_id)].type == Grouping.MULTIINDIRECT:
             # TODO: I don't think this logic is correct (e.g. The mouse is eaten by the cat)
@@ -940,7 +941,7 @@ class AssignTypeToSingleton:
                         confidence=self.nodes[gsm_item['id']].confidence),
                     isNegated=has_negations
                 ))
-        elif edge_label_name not in rejected_edges:
+        elif edge_label_name not in rejected_edges or (edge_label_name in rejected_edges and target_gsm_item is not None and len(target_gsm_item['phi']) > 0):
             self.edges.append(Relationship(
                 source=source_node,
                 target=target_node,

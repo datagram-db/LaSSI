@@ -30,6 +30,7 @@ class TestLaSSI(unittest.TestCase):
                                 found_assertions.append(self.replace_existential(line.strip()).lower())
 
         for assertion in found_assertions:
+            print(assertion)
             split_check_assertion = re.split(" ⇒ ", assertion)
             try:
                 if assertions[split_check_assertion[0].lower()]:
@@ -71,7 +72,7 @@ class TestLaSSI(unittest.TestCase):
         if new_args is None:
             new_args = []
         for arg in re.findall(r"\[[^\[\]]*]", rep):
-            # inner_arg = re.sub(r'\(det:\w+\)', '', arg) # Omit 'det' property (TODO: Fix inheritance in GSM?)
+            # inner_arg = re.sub(r'\(nmod:\w+\)', '', arg) # Omit 'x' property
             # inner_arg = list(filter(None, inner_arg.strip('[]').split(', ')))
             inner_arg = list(filter(None, arg.strip('[]').split(', ')))
             if inner_arg is not None:

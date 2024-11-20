@@ -368,3 +368,8 @@ put
 provide
 take
 oppose
+weigh
+attend
+tackle
+inform
+score

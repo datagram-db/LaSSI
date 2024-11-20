@@ -6,7 +6,7 @@ from LaSSI.external_services.Services import Services
 negations = {'not', 'no'}
 
 def is_label_verb(edge_label_name):
-    edge_label_name = lemmatize_verb(edge_label_name)
+    edge_label_name = lemmatize_verb(edge_label_name).lower()
     parmenides_types = {str(x)[len(Parmenides.parmenides_ns):] for x in
                         Services.getInstance().getParmenides().typeOf(edge_label_name)}
     is_verb = any(map(lambda x: 'Verb' in x, parmenides_types)) or len(parmenides_types) == 0

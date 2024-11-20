@@ -54,31 +54,15 @@ class CreateFinalKernel:
                     # Check if prototypical preposition is in edge label but NOT just the edge label (i.e. "to" in "to steal" = TRUE, "like" in "like" = FALSE)
                     if re.search(r"\b"+p+r"\b", edge.edgeLabel.named_entity) and p != edge.edgeLabel.named_entity:
                         found_prototypical_prepositions = True
+
                         # Add root property to target
-                        if isinstance(edge.target, Singleton):
-                            target_props = dict(edge.target.properties)
-                            target_props['kernel'] = 'root'
-                            new_edge = Relationship(
-                                source=edge.source,
-                                target=Singleton.update_node_props(edge.target, target_props),
-                                edgeLabel=edge.edgeLabel,
-                                isNegated=edge.isNegated
-                            )
-                        elif isinstance(edge.target, SetOfSingletons):
-                            new_edge = Relationship(
-                                source=edge.source,
-                                target=SetOfSingletons(
-                                    id=edge.target.id,
-                                    type=edge.target.type,
-                                    entities=edge.target.entities,
-                                    min=edge.target.min,
-                                    max=edge.target.max,
-                                    confidence=edge.target.confidence,
-                                    root=True
-                                ),
-                                edgeLabel=edge.edgeLabel,
-                                isNegated=edge.isNegated
-                            )
+                        self.nodes[edge.target.id] = Singleton.add_root_property(edge.target)
+                        new_edge = Relationship(
+                            source=edge.source,
+                            target=self.nodes[edge.target.id],
+                            edgeLabel=edge.edgeLabel,
+                            isNegated=edge.isNegated
+                        )
 
                         # re.sub(r"\b"+p+r"\b", "", edge.edgeLabel.named_entity).strip()
                         found_proposition_labels[edge.target.id] = edge.edgeLabel.named_entity
@@ -86,36 +70,20 @@ class CreateFinalKernel:
 
                 # If the edge is a verb and source is a 'root', remove 'root' from the target node of the edge
                 if not found_prototypical_prepositions and is_label_verb(edge.edgeLabel.named_entity) and is_kernel_in_props(edge.source):
-                    if isinstance(edge.target, Singleton):
-                        new_edge = Relationship(
-                            source=edge.source,
-                            target=Singleton.strip_root_properties(edge.target),
-                            edgeLabel=edge.edgeLabel,
-                            isNegated=edge.isNegated
-                        )
-                    else:
-                        new_target = SetOfSingletons(
-                            id=edge.target.id,
-                            type=edge.target.type,
-                            entities=tuple(Singleton.strip_root_properties(entity) for entity in edge.target.entities),
-                            # entities=edge.target.entities,
-                            min=edge.target.min,
-                            max=edge.target.max,
-                            confidence=edge.target.confidence,
-                            root=False
-                        )
-                        new_edge = Relationship(
-                            source=edge.source,
-                            target=new_target,
-                            edgeLabel=edge.edgeLabel,
-                            isNegated=edge.isNegated
-                        )
+                    self.nodes[edge.target.id] = Singleton.strip_root_properties(edge.target)
+                    new_edge = Relationship(
+                        source=edge.source,
+                        target=self.nodes[edge.target.id],
+                        edgeLabel=edge.edgeLabel,
+                        isNegated=edge.isNegated
+                    )
 
                 if new_edge is None:
                     new_edge = edge
                     if not is_kernel_in_props(edge.target):
                         true_targets.add(edge.target.id)
                 new_edges.append(new_edge)
+                new_edges = [Relationship.from_nodes(r, self.nodes) for r in new_edges]
 
         filtered_nodes = set()
         filtered_top_node_ids = set()
@@ -124,10 +92,6 @@ class CreateFinalKernel:
 
         # Loop over every source and target for every edge
         for edge_node in itertools.chain.from_iterable(map(lambda x: [x.source, x.target], new_edges)):
-            if edge_node is None or edge_node.id in filtered_top_node_ids:
-                continue
-            filtered_top_node_ids.add(edge_node.id)
-
             # Check if edge node is not None, in true targets, is a root or existential
             if ((edge_node is not None and edge_node.id not in true_targets) and
                     (is_kernel_in_props(edge_node))
@@ -139,6 +103,10 @@ class CreateFinalKernel:
                     for entity in edge_node.entities:
                         remove_set.add(entity.id)
 
+            if edge_node is None or edge_node.id in filtered_top_node_ids:
+                continue
+            filtered_top_node_ids.add(edge_node.id)
+
         # IDs of root nodes in topological order
         filtered_nodes = filtered_nodes - remove_set
         filtered_top_node_ids = [x.id for x in self.nodes.values() if x.id in filtered_nodes] # Filter node IDs in topological order based on self.nodes order
@@ -147,18 +115,28 @@ class CreateFinalKernel:
             filtered_top_node_ids = [list(self.nodes)[-1]] if len(self.nodes) == 1 else [self.node_functions.get_node_id(self.nodes[x].id) for x in self.nodes if is_kernel_in_props(self.nodes[x], False)]  # Get last node
             filtered_top_node_ids = list(map(int, numpy.unique(filtered_top_node_ids)))
 
+        used_edges = set()
         for node_id in filtered_top_node_ids:
             descendant_nodes = self.node_functions.node_bfs(new_edges, node_id)
-            filtered_edges = [x for x in new_edges if (x.source.id in descendant_nodes and x.target.id in descendant_nodes) or (x.target.id in found_proposition_labels)]
+
+            # Ensure the d_nodes are in the edge, and not in used_edges, unless we have proposition labels
+            filtered_edges = [x for x in new_edges if ((x.source.id in descendant_nodes and x.target.id in descendant_nodes) or (x.target.id in found_proposition_labels)) and ((x.source.id, x.target.id) not in used_edges or ((x.source.id, x.target.id) in used_edges and len(found_proposition_labels) > 0))]
+
+            used_edges = set(map(lambda y: (y.source.id, y.target.id), filtered_edges))
             kernel = create_sentence_obj(filtered_edges, {key: x for key, x in self.nodes.items() if x.id in descendant_nodes}, self.negations, node_id, found_proposition_labels, self.node_functions)
+            kernel = self.check_if_empty_kernel(kernel)  # Check we do not have be(?, ?) as a kernel
             kernel = self.kernel_post_processing(kernel, position_pairs)
             self.nodes[node_id] = kernel
 
             # Remove 'root' property from nodes
-            self.nodes = {k: Singleton.strip_root_properties(v) if isinstance(v, Singleton) and v.id in descendant_nodes else v for k, v in self.nodes.items()}
+            self.nodes = {k: Singleton.strip_root_properties(v) if v.id in descendant_nodes else v for k, v in self.nodes.items()}
 
-            # Re-instantiate new node properties across all relationships
+            # Re-instantiate new node properties across all relationships and new 'kernel' node
             new_edges = [Relationship.from_nodes(r, self.nodes) for r in new_edges]
+
+            # If this current "kernel" we return is none, then pop so we use the previous kernel, if we have more than one root node
+            if ((isinstance(kernel, Singleton) and kernel.kernel is None) or (kernel is None)) and len(filtered_top_node_ids) > 1 and node_id == filtered_top_node_ids[-1]:
+                filtered_top_node_ids.pop()
 
         # Return the last node ('highest' kernel)
         final_kernel = self.nodes[filtered_top_node_ids[-1]]
@@ -220,15 +198,15 @@ class CreateFinalKernel:
         print(f"{final_kernel.to_string()}\n")
         return final_kernel
 
-    # Check if final kernel is "empty" and use the properties of 'SENTENCE'
+    # Check if final kernel is "empty" be(?, ?) and use the properties of 'SENTENCE'
     def check_if_empty_kernel(self, kernel):
-        if kernel.kernel is not None and kernel.kernel.edgeLabel is not None and kernel.kernel.edgeLabel.named_entity == "be" and kernel.kernel.source is not None and kernel.kernel.source.type == 'existential' and kernel.kernel.target is not None and kernel.kernel.target.type == 'existential':
+        if isinstance(kernel, Singleton) and kernel.kernel is not None and kernel.kernel.edgeLabel is not None and kernel.kernel.edgeLabel.named_entity == "be" and kernel.kernel.source is not None and kernel.kernel.source.type == 'existential' and kernel.kernel.target is not None and kernel.kernel.target.type == 'existential':
             node_props = dict(kernel.properties)
             if node_props is not None and 'SENTENCE' in node_props:
                 new_kernel = node_props['SENTENCE'][0] # TODO: Safe to use 0th element?
                 return self.check_if_empty_kernel(new_kernel)
-        else:
-            return kernel
+
+        return kernel
 
     # Rewrite kernel if positions are not correct
     def kernel_post_processing(self, kernel, position_pairs):

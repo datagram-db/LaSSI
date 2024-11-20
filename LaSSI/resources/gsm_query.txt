@@ -54,7 +54,7 @@ p0 = (>> Compl)<-[∀obl||xcomp||dep||obj]--(WithObl)
 
 p1 = (X)--[l:det||nmod_poss||amod||mark||case||punct||advmod||advcl||cc||punct||neg||nummod]->(Y)                   // Graph matching, First pattern
       where ((FILL ((ℓ 0 @ X = verb) ∧ ((X unmatched p3fauxcop . V) ∧ ((X unmatched p3simple . V) ∧ ((X unmatched p3 . V) ∧ ((X unmatched p3expl . V) ∧ ((X unmatched p4 . V) ∧ (X unmatched p3pass . V)))))))) ∧ (FILL ((ℓ 0 @ X = verb) ∧ ((Y unmatched p3fauxcop . V) ∧ ((Y unmatched p3simple . V) ∧ ((Y unmatched p3 . V) ∧ ((Y unmatched p3expl . V) ∧ ((Y unmatched p4 . V) ∧ (Y unmatched p3pass . V))))))))) ∨ (( FILL (label l ≠ neg)) ∧ ((TEST "= |𝜑 ⦃\"Y\"⦄ | 0 ") ∧ ( ( FILL (ℓ 0 @ Y ≠ CC) ) ∧ (( FILL (ℓ 0 @ X ≠ verb)) ∨ (( FILL (label l ≠ mark)) ∨ ((TEST "= |𝜑 ⦃\"X\"⦄ | 1 "))))))) // ∧ ((Y unmatched p2 . K) ∧ ((Y unmatched p3 . T) ∧ ((Y unmatched p2 . Z) ∧ ((ℓ 0 @ Y ≠ noun) ∧ ((ℓ 0 @ Y ≠ CC) ∧ (ℓ 0 @ Y ≠ verb)))))))
-     ↪  set (𝜋 (if (ℓ 0 @ Y = verb) over Y then SCRIPT "\"actioned\"" else (label l)) @ X) as (𝜉 0 @ Y)                        // Property extension
+     ↪  set (𝜋 (if (ℓ 0 @ Y = verb) over Y then SCRIPT "\"actioned\"" else ((if (label l = case) over Y then (𝜋 pos @ Y) else (label l)))) @ X) as (𝜉 0 @ Y)                        // Property extension
        X inheritpropfrom Y // Property inheritance, with no key overlaps
        del Y                                             // Removing a node
        (X);                                              // Instance of reference to be returned

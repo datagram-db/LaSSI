@@ -133,6 +133,24 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
         )
 
     @staticmethod
+    def add_root_property(node):
+        if isinstance(node, SetOfSingletons):
+            return SetOfSingletons(
+                id=node.id,
+                type=node.type,
+                entities=node.entities,
+                min=node.min,
+                max=node.max,
+                confidence=node.confidence,
+                root=True
+            )
+
+        node_props = dict(node.properties)
+        node_props['kernel'] = 'root'
+        return Singleton.update_node_props(node, node_props)
+
+
+    @staticmethod
     def strip_root_properties(node):
         if isinstance(node, SetOfSingletons):
             return SetOfSingletons(
@@ -180,16 +198,7 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
                 if key not in props_to_ignore:
                     properties_key_ = dict(node_to_use.properties)[key]
                     if key == 'cop':
-                        copula_sing = Singleton(
-                            int(properties_key_['id']),
-                            properties_key_['named_entity'],
-                            frozenset(dict(properties_key_['properties']).items()),
-                            int(properties_key_['min']),
-                            int(properties_key_['max']),
-                            properties_key_['type'],
-                            float(properties_key_['confidence'])
-                        )
-                        properties_list.append(f'({key}:{get_node_string(copula_sing)})')
+                        properties_list.append(f'({key}:{get_node_string(properties_key_)})')
                     elif isinstance(properties_key_, str) and properties_key_ != '':
                         properties_list.append(f'({key}:{properties_key_})')
                     else:

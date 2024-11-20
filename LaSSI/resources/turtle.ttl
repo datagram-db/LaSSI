@@ -142,6 +142,9 @@ parmenides:at a parmenides:PrototypicalPreposition ;
 parmenides:atop a parmenides:PrototypicalPreposition ;
     rdfs:label "atop"^^xsd:string .
 
+parmenides:attend a parmenides:TransitiveVerb ;
+    rdfs:label "attend"^^xsd:string .
+
 parmenides:aux a parmenides:dependency ;
     rdfs:label "aux"^^xsd:string .
 
@@ -1364,6 +1367,9 @@ parmenides:scold a parmenides:TransitiveVerb ;
 parmenides:scoop a parmenides:TransitiveVerb ;
     rdfs:label "scoop"^^xsd:string .
 
+parmenides:score a parmenides:TransitiveVerb ;
+    rdfs:label "score"^^xsd:string .
+
 parmenides:scrub a parmenides:TransitiveVerb ;
     rdfs:label "scrub"^^xsd:string .
 
@@ -1555,6 +1561,9 @@ parmenides:swallow a parmenides:TransitiveVerb ;
 
 parmenides:switch a parmenides:TransitiveVerb ;
     rdfs:label "switch"^^xsd:string .
+
+parmenides:tackle a parmenides:TransitiveVerb ;
+    rdfs:label "tackle"^^xsd:string .
 
 parmenides:take a parmenides:TransitiveVerb ;
     rdfs:label "take"^^xsd:string .
@@ -1808,6 +1817,9 @@ parmenides:we a parmenides:PersonalPronoun,
 
 parmenides:wear a parmenides:TransitiveVerb ;
     rdfs:label "wear"^^xsd:string .
+
+parmenides:weigh a parmenides:TransitiveVerb ;
+    rdfs:label "weigh"^^xsd:string .
 
 parmenides:what a parmenides:Pronoun,
         parmenides:RelativePronoun ;
