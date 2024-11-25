@@ -3,10 +3,12 @@ import re
 import numpy
 from collections import defaultdict
 from LaSSI.external_services.Services import Services
-from LaSSI.ner.string_functions import is_label_verb, lemmatize_verb
+from LaSSI.ner.MergeSetOfSingletons import merge_properties
+from LaSSI.ner.node_functions import create_props_for_singleton, create_existential_node
+from LaSSI.ner.string_functions import is_label_verb, lemmatize_verb, check_semi_modal
 from LaSSI.structures.internal_graph.EntityRelationship import Singleton, SetOfSingletons, Relationship
 from LaSSI.structures.kernels.Sentence import is_kernel_in_props, create_edge_kernel, create_existential, \
-    is_node_in_kernel_nodes
+    is_node_in_kernel_nodes, create_sentence_obj
 
 
 class CreateFinalKernel:
@@ -50,9 +52,10 @@ class CreateFinalKernel:
                     continue
                 new_edge = None
                 found_prototypical_prepositions = False
+                first_word = edge.edgeLabel.named_entity.split()[0]
                 for p in prototypical_prepositions:
-                    # Check if prototypical preposition is in edge label but NOT just the edge label (i.e. "to" in "to steal" = TRUE, "like" in "like" = FALSE)
-                    if re.search(r"\b"+p+r"\b", edge.edgeLabel.named_entity) and p != edge.edgeLabel.named_entity:
+                    # Check if prototypical preposition is in edge label but NOT just the edge label (i.e. "to" in "to steal" = TRUE, "like" in "like" = FALSE) AND whether the first word is NOT a verb
+                    if not is_label_verb(first_word) and re.search(r"\b"+p+r"\b", edge.edgeLabel.named_entity) and p != edge.edgeLabel.named_entity:
                         found_prototypical_prepositions = True
 
                         # Add root property to target
@@ -124,9 +127,15 @@ class CreateFinalKernel:
 
             used_edges = set(map(lambda y: (y.source.id, y.target.id), filtered_edges))
             kernel = create_sentence_obj(filtered_edges, {key: x for key, x in self.nodes.items() if x.id in descendant_nodes}, self.negations, node_id, found_proposition_labels, self.node_functions)
-            kernel = self.check_if_empty_kernel(kernel)  # Check we do not have be(?, ?) as a kernel
             kernel = self.kernel_post_processing(kernel, position_pairs)
-            self.nodes[node_id] = kernel
+
+            # Only check for empty kernel if more than one root node, as if there is only 1 root node we need something, even if it is empty...
+            if len(filtered_top_node_ids) > 1:
+                kernel = self.check_if_empty_kernel(kernel)  # Check we do not have be(?, ?) as a kernel
+                if kernel is not None:
+                    self.nodes[node_id] = kernel
+            else:
+                self.nodes[node_id] = kernel
 
             # Remove 'root' property from nodes
             self.nodes = {k: Singleton.strip_root_properties(v) if v.id in descendant_nodes else v for k, v in self.nodes.items()}
@@ -173,7 +182,7 @@ class CreateFinalKernel:
                         max=final_kernel.max,
                         confidence=1,
                         kernel=Relationship(
-                            source=final_kernel if not actioned else None,
+                            source=final_kernel if not actioned else create_existential_node(),
                             target=final_kernel if actioned else None,
                             edgeLabel=Singleton(
                                 id=-1,
@@ -193,20 +202,32 @@ class CreateFinalKernel:
         else:
             final_kernel = self.remove_duplicate_properties(final_kernel)
 
-        final_kernel = self.check_if_empty_kernel(final_kernel)
+        # final_kernel = self.check_if_empty_kernel(final_kernel)
 
         print(f"{final_kernel.to_string()}\n")
         return final_kernel
 
     # Check if final kernel is "empty" be(?, ?) and use the properties of 'SENTENCE'
     def check_if_empty_kernel(self, kernel):
-        if isinstance(kernel, Singleton) and kernel.kernel is not None and kernel.kernel.edgeLabel is not None and kernel.kernel.edgeLabel.named_entity == "be" and kernel.kernel.source is not None and kernel.kernel.source.type == 'existential' and kernel.kernel.target is not None and kernel.kernel.target.type == 'existential':
+        properties_to_keep = dict()
+        new_kernel = None
+        if isinstance(kernel, Singleton) and kernel.kernel is not None and kernel.kernel.edgeLabel is not None and kernel.kernel.edgeLabel.named_entity == "be" and (((kernel.kernel.source is not None and kernel.kernel.source.type == 'existential') and (kernel.kernel.target is not None and kernel.kernel.target.type == 'existential')) or ((kernel.kernel.source is None) and (kernel.kernel.target is None))):
             node_props = dict(kernel.properties)
             if node_props is not None and 'SENTENCE' in node_props:
-                new_kernel = node_props['SENTENCE'][0] # TODO: Safe to use 0th element?
-                return self.check_if_empty_kernel(new_kernel)
+                for key in node_props:
+                    if key == 'SENTENCE':
+                        new_kernel = node_props['SENTENCE'][0] # TODO: Safe to use 0th element?
+                        new_kernel = self.check_if_empty_kernel(new_kernel)
+                    else:
+                        properties_to_keep[key] = node_props[key]
 
-        return kernel
+        if new_kernel is not None:
+            if len(properties_to_keep) > 0:
+                return Singleton.update_node_props(new_kernel, properties_to_keep)
+            else:
+                return new_kernel
+        else:
+            return kernel
 
     # Rewrite kernel if positions are not correct
     def kernel_post_processing(self, kernel, position_pairs):
@@ -216,7 +237,7 @@ class CreateFinalKernel:
         # Check kernel positions
         properties_to_keep = dict(kernel.properties)
         new_target = kernel.kernel.target
-        if kernel.id in position_pairs and kernel.kernel.edgeLabel is not None and self.check_semi_modal(kernel.kernel.edgeLabel.named_entity):
+        if kernel.id in position_pairs and kernel.kernel.edgeLabel is not None and check_semi_modal(kernel.kernel.edgeLabel.named_entity):
             position_value = position_pairs[kernel.id]
             if 'SENTENCE' in dict(kernel.properties):
                 properties_to_keep['SENTENCE'] = []
@@ -239,13 +260,25 @@ class CreateFinalKernel:
                     edgeLabel=kernel.kernel.edgeLabel,
                     isNegated=kernel.kernel.isNegated
                 ),
-                properties=frozenset({k: tuple(v) if isinstance(v, list) else v for k, v in properties_to_keep.items()}.items()),
+                properties=create_props_for_singleton(properties_to_keep),
             )
+        elif kernel.kernel.edgeLabel is None and kernel.kernel.source is not None and kernel.kernel.target is not None and ((kernel.kernel.source.type.startswith('JJ') and kernel.kernel.target.type == 'ENTITY') or (kernel.kernel.source.type.startswith('JJ') and kernel.kernel.target.type == 'ENTITY')):
+            new_edges = []
+            root_id = None
+            if kernel.kernel.source.type.startswith('JJ') and kernel.kernel.target.type == 'ENTITY':
+                node_props = merge_properties(dict(kernel.kernel.target.properties), {kernel.kernel.source.type: kernel.kernel.source})
+                root_id = kernel.kernel.target.id
+                self.nodes[root_id] = Singleton.update_node_props(kernel.kernel.target, node_props)
+                create_existential(new_edges, {0: self.nodes[kernel.kernel.target.id]})
+            elif kernel.kernel.target.type.startswith('JJ') and kernel.kernel.source.type == 'ENTITY':
+                node_props = merge_properties(dict(kernel.kernel.source.properties), {kernel.kernel.target.type: kernel.kernel.target})
+                root_id = kernel.kernel.source.id
+                self.nodes[root_id] = Singleton.update_node_props(kernel.kernel.source, node_props)
+                create_existential(new_edges, {0: self.nodes[kernel.kernel.target.id]})
+
+            kernel = create_sentence_obj(new_edges, self.nodes, self.negations, root_id, {}, self.node_functions)
+            kernel = self.kernel_post_processing(kernel, position_pairs)
         return kernel
-
-
-    def check_semi_modal(self, label):
-        return len({label}.intersection(Services.getInstance().getParmenides().getSemiModalVerbs())) != 0
 
 
     def remove_duplicate_properties(self, kernel, kernel_nodes=None):
@@ -267,10 +300,11 @@ class CreateFinalKernel:
             else:
                 for node in properties_key_:
                     if key == 'SENTENCE':
-                        if not is_node_in_kernel_nodes(node, kernel_nodes):
-                            properties_to_keep[key].append(self.remove_duplicate_properties(node, kernel_nodes))
-                        else:
-                            self.remove_duplicate_properties(node, kernel_nodes)
+                        if self.check_if_empty_kernel(node) is not None:
+                            if not is_node_in_kernel_nodes(node, kernel_nodes):
+                                properties_to_keep[key].append(self.remove_duplicate_properties(node, kernel_nodes))
+                            else:
+                                self.remove_duplicate_properties(node, kernel_nodes)
                     elif not is_node_in_kernel_nodes(node, kernel_nodes):
                         properties_to_keep[key].append(node)
 
@@ -282,5 +316,5 @@ class CreateFinalKernel:
             max=kernel.max,
             confidence=kernel.confidence,
             kernel=kernel.kernel,
-            properties=frozenset({k: tuple(v) if isinstance(v, list) else v for k, v in properties_to_keep.items()}.items()),
+            properties=create_props_for_singleton(properties_to_keep),
         )

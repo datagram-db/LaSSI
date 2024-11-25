@@ -100,7 +100,12 @@ class TestLaSSI(unittest.TestCase):
 
     # Remove everything between []
     def remove_properties(self, rep):
-        return re.sub(r"\[((?:[^\[\]]|\[[^\[\]]*])*)]", "", rep)
+        pattern = r"\[((?:[^\[\]]|\[[^\[\]]*])*)]"
+        removed = re.sub(pattern, "", rep)
+        if len(re.findall(pattern, removed)) > 0:
+            removed = self.remove_properties(removed)
+
+        return removed
         # return re.sub(r"\[[^\[\]]*]", "", rep)
 
     # ?1 is replaced with ?

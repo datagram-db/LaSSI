@@ -23,7 +23,7 @@ class GraphProvenance:
 
     def internal_graph(self) -> Graph:
         # Phase 0-4
-        self.atts_global.groupGraphNodes(self.gsm_json_graph)
+        self.gsm_json_graph = self.atts_global.groupGraphNodes(self.gsm_json_graph)
         # Phase 5
         self.atts_global.checkForNegation(self.gsm_json_graph)
 

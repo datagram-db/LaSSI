@@ -130,6 +130,7 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
             max=node.max,
             type=node.type,
             confidence=node.confidence,
+            kernel=node.kernel,
         )
 
     @staticmethod
@@ -192,7 +193,7 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
             if node_to_use is None or not isinstance(node_to_use, Singleton):
                 return ''
 
-            props_to_ignore = ['begin', 'pos', 'end', 'kernel', 'lemma', 'specification', 'number', 'root', 'expl', 'cc', 'conj']
+            props_to_ignore = ['begin', 'pos', 'end', 'kernel', 'lemma', 'specification', 'number', 'root', 'expl', 'cc', 'conj', 'neg']
             properties_list = []
             for key in dict(node_to_use.properties):
                 if key not in props_to_ignore:
@@ -200,13 +201,24 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
                     if key == 'cop':
                         properties_list.append(f'({key}:{get_node_string(properties_key_)})')
                     elif isinstance(properties_key_, str) and properties_key_ != '':
+                        try:
+                            key = str(int(float(key)))
+                        except ValueError:
+                            key = key
+
                         properties_list.append(f'({key}:{properties_key_})')
                     else:
-                        for node in properties_key_:
-                            if key == 'SENTENCE':  # It is a node with kernel (most likely)
-                                properties_list.append(f'({key}:{self.to_string(node)})')
-                            else:
-                                properties_list.append(f'({key}:{get_node_string(node)})')
+                        if isinstance(properties_key_, Singleton):
+                            properties_list.append(f'({key}:{get_node_string(properties_key_)})')
+                        else:
+                            for node in properties_key_:
+                                if key == 'SENTENCE':  # It is a node with kernel (most likely)
+                                    properties_list.append(f'({key}:{self.to_string(node)})')
+                                else:
+                                    if key in {'nmod', 'nmod_poss', 'acl_relcl'}:
+                                        properties_list.append(f'({get_node_string(node)})')
+                                    else:
+                                        properties_list.append(f'({key}:{get_node_string(node)})')
 
             return f'[{", ".join(properties_list)}]' if len(properties_list) > 0 else ''
 

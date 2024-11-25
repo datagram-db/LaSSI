@@ -113,7 +113,7 @@ def GraphNER_withProperties(node, is_simplistic_rewriting, meu_db_row, parmenide
     for entity in sorted_entities:
         norm_confidence *= entity.confidence
 
-        merge_properties(dict(entity.properties), fusion_properties)
+        fusion_properties = merge_properties(dict(entity.properties), fusion_properties)
         if entity.named_entity == list(d.values())[0] and len(resolved_d) > 0:
             chosen_entity = entity
         else:
@@ -202,15 +202,20 @@ def GraphNER_withProperties(node, is_simplistic_rewriting, meu_db_row, parmenide
     return merged_node
 
 
-def merge_properties(entity_properties, fusion_properties):
-    for key, value in entity_properties.items():
-        if key in fusion_properties:
-            if key == 'begin':
-                fusion_properties[key] = min(fusion_properties[key], value)
-            elif key == 'end':
-                fusion_properties[key] = max(fusion_properties[key], value)
-            elif key == 'pos':
-                fusion_properties[key] = str(min(float(fusion_properties[key]), float(value)))
-        else:
-            fusion_properties[key] = value
-    return fusion_properties
+def merge_properties(orig_props, new_props, ignore_values=None):
+    for key, new_value in new_props.items():
+        if ignore_values is None or key not in ignore_values:
+            if key in orig_props:
+                if key == 'begin':
+                    orig_props[key] = min(orig_props[key], new_value)
+                elif key == 'end':
+                    orig_props[key] = max(orig_props[key], new_value)
+                elif key == 'pos':
+                    orig_props[key] = str(min(float(orig_props[key]), float(new_value)))
+            else:
+                orig_props[key] = new_value
+        elif ignore_values is None:
+            orig_props[key] = new_value
+        elif key not in orig_props:
+            orig_props[key] = new_value
+    return orig_props

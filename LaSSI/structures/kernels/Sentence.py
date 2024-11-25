@@ -7,16 +7,13 @@ __maintainer__ = "Oliver R. Fox"
 __email__ = "ollie.fox5@gmail.com"
 __status__ = "Production"
 
-import json
 import re
 from collections import defaultdict
 from copy import copy
-
 from LaSSI.external_services.Services import Services
-from LaSSI.files.JSONDump import json_dumps
-from LaSSI.ner.string_functions import lemmatize_verb
+from LaSSI.ner.node_functions import create_existential_node, create_props_for_singleton
+from LaSSI.ner.string_functions import lemmatize_verb, check_semi_modal
 from LaSSI.structures.internal_graph.EntityRelationship import Relationship,  Singleton, SetOfSingletons, Grouping
-
 
 # @dataclass(order=True, frozen=True, eq=True)
 # class Sentence(Singleton):
@@ -31,6 +28,7 @@ from LaSSI.structures.internal_graph.EntityRelationship import Relationship,  Si
 #     #     return cls(kernel=Relationship.from_dict(c.get('kernel')),
 #     #                properties={k: [deserialize_NodeEntryPoint(x) for x in v] for k, v in c.get('properties').items()}
 #     #                )
+copula_types = {'JJ', 'JJS', 'RB'}
 
 
 def replaceNamed(entity: Singleton, s: str) -> Singleton:
@@ -53,15 +51,7 @@ def create_existential(edges, nodes):
         if is_kernel_in_props(node) or len(nodes) == 1:
             edges.append(Relationship(
                 source=node,
-                target=Singleton(
-                    id=-1,
-                    named_entity="?" + str(Services.getInstance().getExistentials().increaseAndGetExistential()),
-                    properties=frozenset(dict().items()),
-                    min=-1,
-                    max=-1,
-                    type="existential",
-                    confidence=-1
-                ),
+                target=create_existential_node(),
                 edgeLabel=Singleton(
                     id=-1,
                     named_entity="is",
@@ -87,7 +77,7 @@ def create_cop(node, kernel, target_or_source):
             new_source = Singleton(
                 id=kernel.source.id,
                 named_entity=kernel.source.named_entity,
-                properties=frozenset({k: tuple(v) if isinstance(v, list) else v for k, v in temp_prop.items()}.items()),
+                properties=create_props_for_singleton(temp_prop),
                 min=kernel.source.min,
                 max=kernel.source.max,
                 type=kernel.source.type,
@@ -110,7 +100,7 @@ def create_cop(node, kernel, target_or_source):
                 new_target = Singleton(
                     id=kernel.target.id,
                     named_entity=kernel.target.named_entity,
-                    properties=frozenset({k: tuple(v) if isinstance(v, list) else v for k, v in temp_prop.items()}.items()),
+                    properties=create_props_for_singleton(temp_prop),
                     min=kernel.target.min,
                     max=kernel.target.max,
                     type=kernel.target.type,
@@ -165,8 +155,10 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
 
     # With graph created, make the 'Sentence' object
     kernel = None
-    kernel, properties = assign_kernel(edges, kernel, negations, nodes, root_sentence_id, found_proposition_labels)
+    kernel = assign_kernel(edges, kernel, negations, nodes, root_sentence_id, found_proposition_labels)
     kernel_nodes = set()
+    properties = defaultdict(list)
+
     if kernel is not None:
         # Add relevant nodes to kernel_nodes, and check if source or target should be a pronoun
         if kernel.source is not None:
@@ -182,14 +174,14 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
         kernel, properties, kernel_nodes = add_to_properties(kernel, edge.target, 'target', kernel_nodes, properties, negations, node_functions)
 
         # Add edge
-        if edge.edgeLabel.named_entity in {'acl_relcl', 'nmod'}:
-            valid_nodes = node_functions.get_valid_nodes([kernel.source, kernel.target])
+        if edge.edgeLabel.named_entity in {'acl_relcl', 'nmod', 'nmod_poss'}:
+            valid_nodes = [kernel.source, kernel.target]
             edge_kernel = Singleton(
                 id=edge.edgeLabel.id,
                 named_entity="",
                 type="SENTENCE",
-                min=min(valid_nodes, key=lambda x: x.min).min if valid_nodes != -1 else -1,
-                max=max(valid_nodes, key=lambda x: x.max).max if valid_nodes != -1 else -1,
+                min=node_functions.get_min_from_nodes(valid_nodes),
+                max=node_functions.get_max_from_nodes(valid_nodes),
                 confidence=1,
                 kernel=Relationship(
                     source=edge.source,
@@ -217,13 +209,13 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
         else:
             properties_to_keep[key] = properties[key]
 
-    valid_nodes = node_functions.get_valid_nodes([kernel.source, kernel.target])
+    valid_nodes = [kernel.source, kernel.target]
     final_kernel = Singleton(
         id=root_sentence_id,
         named_entity="",
         type="SENTENCE",
-        min=min(valid_nodes, key=lambda x: x.min).min if valid_nodes != -1 else -1,
-        max=max(valid_nodes, key=lambda x: x.max).max if valid_nodes != -1 else -1,
+        min=node_functions.get_min_from_nodes(valid_nodes),
+        max=node_functions.get_max_from_nodes(valid_nodes),
         confidence=1,
         kernel=Relationship(
             source=kernel.source,
@@ -231,7 +223,7 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
             edgeLabel=edge_label,
             isNegated=kernel.isNegated
         ),
-        properties=frozenset({k: tuple(v) if isinstance(v, list) else v for k, v in properties_to_keep.items()}.items()),
+        properties=create_props_for_singleton(properties_to_keep),
     )
 
     if new_kernel is not None:
@@ -240,24 +232,16 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
             id=root_sentence_id,
             named_entity="",
             type="SENTENCE",
-            min=min(valid_nodes, key=lambda x: x.min).min if valid_nodes != -1 else -1,
-            max=max(valid_nodes, key=lambda x: x.max).max if valid_nodes != -1 else -1,
+            min=node_functions.get_min_from_nodes(valid_nodes),
+            max=node_functions.get_max_from_nodes(valid_nodes),
             confidence=1,
             kernel=Relationship(
-                source=Singleton(
-                    id=-1,
-                    named_entity="?" + str(Services.getInstance().getExistentials().increaseAndGetExistential()),
-                    properties=frozenset(dict().items()),
-                    min=-1,
-                    max=-1,
-                    type="existential",
-                    confidence=-1
-                ),
+                source=create_existential_node(),
                 target=final_kernel,
                 edgeLabel=new_kernel,
                 isNegated=False, # TODO
             ),
-            properties=frozenset({k: tuple(v) if isinstance(v, list) else v for k, v in properties_to_keep.items()}.items()),
+            properties=create_props_for_singleton(properties_to_keep),
         )
     else:
         return final_kernel
@@ -304,14 +288,29 @@ def add_to_kernel_nodes(node, kernel_nodes):
     if isinstance(node, SetOfSingletons):
         kernel_nodes.add(node)
         for entity in node.entities:
-            kernel_nodes.add(entity)
+            add_to_kernel_nodes(entity, kernel_nodes)
     else:
+        # Check if properties has any Singleton's and add to kernel nodes also
+        for key in dict(node.properties):
+            properties_key_ = dict(node.properties)[key]
+            if not isinstance(properties_key_, str):
+                if isinstance(properties_key_, Singleton):
+                    add_to_kernel_nodes(properties_key_, kernel_nodes)
+                else:
+                    for prop_node in properties_key_:
+                        if isinstance(prop_node, Singleton):
+                            add_to_kernel_nodes(prop_node, kernel_nodes)
+                        elif isinstance(prop_node, SetOfSingletons):
+                            kernel_nodes.add(node)
+                            for prop_entity in prop_node.entities:
+                                add_to_kernel_nodes(prop_entity, kernel_nodes)
+
         if node.kernel is not None:
-            kernel_nodes.add(node.kernel.edgeLabel.id)
+            add_to_kernel_nodes(node.kernel.edgeLabel, kernel_nodes)
             if node.kernel.source is not None:
-                kernel_nodes.add(node.kernel.source.id)
+                add_to_kernel_nodes(node.kernel.source, kernel_nodes)
             if node.kernel.target is not None:
-                kernel_nodes.add(node.kernel.target.id)
+                add_to_kernel_nodes(node.kernel.target, kernel_nodes)
         else:
             kernel_nodes.add(node)
 
@@ -362,7 +361,7 @@ def add_to_properties(kernel, node, source_or_target, kernel_nodes, properties, 
                 type_key = node.kernel.edgeLabel.named_entity
             else:
                 type_key = node_functions.get_node_type(node)
-        if (type_key == 'JJ' or type_key == 'JJS') and not is_node_in_kernel_nodes(node, kernel_nodes):
+        if (type_key in copula_types) and not is_node_in_kernel_nodes(node, kernel_nodes):
             kernel_nodes = add_to_kernel_nodes(node, kernel_nodes)
             kernel = create_cop(node, kernel, source_or_target)
         if 'NEG' not in type_key and 'NOT' not in type_key and 'existential' not in type_key:
@@ -389,7 +388,8 @@ def is_node_in_kernel_nodes(check_node, kernel_nodes):
     for kernel_node in kernel_nodes:
         if isinstance(check_node, Singleton) and isinstance(kernel_node, Singleton):
             if (check_node.named_entity == kernel_node.named_entity and check_node.id == kernel_node.id
-                    # and check_node.type == kernel_node.type and check_node.min == kernel_node.min and check_node.max == kernel_node.max
+                    #and check_node.type == kernel_node.type and check_node.min == kernel_node.min and check_node.max == kernel_node.max
+                #check_node.named_entity == kernel_node.named_entity and
             ):
                 return True
         elif isinstance(check_node, SetOfSingletons) and isinstance(kernel_node, SetOfSingletons):
@@ -400,8 +400,6 @@ def is_node_in_kernel_nodes(check_node, kernel_nodes):
 
 
 def assign_kernel(edges, kernel, negations, nodes, root_sentence_id, found_proposition_labels):
-    properties = defaultdict(list)
-
     chosen_edge = None
     for edge in edges:
         if edge.edgeLabel.type == "verb" and (root_sentence_id in found_proposition_labels or edge.edgeLabel.named_entity not in found_proposition_labels.values()):
@@ -411,7 +409,9 @@ def assign_kernel(edges, kernel, negations, nodes, root_sentence_id, found_propo
     for edge in edges:
         if ((edge.edgeLabel.type == "verb" or edge.source.type == "verb" and chosen_edge is None) or (chosen_edge is not None and chosen_edge == edge)) and (root_sentence_id in found_proposition_labels or edge.edgeLabel.named_entity not in found_proposition_labels.values()):
             edge_label = edge.edgeLabel if edge.edgeLabel.type == "verb" else edge.source  # If the source is a verb, assign it to the edge label
-            edge_source = edge.source if edge.source.type != "verb" else None  # If the source is a verb, remove it
+
+            # If not semi-modal AND not in nodes then remove source
+            edge_source = create_existential_node() if (isinstance(edge.source, Singleton) and not check_semi_modal(edge.source.named_entity) and len([x for x in nodes.keys() if edge.source.id == x]) == 0 and edge.source.type != 'existential') or edge.source == edge_label else edge.source
             edge_target = edge.target
 
             if edge.isNegated:
@@ -452,19 +452,15 @@ def assign_kernel(edges, kernel, negations, nodes, root_sentence_id, found_propo
     # If kernel is none, look for existential
     if kernel is None:
         for edge in edges:
-            if isinstance(edge.source, SetOfSingletons):
-                for entity in edge.source.entities:
-                    for prop in entity.properties:
-                        if prop[1] == '∃':
-                            kernel = edge
-                            break
-            else:
-                # TODO: Make this recursive
-                if isinstance(edge.target, Singleton):
-                    for prop in edge.target.properties:
-                        if prop[1] == '∃':
-                            kernel = edge
-                            break
+            # Look in source
+            kernel = find_existential_in_properties(edge.source)
+            if kernel is not None:
+                break
+
+            # Look in target
+            kernel = find_existential_in_properties(edge.target)
+            if kernel is not None:
+                break
 
     # If we cannot find existential, create it instead
     if kernel is None:
@@ -477,17 +473,14 @@ def assign_kernel(edges, kernel, negations, nodes, root_sentence_id, found_propo
 
     # Check if source or target have "case" property, if so remove it (to be added to properties of the kernel later)
     # TODO: Check within SetOfSingletons, if any elements have a case, then add to properties...
-    node_props = Singleton.get_props(kernel.source)
-    if is_case_in_props(node_props):
+    if case_in_props(Singleton.get_props(kernel.source)):
         kernel = Relationship(
-            source=None,
+            source=create_existential_node(),
             target=kernel.target,
             edgeLabel=kernel.edgeLabel,
             isNegated=kernel.isNegated
         )
-
-    node_props = Singleton.get_props(kernel.target)
-    if is_case_in_props(node_props):
+    if case_in_props(Singleton.get_props(kernel.target)):
         kernel = Relationship(
             source=kernel.source,
             target=None,
@@ -502,26 +495,46 @@ def assign_kernel(edges, kernel, negations, nodes, root_sentence_id, found_propo
             isNegated=kernel.isNegated
         )
 
-    return kernel, properties
+    return kernel
 
 
-def is_case_in_props(node_props):
+def find_existential_in_properties(node):
+    new_kernel = None
+    if isinstance(node, SetOfSingletons):
+        for entity in node.entities:
+            find_existential_in_properties(entity)
+    else:
+        for prop in node.properties:
+            if prop[1] == '∃':
+                new_kernel = node
+                break
+    return new_kernel
+
+
+def case_in_props(node_props, return_props=False):
     if node_props is None:
         return False
 
     # Ignore "by" as passive sentence: https://www.uc.utoronto.ca/passive-voice
     # Ignore "of" and "'s" as "possessive": https://en.m.wikipedia.org/wiki/English_possessive
     ignore_cases = ['by', "'s", 'of']
+    found_cases = []
 
     for key in node_props:
         try:
             case_position = float(key)
             if node_props[key] not in ignore_cases:
-                return True
+                if not return_props:
+                    return True
+                else:
+                    found_cases.append(node_props[key])
         except ValueError:
             continue
 
-    return False
+    if not return_props:
+        return False
+    else:
+        return found_cases
 
 def create_edge_kernel(node):
     return Singleton(
@@ -532,7 +545,7 @@ def create_edge_kernel(node):
         max=node.max,
         confidence=1,
         kernel=Relationship(
-            source=None,
+            source=create_existential_node(),
             target=None,
             edgeLabel=node,
             isNegated=False

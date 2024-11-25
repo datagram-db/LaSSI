@@ -53,11 +53,13 @@ p0 = (>> Compl)<-[∀obl||xcomp||dep||obj]--(WithObl)
        (h);
 
 p1 = (X)--[l:det||nmod_poss||amod||mark||case||punct||advmod||advcl||cc||punct||neg||nummod]->(Y)                   // Graph matching, First pattern
-      where ((FILL ((ℓ 0 @ X = verb) ∧ ((X unmatched p3fauxcop . V) ∧ ((X unmatched p3simple . V) ∧ ((X unmatched p3 . V) ∧ ((X unmatched p3expl . V) ∧ ((X unmatched p4 . V) ∧ (X unmatched p3pass . V)))))))) ∧ (FILL ((ℓ 0 @ X = verb) ∧ ((Y unmatched p3fauxcop . V) ∧ ((Y unmatched p3simple . V) ∧ ((Y unmatched p3 . V) ∧ ((Y unmatched p3expl . V) ∧ ((Y unmatched p4 . V) ∧ (Y unmatched p3pass . V))))))))) ∨ (( FILL (label l ≠ neg)) ∧ ((TEST "= |𝜑 ⦃\"Y\"⦄ | 0 ") ∧ ( ( FILL (ℓ 0 @ Y ≠ CC) ) ∧ (( FILL (ℓ 0 @ X ≠ verb)) ∨ (( FILL (label l ≠ mark)) ∨ ((TEST "= |𝜑 ⦃\"X\"⦄ | 1 "))))))) // ∧ ((Y unmatched p2 . K) ∧ ((Y unmatched p3 . T) ∧ ((Y unmatched p2 . Z) ∧ ((ℓ 0 @ Y ≠ noun) ∧ ((ℓ 0 @ Y ≠ CC) ∧ (ℓ 0 @ Y ≠ verb)))))))
-     ↪  set (𝜋 (if (ℓ 0 @ Y = verb) over Y then SCRIPT "\"actioned\"" else ((if (label l = case) over Y then (𝜋 pos @ Y) else (label l)))) @ X) as (𝜉 0 @ Y)                        // Property extension
-       X inheritpropfrom Y // Property inheritance, with no key overlaps
-       del Y                                             // Removing a node
-       (X);                                              // Instance of reference to be returned
+   where ((FILL ((ℓ 0 @ X ≠ verb) ∨ ((X unmatched p3fauxcop . V) ∧ ((X unmatched p3simple . V) ∧ ((X unmatched p3 . V) ∧ ((X unmatched p3expl . V) ∧ ((X unmatched p4 . V) ∧ (X unmatched p3pass . V)))))))) ∧ (FILL ((ℓ 0 @ Y = verb) ∧ ((Y unmatched p3fauxcop . V) ∧ ((Y unmatched p3simple . V) ∧ ((Y unmatched p3 . V) ∧ ((Y unmatched p3expl . V) ∧ ((Y unmatched p4 . V) ∧ (Y unmatched p3pass . V))))))))) ∨ (( FILL (label l ≠ neg)) ∧ ((TEST "= |𝜑 ⦃\"Y\"⦄ | 0 ") ∧ ( ( FILL (ℓ 0 @ Y ≠ CC) ) ∧ (( FILL (ℓ 0 @ X ≠ verb)) ∧ (( FILL (label l ≠ mark)) ∨ ((TEST "= |𝜑 ⦃\"X\"⦄ | 1 ")))))))
+   ↪ set (𝜋 if (( ℓ 0 @ Y ) = verb) over Y then SCRIPT "\"actioned\"" else ((if (label l = case) over Y then (𝜋 pos @ Y) else (label l))) @ X) as (𝜉 0 @ Y)                        // Property extension
+    X inheritpropfrom Y // Property inheritance, with no key overlaps
+    //del Y                                             // Removing a node
+    del l
+    set (φ inherit_edge , X ) as Y
+    (X);                                              // Instance of reference to be returned
 docop = (target)--[cop]->(V)
                 --[l:nsubj||csubj||nsubj]->(subject)
         where ((V unmatched p3 . V) ∧ ((V unmatched p3pass . V) ∧ ((V unmatched p3expl3 . V) ∧ ((V unmatched p3expl3 . V) ∧ (V unmatched p4 . V)))))
@@ -129,7 +131,7 @@ p3simple = (V)--[∀n:nsubj]->(>>S)
      where ((V unmatched p3pass . V) ∧ ((V unmatched p3expl . V) ∧((V unmatched p3 . V) ∧((ℓ 0 @ V = verb)))))
      ↪
         //new s
-        set(φ (SCRIPT "(^(^(^(^(^ (^ ( [(𝜉 ⦃\"M\"⦄) 0])  \" \") ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])) \" \") ([ (𝜉 ⦃\"T\"⦄)  0]))") , S) as Z
+        set(φ (SCRIPT "(^(^(^(^(^ (^ (^ (^ ( [(𝜉 ⦃\"M\"⦄) 0])  \" \")  ([ (𝜉 ⦃\"A\"⦄)  0]))  \" \") ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])) \" \") ([ (𝜉 ⦃\"T\"⦄)  0]))") , S) as Z
         //set(   𝜋 mark @ s) as (𝜉 0 @ M)
         //set(   φ orig , s) as S
         //set(   𝜉 0 @ s) as (𝜉 0 @ S)
@@ -157,12 +159,12 @@ p3 = (>> V)<-[∀ ? w:]--(B)
      (S)--[? neg]->(NN)
      where ((V unmatched p3pass . V) ∧ ((V unmatched p3expl . V) ∧((ℓ 0 @ V = verb))))
      ↪
-        //new s
-        set(φ (SCRIPT "[(° (fun y → { l cp (fun x → { ^ (^ ([⦃x⦄ 0]) \" \") ([⦃x⦄ 1]) }) (\" \")  y } ) ( zip ( a {   (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.M\"⦄)  ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.N\"⦄) ;  (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.V\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.T\"⦄) } ) )) 0]"), S) as Z
-        //set(   𝜋 mark @ s) as (𝜉 0 @ M)
-        //set(   φ orig , s) as S
-        //set(   𝜉 0 @ s) as (𝜉 0 @ S)
-        set(𝜋 expl @ S) as (ℓ 0 @ E)
+       //new s
+       set (φ (SCRIPT "[(° (fun y → { l cp (fun x → { ^ (^ ([⦃x⦄ 0]) \" \") ([⦃x⦄ 1]) }) (\" \") y } ) ( zip ( a {  (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.M\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.A\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.N\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.V\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.ADM\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.T\"⦄) } ) )) 0]"), S) as Z
+       //set(   𝜋 mark @ s) as (𝜉 0 @ M)
+       //set(   φ orig , s) as S
+       //set(   𝜉 0 @ s) as (𝜉 0 @ S)
+       set (𝜋 expl @ S) as (ℓ 0 @ E)
        set (φ iobj , S) as IOZ
        set (φ adv , S) as ADM
        set (φ dep , S) as Z
@@ -172,7 +174,7 @@ p3 = (>> V)<-[∀ ? w:]--(B)
        del A
        del E
        del NN
-     set (𝜋 kernel @ S) as kernel
+       set (𝜋 kernel @ S) as kernel
        (S);
 
 p3expl = (V)--[∀n:nsubj]->(>> S)

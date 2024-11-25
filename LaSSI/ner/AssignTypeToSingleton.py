@@ -17,10 +17,9 @@ from LaSSI.ner.string_functions import is_label_verb, does_string_have_negations
 from LaSSI.ner.topological_sort import topologicalSort
 from LaSSI.structures.internal_graph.EntityRelationship import Singleton, Grouping, SetOfSingletons, Relationship
 from LaSSI.structures.internal_graph.Graph import Graph
-from LaSSI.structures.kernels.Sentence import is_kernel_in_props, is_case_in_props
+from LaSSI.structures.kernels.Sentence import is_kernel_in_props, case_in_props
 
 
-# TODO: This is doing a bit more than "AssignTypeToSingleton", should move some functions into different classes?
 class AssignTypeToSingleton:
     def __init__(self, is_simplistic_rewriting, meu_db_row, negations=None):
         if negations is None:
@@ -51,7 +50,7 @@ class AssignTypeToSingleton:
         gsm_json = topologicalSort(gsm_json)
 
         # Phase 0
-        self.preProcessing(gsm_json)
+        gsm_json = self.preProcessing(gsm_json)
 
         # Phase 1
         self.extractLogicalConnectorsAsGroups(gsm_json)
@@ -70,11 +69,14 @@ class AssignTypeToSingleton:
         # Phase 4
         self.resolveGraphNERs()
 
+        return gsm_json
+
     # Phase 0
     def preProcessing(self, gsm_json):
         # Pre-processing not semantically driven
         # Scan for 'inherit' edges and contain them in the node that has that edge
         number_of_nodes = range(len(gsm_json))
+        ids_to_remove = []
         for row in number_of_nodes:
             gsm_item = gsm_json[row]
             edges_to_keep = []
@@ -82,13 +84,18 @@ class AssignTypeToSingleton:
                 if 'inherit_' in edge['containment']:
                     node_to_inherit = self.node_functions.get_gsm_item_from_id(edge['score']['child'], gsm_json)
                     if edge['containment'].endswith('_edge'):
-                        gsm_item['xi'] = node_to_inherit['xi']
+                        # gsm_item['xi'] = node_to_inherit['xi']
                         if len(gsm_item['ell']) == 0:
                             gsm_item['ell'] = node_to_inherit['ell']
                         else:
-                            gsm_item['ell'][1:] = node_to_inherit['ell'][1:]
-                        new_properties = merge_properties(dict(gsm_item['properties']), dict(node_to_inherit['properties']))
-                        gsm_item['properties'] = new_properties
+                            gsm_item['ell'][len(gsm_item['ell']):] = node_to_inherit['ell'][1:]
+
+                        if not node_to_inherit['ell'][0] in dict(gsm_item['properties']):
+                            new_properties = merge_properties(dict(gsm_item['properties']), dict(node_to_inherit['properties']), {'begin', 'end', 'pos'})
+                            gsm_item['properties'] = new_properties
+
+                        if self.node_functions.get_node_parents(node_to_inherit, gsm_json) == [gsm_item['id']]:
+                           self.node_functions.remove_gsm_item_by_id(edge['score']['child'], gsm_json, ids_to_remove)
 
                     for edge_to_inherit in node_to_inherit['phi']:
                         edge_to_inherit['score']['parent'] = gsm_item['id']
@@ -99,12 +106,17 @@ class AssignTypeToSingleton:
                 elif 'mark' in edge['containment']:
                     mark_target_node = self.node_functions.get_gsm_item_from_id(edge['score']['child'], gsm_json)
                     if 'IN' in mark_target_node['ell'] or 'TO' in mark_target_node['ell']:
-                        gsm_item['properties']['mark'] = mark_target_node['ell'][0]
+                        gsm_item['properties']['mark'] = mark_target_node['xi'][0]
+                elif 'punct' in edge['containment']:
+                    punct_target_node = self.node_functions.get_gsm_item_from_id(edge['score']['child'], gsm_json)
+                    gsm_item['properties']['punct'] = punct_target_node['xi'][0]
                 else:
                     edges_to_keep.append(edge)
 
             # Ignore 'inherit_edge' as they are accounted for, keep all other edges
             gsm_item['phi'] = edges_to_keep
+
+        return [item for idx, item in enumerate(gsm_json) if idx not in ids_to_remove]
 
     # Phase 1
     def extractLogicalConnectorsAsGroups(self, gsm_json):
@@ -141,7 +153,7 @@ class AssignTypeToSingleton:
                         # Merge properties from parent into children
                         # TODO: Should we really only be merging desired properties like 'kernel' (e.g. we now get conj property in children)?
                         if isinstance(node, Singleton):
-                            node_props = merge_properties(gsm_item['properties'], dict(node.properties))
+                            node_props = merge_properties(dict(node.properties), gsm_item['properties'], {'pos'})
                             # gsm_item['properties'] = node_props
                             self.nodes[node_id] = Singleton.update_node_props(node, node_props)
 
@@ -548,10 +560,18 @@ class AssignTypeToSingleton:
                         ## TODO! type disambiguation, in future works, needs to take into account also the verb associated to it!
                         elif ("VERB" in best_types or "verb" in best_types) and (
                                 # If a node is marked with a det, never consider this as a verb
-                                'det' not in dict(item.properties) and
-                                (( # If a node is the last occurring in the root/kernel of all kernels and has no ingoing edges or if a node has at least one ingoing edge and comes with a case-derived float attribute
-                                        (len(self.node_functions.get_node_parents(item, gsm_json)) > 0 and is_case_in_props(self.node_functions.get_gsm_item_from_id(x, gsm_json)['properties']) for x in self.node_functions.get_node_parents(item, gsm_json)) or
-                                        (list(self.nodes)[0] == item and is_kernel_in_props(item) and len(self.node_functions.get_node_parents(item, gsm_json)) == 0)
+                                'det' not in dict(item.properties)
+                                and
+                                # TODO: This condition may need to be revised
+                                # 'on' is very unlikely to lead to a verb
+                                ('on' not in case_in_props(dict(item.properties), True))
+                                and
+                                ((
+                                        # if a node has at least one ingoing edge and comes with a case-derived float attribute
+                                        (len(self.node_functions.get_node_parents(item, gsm_json)) > 0 and any(case_in_props(self.node_functions.get_gsm_item_from_id(x, gsm_json)['properties']) for x in self.node_functions.get_node_parents(item, gsm_json)))
+                                        or
+                                        # If a node is the last occurring in the root/kernel of all kernels and has no ingoing edges
+                                        (list(self.nodes)[-1] == item.id and is_kernel_in_props(item) and len(self.node_functions.get_node_parents(item, gsm_json)) == 0)
                                 ))
                         ):
                             best_type = "verb"
@@ -703,24 +723,7 @@ class AssignTypeToSingleton:
 
             if node.type == Grouping.NOT or (node.type == Grouping.AND and node.entities[0].type == Grouping.NOT):
                 return
-            # # TODO: Check if xi is in negations or NEG is in ell
-            # if len(gsm_item['xi']) > 0 and gsm_item['xi'][0] in self.negations or 'NEG' in gsm_item['ell']:
-            #     is_prop_negated = True
 
-            # Check if name is not/no or if negation found in properties
-            ## TODO: there was a case where node didn't have the field named_entity
-            ##       Please double check if this will fix it...
-            # if is_prop_negated:
-            #     self.nodes[key] = SetOfSingletons(
-            #         id=key,
-            #         type=Grouping.NOT,
-            #         entities=tuple([node]),
-            #         min=node.min,
-            #         max=node.max,
-            #         confidence=node.confidence
-            #     )
-            # else:
-            # if hasattr(node, "named_entity") and node.named_entity in self.negations:
             grouped_nodes.append(node)
             for edge in gsm_item['phi']:
                 if edge['score']['child'] in self.nodes:  # Node might have been removed so check key exists
@@ -819,7 +822,7 @@ class AssignTypeToSingleton:
         # Add child node if 'amod' as properties of source node
         for row, gsm_item, edge in self.iterateOverEdges(gsm_json, rejected_edges):
             edge_label_name = edge['containment']  # Name of edge label
-            if 'amod' in edge_label_name or 'advmod' in edge_label_name:  # TODO: Is this 'amod' or just 'mod' as could have 'nmod' (e.g. (traffic)-[nmod]->(Newcastle)
+            if edge_label_name in {'amod', 'advmod'}:  # TODO: Is this 'amod' or just 'mod' as could have 'nmod' (e.g. (traffic)-[nmod]->(Newcastle)
                 source_node = self.nodes[self.node_functions.get_node_id(edge['score']['parent'])]
                 target_node = self.nodes[self.node_functions.get_node_id(edge['score']['child'])]
                 temp_prop = dict(copy(source_node.properties))
@@ -830,22 +833,23 @@ class AssignTypeToSingleton:
                     type_key = self.services.getParmenides().most_general_type(
                         map(lambda x: x.type, target_node.entities))
 
-                if type_key not in temp_prop:
-                    temp_prop[type_key] = (target_node,)
-                elif not isinstance(temp_prop[type_key], list):
-                    temp_prop[type_key] = (temp_prop[type_key], target_node)
-                else:
-                    temp_prop[type_key] += (target_node,)
+                if type_key != 'existential':
+                    if type_key not in temp_prop:
+                        temp_prop[type_key] = (target_node,)
+                    elif not isinstance(temp_prop[type_key], list):
+                        temp_prop[type_key] = (temp_prop[type_key], target_node)
+                    else:
+                        temp_prop[type_key] += (target_node,)
 
-                self.nodes[self.node_functions.get_node_id(edge['score']['parent'])] = Singleton(
-                    id=source_node.id,
-                    named_entity=source_node.named_entity,
-                    properties=frozenset(temp_prop.items()),
-                    min=source_node.min,
-                    max=source_node.max,
-                    type=source_node.type,  # TODO: This type is the ENUM case (i.e. 3 instead of NOT) so use dacite
-                    confidence=source_node.confidence
-                )
+                    self.nodes[self.node_functions.get_node_id(edge['score']['parent'])] = Singleton(
+                        id=source_node.id,
+                        named_entity=source_node.named_entity,
+                        properties=frozenset(temp_prop.items()),
+                        min=source_node.min,
+                        max=source_node.max,
+                        type=source_node.type,  # TODO: This type is the ENUM case (i.e. 3 instead of NOT) so use dacite
+                        confidence=source_node.confidence
+                    )
 
         for row in range(len(gsm_json)):
             gsm_item = gsm_json[row]
@@ -922,7 +926,7 @@ class AssignTypeToSingleton:
             if 'end' in gsm_item['properties']:
                 node_max = gsm_item['properties']['end']
 
-        rejected_edges = {'amod', 'advmod', 'neg', 'conj', 'cc'}
+        rejected_edges = {'amod', 'advmod', 'adv', 'neg', 'conj', 'cc'}
         target_gsm_item = self.node_functions.get_gsm_item_from_id(self.node_functions.get_node_id(target_node.id), gsm_json)
 
         if self.nodes[self.node_functions.get_node_id(source_node_id)].type == Grouping.MULTIINDIRECT:

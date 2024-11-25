@@ -918,6 +918,9 @@ parmenides:me a parmenides:PersonalPronoun,
 parmenides:melt a parmenides:TransitiveVerb ;
     rdfs:label "melt"^^xsd:string .
 
+parmenides:mend a parmenides:TransitiveVerb ;
+    rdfs:label "mend"^^xsd:string .
+
 parmenides:mid a parmenides:PrototypicalPreposition ;
     rdfs:label "mid"^^xsd:string .
 

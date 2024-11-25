@@ -4,6 +4,22 @@ from LaSSI.external_services.Services import Services
 from LaSSI.structures.internal_graph.EntityRelationship import Singleton, Grouping
 
 
+def create_existential_node():
+    return Singleton(
+        id=-1,
+        named_entity="?" + str(Services.getInstance().getExistentials().increaseAndGetExistential()),
+        properties=frozenset(dict().items()),
+        min=-1,
+        max=-1,
+        type="existential",
+        confidence=-1
+    )
+
+
+def create_props_for_singleton(properties):
+    return frozenset({k: tuple(v) if isinstance(v, list) else v for k, v in properties.items()}.items())
+
+
 class NodeFunctions:
     def __init__(self, max_id):
         self.services = Services.getInstance()
@@ -18,6 +34,11 @@ class NodeFunctions:
         else:
             return None
 
+    def remove_gsm_item_by_id(self, gsm_id, gsm_json, ids_to_remove):
+        gsm_id_json = {row['id']: idx for idx, row in enumerate(gsm_json)}  # Associate ID to key value
+        if gsm_id in gsm_id_json:
+            ids_to_remove.append(gsm_id_json[gsm_id])
+
     def get_node_parents(self, node, gsm_json):
         parents = []
         number_of_nodes = range(len(gsm_json))
@@ -25,11 +46,11 @@ class NodeFunctions:
             gsm_item = gsm_json[row]
             if len(gsm_item['phi']) > 0:
                 for edge in gsm_item['phi']:
-                    if edge['score']['child'] == node.id:
+                    if (isinstance(node, Singleton) and edge['score']['child'] == node.id) or (
+                            not isinstance(node, Singleton) and edge['score']['child'] == node['id']):
                         parents.append(edge['score']['parent'])
 
         return parents
-
 
     def get_node_id(self, node_id):
         value = self.node_id_map.get(node_id, node_id)
@@ -51,15 +72,7 @@ class NodeFunctions:
 
     def resolve_node_id(self, node_id, nodes):
         if node_id is None:
-            return Singleton(
-                id=-1,
-                named_entity="?" + str(self.existentials.increaseAndGetExistential()),
-                properties=frozenset(),
-                min=-1,
-                max=-1,
-                type='existential',
-                confidence=1
-            )
+            return create_existential_node()
         else:
             return nodes[self.get_node_id(node_id)]
 
@@ -125,3 +138,11 @@ class NodeFunctions:
             return valid_nodes
         else:
             return -1
+
+    def get_max_from_nodes(self, nodes):
+        valid_nodes = self.get_valid_nodes(nodes)
+        return max(valid_nodes, key=lambda x: x.max).max if valid_nodes != -1 else -1
+
+    def get_min_from_nodes(self, nodes):
+        valid_nodes = self.get_valid_nodes(nodes)
+        return min(valid_nodes, key=lambda x: x.min).min if valid_nodes != -1 else -1
