@@ -307,10 +307,19 @@ class CreateFinalKernel:
         properties_to_keep = defaultdict(list)
 
         if kernel_nodes is None:
-            kernel_nodes = []
-        kernel_nodes.append(kernel.kernel.source) if kernel.kernel.source is not None else kernel_nodes
-        kernel_nodes.append(kernel.kernel.target) if kernel.kernel.target is not None else kernel_nodes
-        kernel_nodes.append(kernel.kernel.edgeLabel) if kernel.kernel.edgeLabel is not None else kernel_nodes
+            kernel_nodes = set()
+        kernel_nodes = self.add_to_kernel_nodes(kernel, kernel_nodes)
+
+        # Add 'nmod' source and target to kernel nodes, so duplicate nodes are not added to properties
+        for key in dict(kernel.properties):
+            properties_key_ = dict(kernel.properties)[key]
+            if isinstance(properties_key_, str):
+                continue
+            else:
+                for node in properties_key_:
+                    if key == 'nmod':
+                        properties_to_keep[key].append(self.remove_duplicate_properties(node, kernel_nodes))
+                        kernel_nodes = self.add_to_kernel_nodes(node, kernel_nodes)
 
         for key in dict(kernel.properties):
             properties_key_ = dict(kernel.properties)[key]
@@ -359,3 +368,42 @@ class CreateFinalKernel:
             kernel=kernel.kernel,
             properties=create_props_for_singleton(properties_to_keep),
         )
+
+    def add_to_kernel_nodes(self, node, kernel_nodes):
+        if isinstance(node, SetOfSingletons):
+            kernel_nodes.add(node)
+            for entity in node.entities:
+                self.add_to_kernel_nodes(entity, kernel_nodes)
+        else:
+            if node.kernel is not None:
+                kernel_nodes.add(node)
+                # Check if properties has any Singleton's and add to kernel nodes also
+                if node.kernel.edgeLabel is not None:
+                    self.add_singletons_from_node_properties(node.kernel.edgeLabel, kernel_nodes)
+                    self.add_to_kernel_nodes(node.kernel.edgeLabel, kernel_nodes)
+                if node.kernel.source is not None:
+                    self.add_singletons_from_node_properties(node.kernel.source, kernel_nodes)
+                    self.add_to_kernel_nodes(node.kernel.source, kernel_nodes)
+                if node.kernel.target is not None:
+                    self.add_singletons_from_node_properties(node.kernel.target, kernel_nodes)
+                    self.add_to_kernel_nodes(node.kernel.target, kernel_nodes)
+            else:
+                kernel_nodes.add(node)
+
+        return kernel_nodes
+
+    def add_singletons_from_node_properties(self, node, kernel_nodes):
+        if isinstance(node, Singleton):
+            for key in dict(node.properties):
+                properties_key_ = dict(node.properties)[key]
+                if not isinstance(properties_key_, str):
+                    if isinstance(properties_key_, Singleton):
+                        self.add_to_kernel_nodes(properties_key_, kernel_nodes)
+                    else:
+                        for prop_node in properties_key_:
+                            if isinstance(prop_node, Singleton):
+                                self.add_to_kernel_nodes(prop_node, kernel_nodes)
+                            elif isinstance(prop_node, SetOfSingletons):
+                                kernel_nodes.add(node)
+                                for prop_entity in prop_node.entities:
+                                    self.add_to_kernel_nodes(prop_entity, kernel_nodes)

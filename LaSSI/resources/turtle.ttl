@@ -1327,6 +1327,9 @@ parmenides:retire a parmenides:TransitiveVerb ;
 parmenides:reveal a parmenides:TransitiveVerb ;
     rdfs:label "reveal"^^xsd:string .
 
+parmenides:rewind a parmenides:TransitiveVerb ;
+    rdfs:label "rewind"^^xsd:string .
+
 parmenides:ride a parmenides:TransitiveVerb ;
     rdfs:label "ride"^^xsd:string .
 
@@ -1791,6 +1794,9 @@ parmenides:violate a parmenides:TransitiveVerb ;
 
 parmenides:vis-%C3%A0-vis a parmenides:PrototypicalPreposition ;
     rdfs:label "vis-à-vis"^^xsd:string .
+
+parmenides:visit a parmenides:TransitiveVerb ;
+    rdfs:label "visit"^^xsd:string .
 
 parmenides:vocative a parmenides:dependency ;
     rdfs:label "vocative"^^xsd:string .

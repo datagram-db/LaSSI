@@ -543,50 +543,53 @@ class AssignTypeToSingleton:
                     # TODO: Fix typing information (e.g. Golden Gate Bridge has GPE (0.8) and ENTITY (1.0)
                     best_score = max(map(lambda y: y.confidence, self.meu_entities[item]))
 
-                    # TODO: min and max might not be correct when coming from an inherit edge
-                    best_items = [
-                        y for y in self.meu_entities[item]
-                        if y.confidence == best_score
-                    ]
-                    if len(best_items) == 0:
-                        return
-                    if len(best_items) == 1:
-                        best_item = best_items[0]
-                        best_type = best_item.type
+                    if item.confidence >= best_score and item.type in {'verb', 'PERSON', 'DATE', 'GPE', 'LOC', 'ENTITY'}: # If the best_score is better than what we currently have for the Singleton
+                        best_type = item.type
                     else:
-                        best_types = list(set(map(lambda best_item: best_item.type, best_items)))
-                        if len(best_types) == 1:
-                            best_type = best_types[0]
-                        ## TODO! type disambiguation, in future works, needs to take into account also the verb associated to it!
-                        elif ("VERB" in best_types or "verb" in best_types) and (
-                                # If a node is marked with a det, never consider this as a verb
-                                'det' not in dict(item.properties)
-                                and
-                                # TODO: This condition may need to be revised
-                                # 'on' is very unlikely to lead to a verb
-                                ('on' not in case_in_props(dict(item.properties), True))
-                                and
-                                ((
-                                        # if a node has at least one ingoing edge and comes with a case-derived float attribute
-                                        (len(self.node_functions.get_node_parents(item, gsm_json)) > 0 and any(case_in_props(self.node_functions.get_gsm_item_from_id(x, gsm_json)['properties']) for x in self.node_functions.get_node_parents(item, gsm_json)))
-                                        or
-                                        # If a node is the last occurring in the root/kernel of all kernels and has no ingoing edges
-                                        (list(self.nodes)[-1] == item.id and is_kernel_in_props(item) and len(self.node_functions.get_node_parents(item, gsm_json)) == 0)
-                                ))
-                        ):
-                            best_type = "verb"
-                        elif "PERSON" in best_types:
-                            best_type = "PERSON"
-                        elif "DATE" in best_types or "TIME" in best_types:
-                            best_type = "DATE"
-                        elif "GPE" in best_types:
-                            best_type = "GPE"
-                        elif "LOC" in best_types:
-                            best_type = "LOC"
-                        elif "ENTITY" in best_types:
-                            best_type = "ENTITY"
+                        # TODO: min and max might not be correct when coming from an inherit edge
+                        best_items = [
+                            y for y in self.meu_entities[item]
+                            if y.confidence == best_score
+                        ]
+                        if len(best_items) == 0:
+                            return
+                        if len(best_items) == 1:
+                            best_item = best_items[0]
+                            best_type = best_item.type
                         else:
-                            best_type = "None"
+                            best_types = list(set(map(lambda best_item: best_item.type, best_items)))
+                            if len(best_types) == 1:
+                                best_type = best_types[0]
+                            ## TODO! type disambiguation, in future works, needs to take into account also the verb associated to it!
+                            elif ("VERB" in best_types or "verb" in best_types) and (
+                                    # If a node is marked with a det, never consider this as a verb
+                                    'det' not in dict(item.properties)
+                                    and
+                                    # TODO: This condition may need to be revised
+                                    # 'on' is very unlikely to lead to a verb
+                                    ('on' not in case_in_props(dict(item.properties), True))
+                                    and
+                                    ((
+                                            # if a node has at least one ingoing edge and comes with a case-derived float attribute
+                                            (len(self.node_functions.get_node_parents(item, gsm_json)) > 0 and any(case_in_props(self.node_functions.get_gsm_item_from_id(x, gsm_json)['properties']) for x in self.node_functions.get_node_parents(item, gsm_json)))
+                                            or
+                                            # If a node is the last occurring in the root/kernel of all kernels and has no ingoing edges
+                                            (list(self.nodes)[-1] == item.id and is_kernel_in_props(item) and len(self.node_functions.get_node_parents(item, gsm_json)) == 0)
+                                    ))
+                            ):
+                                best_type = "verb"
+                            elif "PERSON" in best_types:
+                                best_type = "PERSON"
+                            elif "DATE" in best_types or "TIME" in best_types:
+                                best_type = "DATE"
+                            elif "GPE" in best_types:
+                                best_type = "GPE"
+                            elif "LOC" in best_types:
+                                best_type = "LOC"
+                            elif "ENTITY" in best_types:
+                                best_type = "ENTITY"
+                            else:
+                                best_type = "None"
             from LaSSI.structures.internal_graph.EntityRelationship import Singleton
             self.nodes[item.id] = Singleton(
                 id=item.id,
@@ -822,7 +825,24 @@ class AssignTypeToSingleton:
         # Add child node if 'amod' as properties of source node
         for row, gsm_item, edge in self.iterateOverEdges(gsm_json, rejected_edges):
             edge_label_name = edge['containment']  # Name of edge label
-            if edge_label_name in {'amod', 'advmod', 'case'}:  # TODO: Is this 'amod' or just 'mod' as could have 'nmod' (e.g. (traffic)-[nmod]->(Newcastle)
+            if edge_label_name in {'appos'}:
+                source_node = self.nodes[self.node_functions.get_node_id(edge['score']['parent'])]
+                target_node = self.nodes[self.node_functions.get_node_id(edge['score']['child'])]
+
+                if isinstance(target_node, SetOfSingletons):
+                    current_grouped_nodes = list(target_node.entities)
+                    current_grouped_nodes.insert(0, source_node)
+
+                    self.nodes[source_node.id] = SetOfSingletons(
+                        id=source_node.id,
+                        type=target_node.type,
+                        entities=tuple(current_grouped_nodes),
+                        min=min(current_grouped_nodes, key=lambda x: x.min).min,
+                        max=max(current_grouped_nodes, key=lambda x: x.max).max,
+                        confidence=1,
+                        root=target_node.root
+                    )
+            elif edge_label_name in {'amod', 'advmod', 'case'}:  # TODO: Is this 'amod' or just 'mod' as could have 'nmod' (e.g. (traffic)-[nmod]->(Newcastle)
                 source_node = self.nodes[self.node_functions.get_node_id(edge['score']['parent'])]
                 target_node = self.nodes[self.node_functions.get_node_id(edge['score']['child'])]
                 temp_prop = dict(copy(source_node.properties))
@@ -929,7 +949,7 @@ class AssignTypeToSingleton:
             if 'end' in gsm_item['properties']:
                 node_max = gsm_item['properties']['end']
 
-        rejected_edges = {'amod', 'advmod', 'adv', 'neg', 'conj', 'cc', 'case', 'none'}
+        rejected_edges = {'amod', 'advmod', 'adv', 'neg', 'conj', 'cc', 'case', 'none', 'appos'}
         target_gsm_item = self.node_functions.get_gsm_item_from_id(self.node_functions.get_node_id(target_node.id), gsm_json)
 
         if self.nodes[self.node_functions.get_node_id(source_node_id)].type == Grouping.MULTIINDIRECT:

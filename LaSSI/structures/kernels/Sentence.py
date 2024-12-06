@@ -134,7 +134,7 @@ def create_cop(node, kernel, target_or_source):
         new_source = Singleton(
             id=kernel.source.id,
             named_entity=kernel.source.named_entity,
-            properties=temp_prop,
+            properties=create_props_for_singleton(temp_prop),
             min=kernel.source.min,
             max=kernel.source.max,
             type=kernel.source.type,
@@ -403,7 +403,7 @@ def add_to_properties(kernel, node, source_or_target, kernel_nodes, properties, 
 #  min and max might differ despite being the same node (i.e. a MULTIINDIRECT might have larger min max)?
 def is_node_in_kernel_nodes(check_node, kernel_nodes):
     for kernel_node in kernel_nodes:
-        if isinstance(check_node, Singleton) and isinstance(kernel_node, Singleton):
+        if isinstance(check_node, Singleton) and isinstance(kernel_node, Singleton) and check_node.kernel is None:
             if (check_node.named_entity == kernel_node.named_entity and check_node.id == kernel_node.id
                     #and check_node.type == kernel_node.type and check_node.min == kernel_node.min and check_node.max == kernel_node.max
                 #check_node.named_entity == kernel_node.named_entity and
@@ -411,6 +411,9 @@ def is_node_in_kernel_nodes(check_node, kernel_nodes):
                 return True
         elif isinstance(check_node, SetOfSingletons) and isinstance(kernel_node, SetOfSingletons):
             if check_node.entities == kernel_node.entities and check_node.type == kernel_node.type and check_node.min == kernel_node.min and check_node.max == kernel_node.max:
+                return True
+        elif isinstance(check_node, Singleton) and isinstance(kernel_node, Singleton) and check_node.kernel is not None and kernel_node.kernel is not None:
+            if ((check_node.kernel.source is not None and kernel_node.kernel.source is not None and check_node.kernel.source.id == kernel_node.kernel.source.id) or (check_node.kernel.source is None and kernel_node.kernel.source is None)) and ((check_node.kernel.target is not None and kernel_node.kernel.target is not None and check_node.kernel.target.id == kernel_node.kernel.target.id) or (check_node.kernel.target is None and kernel_node.kernel.target is None)) and ((check_node.kernel.edgeLabel is not None and kernel_node.kernel.edgeLabel is not None and check_node.kernel.edgeLabel.named_entity == kernel_node.kernel.edgeLabel.named_entity) or (check_node.kernel.edgeLabel is None and kernel_node.kernel.edgeLabel is None)):
                 return True
 
     return False

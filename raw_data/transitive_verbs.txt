@@ -377,3 +377,5 @@ mend
 dare
 attack
 do
+visit
+rewind

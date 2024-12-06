@@ -120,6 +120,9 @@ def GraphNER_withProperties(node, is_simplistic_rewriting, meu_db_row, parmenide
             extra = " ".join((extra, entity.named_entity))  # Ensure there is no leading space
     extra = extra.strip()  # Remove whitespace
 
+    if norm_confidence > candidate_meu_score:
+        candidate_meu_score = norm_confidence
+
     if is_simplistic_rewriting:
         new_properties = {
             "specification": "none",
@@ -169,8 +172,9 @@ def GraphNER_withProperties(node, is_simplistic_rewriting, meu_db_row, parmenide
         new_properties = merge_properties(fusion_properties, new_properties)
 
         # Get score and type for newly created Singleton
-        candidate_meu_score, candidate_meu_type = (
-            score_from_meu(min_value, max_value, sing_type, meu_db_row, parmenides))
+        concat_candidate_meu_score, concat_candidate_meu_type = (score_from_meu(min_value, max_value, sing_type, meu_db_row, parmenides))
+
+        candidate_meu_type = parmenides.most_specific_type([concat_candidate_meu_type, candidate_meu_type])
 
         merged_node = Singleton(
             id=node.id,
