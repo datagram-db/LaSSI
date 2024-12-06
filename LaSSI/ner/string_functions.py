@@ -32,5 +32,11 @@ def lemmatize_verb(edge_label_name):
         return edge_label_name
 
 @lru_cache(maxsize = 128)
+def has_auxiliary(label):
+    stNLP = Services.getInstance().getStanzaSTNLP()
+    return any(map(lambda y: y["lemma"], filter(lambda x: x["upos"] == "AUX", stNLP(label).to_dict()[0])))
+
+
+@lru_cache(maxsize = 128)
 def check_semi_modal(label):
     return len({label}.intersection(Services.getInstance().getParmenides().getSemiModalVerbs())) != 0

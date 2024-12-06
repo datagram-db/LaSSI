@@ -9,8 +9,8 @@ Dan plays football ⇒ play(Dan, football)
 Neither Alice nor Bob play football ⇒ play(NEITHER(Bob, Alice), football)
 
 // But not
-Alice is playing but not joking ⇒ play(Alice[(action:playing)], ?1)[(AND:Alice[(action:is  playing )]), (AND:NOT(joking))]
-Alice is playing but not in Newcastle ⇒ play(Alice, AND(NOT(Newcastle[(6:in)])))
+Alice is playing but not joking ⇒ play(Alice[(action:playing)], ?2)[(SENTENCE:NOT(joke(Alice[(action:playing)], None)))]
+Alice is playing but not in Newcastle ⇒ play(Alice, None)[(AND:NOT(Newcastle[(6:in)]))]
 
 // Cat and mouse
 The cat eats the mouse ⇒ eat(cat[(det:The)], mouse[(det:the)])
@@ -29,21 +29,22 @@ The Golden Gate Bridge is fabulous! ⇒ be(Golden Gate Bridge[(det:The)], fabulo
 
 // Newcastle
 The busy Newcastle city centre is closed for traffic ⇒ close(?1, Newcastle[(extra:city centre), (det:The), (amod:busy)])[(ENTITY:traffic[(subjpass:subjpass), (8:for)])]
-
 There is traffic but not in the Newcastle city centre ⇒ be(traffic, ?1)[(AND:NOT(Newcastle[(det:the), (extra:city centre), (6:in)]))]
-Newcastle has traffic but not in the city centre ⇒ have(Newcastle, AND(traffic, NOT(city centre[(det:the), (6:in)])))
 
-In Newcastle city center on Saturdays, traffic is flowing ⇒ flow in(traffic, None)[(DATE:Saturdays[(5:on)]), (GPE:Newcastle[(extra:city center), (1:In)]), (nmod(Newcastle[(extra:city center), (1:In)], Saturdays[(5:on)]))]
-Traffic is flowing in Newcastle city centre, on Saturdays ⇒ flow on(Traffic, None)[(DATE:Saturdays[(9:on)]), (GPE:Newcastle[(4:in), (extra:city centre)])]
+//Newcastle has traffic but not in the city centre ⇒ have(Newcastle, AND(traffic, NOT(city centre[(det:the), (6:in)])))
+Newcastle has traffic but not in the city centre ⇒ have(Newcastle, None)[(AND:NOT(city centre[(det:the), (6:in)])), (AND:traffic)]
+
+In Newcastle city center on Saturdays, traffic is flowing ⇒ flow(traffic, None)[(GPE:Newcastle[(extra:city center), (1:In)]), (DATE:Saturdays[(5:on)]), (nmod(Newcastle[(extra:city center), (1:In)], Saturdays[(5:on)]))]
+Traffic is flowing in Newcastle city centre, on Saturdays ⇒ flow(Traffic, None)[(GPE:Newcastle[(4:in), (extra:city centre)]), (DATE:Saturdays[(9:on)])]
 
 //On Saturdays, traffic is flowing in Newcastle city centre ⇒ flow(traffic, None)[(GPE:Newcastle[(7:in), (extra:city centre)]), (DATE:Saturdays[(1:On)])]
-On Saturdays, traffic is flowing in Newcastle city centre ⇒ flow on(traffic, None)[(GPE:Newcastle[(7:in), (extra:city centre)]), (DATE:Saturdays[(1:On)])]
+On Saturdays, traffic is flowing in Newcastle city centre ⇒ flow(traffic, None)[(GPE:Newcastle[(extra:city centre), (7:in)]), (DATE:Saturdays[(1:On)])]
 
-There is traffic in the Newcastle city centre ⇒ be(traffic[(action:is)], ?1)[(GPE:Newcastle[(det:the), (4:in), (extra:city centre)]), (nmod(traffic[(action:is)], Newcastle[(det:the), (4:in), (extra:city centre)]))]
+There is traffic in the Newcastle city centre ⇒ be(traffic, ?1)[(GPE:Newcastle[(4:in), (extra:city centre), (det:the)]), (nmod(traffic, Newcastle[(4:in), (extra:city centre), (det:the)]))]
 In the Newcastle city centre there is traffic ⇒ be(traffic, ?2)[(GPE:Newcastle[(extra:city centre), (1:In), (det:the)])]
 Newcastle city centre has traffic ⇒ have(Newcastle[(extra:city centre)], traffic)
 There is traffic but not in the Newcastle city centre ⇒ be(traffic, ?3)[(AND:NOT(Newcastle[(det:the), (6:in), (extra:city centre)]))]
-Newcastle has traffic but not in the city centre ⇒ have(Newcastle, AND(NOT(city centre[(6:in), (det:the)]), traffic))
+Newcastle has traffic but not in the city centre ⇒ have(Newcastle, None)[(AND:NOT(city centre[(det:the), (6:in)])), (AND:traffic)]
 Newcastle city center does not have traffic ⇒ NOT(have(Newcastle[(extra:city center)], traffic))
 Newcastle city centre is trafficked ⇒ traffic(?2[(subjpass:subjpass)], None)[(GPE:Newcastle[(extra:city centre)])]
 It is busy in Newcastle ⇒ be(It, busy)[(GPE:Newcastle[(4:in)])]
@@ -51,7 +52,7 @@ Saturdays have usually busy city centers ⇒ have(Saturdays, city centers[(JJ:bu
 
 // Negations
 I like non green books ⇒ like(I, books[(JJ:NOT(green))])
-I do not skate ⇒ NOT(skate(I[(action:skate)], None))
+I do not skate ⇒ NOT(do skate(I[(action:skate)], ?1))
 
 // Sentences
 This is a beautiful world ⇒ be(This[(det:det)], world[(amod:beautiful), (det:a)])
@@ -59,7 +60,7 @@ This world is beautiful ⇒ be(world[(det:This)], beautiful)
 The Golden Gate Bridge is fabulous! ⇒ be(Golden Gate Bridge[(det:The)], fabulous[(punct:!)])
 This is a fabulous Golden Gate Bridge picture ⇒ be(This[(det:det)], picture[(extra:Golden Gate Bridge), (amod:fabulous), (det:a)])
 
-//
+// Sub kernels
 //To live freely you need to fight ⇒ need(you, fight[(mark:to)](?1, None)[(mark:to)])[(SENTENCE:live[(advmod:freely), (mark:To)](?1, None))]
 To live freely you need to fight ⇒ need(you, fight[(mark:to)](?1, None)[(mark:to)])[(SENTENCE:live[(mark:To), (ENTITY:freely)](?1, None)[(ENTITY:freely)])]
 to be, or not to be, that is the question ⇒ be(that[(det:det)], question[(punct:,), (det:the)])[(OR:be[(mark:to), (punct:,)]), (OR:NOT(be[(mark:to)]))]
@@ -85,7 +86,7 @@ the hot water to run out ⇒ be(water[(amod:hot), (det:the)], ?10)[(ENTITY:run o
 you become fatigued ⇒ become(you[(cop:fatigued)], None)
 
 //attempt to steal someone's husband ⇒ be(attempt, ?10)[(SENTENCE:to steal(?1, husband[(5:'s), (nmod_poss:someone)]))]
-attempt to steal someone's husband ⇒ be(attempt, ?11)[(nmod_poss(to steal(?1, husband)[(ENTITY:someone[(5:'s)]), (nmod_poss(husband, someone[(5:'s)])), (verb:attempt)], someone[(5:'s)])), (ENTITY:someone[(5:'s)]), (SENTENCE:to steal(?1, husband)[(ENTITY:someone[(5:'s)]), (nmod_poss(husband, someone[(5:'s)]))])]
+//attempt to steal someone's husband ⇒ be(attempt, ?11)[(nmod_poss(to steal(?1, husband)[(ENTITY:someone[(5:'s)]), (nmod_poss(husband, someone[(5:'s)])), (verb:attempt)], someone[(5:'s)])), (ENTITY:someone[(5:'s)]), (SENTENCE:to steal(?1, husband)[(ENTITY:someone[(5:'s)]), (nmod_poss(husband, someone[(5:'s)]))])]
 attempt to steal someone's husband ⇒ be(attempt, ?11)[(SENTENCE:to steal(?1, husband)[(nmod_poss(husband, someone[(5:'s)])), (ENTITY:someone[(5:'s)])]), (nmod_poss(to steal(?1, husband)[(nmod_poss(husband, someone[(5:'s)])), (ENTITY:someone[(5:'s)]), (verb:attempt)], someone[(5:'s)]))]
 
 
@@ -138,7 +139,8 @@ washing clothes ⇒ wash(?1, clothes[(actioned:washing)])
 group of reindeer ⇒ be(group, ?17)[(ENTITY:reindeer[(2:of)]), (nmod(group, reindeer[(2:of)]))]
 
 //attack opposing armies ⇒ attack(?18, oppose(?1, armies))
-attack opposing armies ⇒ oppose(attack, armies)
+//attack opposing armies ⇒ oppose(attack, armies)
+attack opposing armies ⇒ be(attack, ?25)[(SENTENCE:oppose(?24, armies))]
 
 A mixed breed dog ⇒ be(breed dog[(amod:mixed), (det:A)], ?19)
 you set the timer ⇒ set(you, timer[(det:the)])
@@ -152,7 +154,7 @@ made into mummies ⇒ make into(?5, None)[(ENTITY:mummies[(2:into)])]
 weigh the consequences ⇒ weigh(?7, consequences[(det:the)])
 embryoma of the kidney ⇒ be(embryoma, ?9)[(nmod(embryoma, kidney[(det:the), (2:of)])), (ENTITY:kidney[(det:the), (2:of)])]
 attend an interview ⇒ attend(?10, interview[(det:an)])
-become able to answer more questions ⇒ become(?14[(cop:able)], None)[(SENTENCE:answer to(?12, questions[(amod:more)]))]
+become able to answer more questions ⇒ become(?14[(cop:able)], None)[(SENTENCE:to answer(?12, questions[(amod:more)]))]
 being on same track ⇒ being(?16, None)[(ENTITY:track[(amod:same), (2:on)])]
 
 //used in the game of chess ⇒ use(?18, None)[(ENTITY:game[(det:the), (2:in)]), (ENTITY:chess[(5:of)]), (nmod(game[(det:the), (2:in)], chess[(5:of)]))]
@@ -163,11 +165,8 @@ A hard working person ⇒ be(person[(det:A)], ?23)[(SENTENCE:work(?21[(cop:hard)
 tackle the ball carrier ⇒ tackle(?23, ball carrier[(det:the)])
 Mailboxes on the street ⇒ be(Mailboxes, ?26)[(ENTITY:street[(det:the), (2:on)]), (nmod(Mailboxes, street[(det:the), (2:on)]))]
 having a burger ⇒ have(?27, burger[(det:a)])
-
-//being informed about ongoings ⇒ inform(?29, None)[(ENTITY:ongoings[(3:about)])]
 being informed about ongoings ⇒ inform about(?31, None)[(ENTITY:ongoings[(3:about)])]
-
-you score well on tests ⇒ score well on(you, None)[(ENTITY:tests[(4:on)])]
+you score well on tests ⇒ score well(you, None)[(ENTITY:tests[(4:on)])]
 run alot ⇒ run(?31, alot)
 study closely ⇒ study(?1, closely)
 
@@ -180,8 +179,6 @@ the corner of two streets ⇒ be(corner[(det:the)], ?3)[(ENTITY:streets[(3:of), 
 phase of cell division ⇒ be(phase, ?4)[(nmod(phase, cell division[(2:of)])), (ENTITY:cell division[(2:of)])]
 carrying foods ⇒ carry(?5, foods)
 mend a hole ⇒ mend(?7, hole[(det:a)])
-
-//be on the interne ⇒ be(?1, ?9)[(SENTENCE:be(?1, None)), (ENTITY:interne[(2:on), (det:the)])]
 be on the interne ⇒ be(?10, None)[(ENTITY:interne[(det:the), (2:on)])]
 
 //come closer ⇒ come[(advmod:closer)](?1, None)
@@ -198,13 +195,13 @@ friction between moms and their sons ⇒ between(friction, None)[(AND:moms[(2:be
 discussing a business deal ⇒ discuss(?21, business deal[(det:a)])
 
 //the essence of seeing is everywhere ⇒ be[(advmod:everywhere)](?1, essence[(action:is), (det:the)])[(SENTENCE:seeing[(mark:of)](?1, None))]
-the essence of seeing is everywhere ⇒ be[(ENTITY:everywhere)](?1, essence[(det:the), (action:is)])[(SENTENCE:seeing[(mark:of)](?1, None))]
+the essence of seeing is everywhere ⇒ be(essence[(det:the), (action:is)], ?30)[(SENTENCE:seeing[(mark:of)](?31, None))]
 
 get some fresh air and exercise ⇒ get(?22, AND(air[(amod:fresh), (det:some)], exercise))
 
 
 // Part 6
-your family gathers by your bedside ⇒ gather by(family[(nmod_poss:your)], bedside[(nmod_poss:your), (4:by)])
+your family gathers by your bedside ⇒ gather(family[(nmod_poss:your)], bedside[(nmod_poss:your), (4:by)])
 search for answers ⇒ search(?1, None)[(nmod(search, answers[(2:for)])), (ENTITY:answers[(2:for)])]
 smell rather unpleasant ⇒ smell(?1, unpleasant[(advmod:rather)])
 go to the store ⇒ go to(?1, None)[(ENTITY:store[(det:the), (2:to)])]
@@ -214,16 +211,17 @@ turning in completed homework assignments ⇒ turn in(?5, None)[(ENTITY:homework
 open your mouth and chew ⇒ open(?7, AND(mouth[(nmod_poss:your)], chew))
 clear your vision ⇒ be(vision[(JJ:clear), (nmod_poss:your)], ?9)
 desire to win an election ⇒ be(desire, ?10)[(SENTENCE:to win(?1, election[(det:an)]))]
-People that work in warehouses ⇒ be(People, ?11)[(SENTENCE:work in(that, None)[(ENTITY:warehouses[(4:in)])]), (acl_relcl(People, work in(that, None)[(ENTITY:warehouses[(4:in)])]))]
+People that work in warehouses ⇒ be(People, ?15)[(SENTENCE:work(that, None)[(ENTITY:warehouses[(4:in)])]), (acl_relcl(People, work(that, None)[(ENTITY:warehouses[(4:in)])]))]
 29.8 miles per second ⇒ be(miles[(nummod:29<dot>8)], ?12)[(ENTITY:second[(3:per)]), (nmod(miles[(nummod:29<dot>8)], second[(3:per)]))]
 get something on the stand ⇒ get(?13, something)[(ENTITY:stand[(3:on), (det:the)])]
 A love of knowledge ⇒ be(love[(det:A)], ?15)[(nmod(love[(det:A)], knowledge[(3:of)])), (ENTITY:knowledge[(3:of)])]
 get a magazine ⇒ get(?16, magazine[(det:a)])
 it looks good on me ⇒ look(it[(cop:good)], None)[(ENTITY:me[(4:on)])]
-the effect of dissolving the sugar ⇒ be(effect[(det:the)], ?20)[(SENTENCE:dissolve of(?18, None)[(ENTITY:sugar[(det:the)])])]
+the effect of dissolving the sugar ⇒ be(effect[(det:the)], ?25)[(SENTENCE:of dissolve(?22, None)[(ENTITY:sugar[(det:the)])])]
 killed by somone else ⇒ kill by(?21, somone[(2:by), (advmod:else)])
 make sure you don't get sick ⇒ make(?23, sure)[(SENTENCE:NOT(get(you, sick)))]
 getting something you really want ⇒ get(?25, something)
 
-
-
+// Subsentences
+desire to win the elections ⇒ be(desire, ?4)[(SENTENCE:to win(?3, elections[(det:the)]))]
+I dare you to do it in front of me! ⇒ dare(I, you)[(SENTENCE:to do(?7, it)[(ENTITY:me[(case:of[(extra:in front)])])])]

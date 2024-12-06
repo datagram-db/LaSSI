@@ -13,7 +13,7 @@ import os.path
 import pickle
 import re
 from collections import defaultdict
-from functools import reduce
+from functools import reduce, lru_cache
 from string import Template
 
 import pandas
@@ -219,6 +219,7 @@ class Parmenides():
         for row in qres:
             yield f(row)
 
+    @lru_cache(maxsize=128)
     def get_semi_modal_verbs(self):
         knows_query = """
          SELECT DISTINCT ?c
@@ -228,6 +229,7 @@ class Parmenides():
          }"""
         return self._single_unary_query(knows_query, lambda x: str(x.c))
 
+    @lru_cache(maxsize=128)
     def get_transitive_verbs(self):
         knows_query = """
          SELECT DISTINCT ?c
@@ -237,6 +239,7 @@ class Parmenides():
          }"""
         return self._single_unary_query(knows_query, lambda x: str(x.c))
 
+    @lru_cache(maxsize=128)
     def get_prototypical_prepositions(self):
         knows_query = """
          SELECT DISTINCT ?c
@@ -246,6 +249,7 @@ class Parmenides():
          }"""
         return self._single_unary_query(knows_query, lambda x: str(x.c))
 
+    @lru_cache(maxsize=128)
     def get_pronouns(self):
         knows_query = """
          SELECT DISTINCT ?c
@@ -255,6 +259,7 @@ class Parmenides():
          }"""
         return self._single_unary_query(knows_query, lambda x: str(x.c))
 
+    @lru_cache(maxsize=128)
     def get_universal_dependencies(self):
         knows_query = """
          SELECT DISTINCT ?c

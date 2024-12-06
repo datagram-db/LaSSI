@@ -117,8 +117,18 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
     kernel: Relationship = None
 
     @staticmethod
-    def get_props(node):
-        return dict(node.properties) if node is not None and isinstance(node, Singleton) else None
+    def get_props(node, properties=None):
+        if properties is None:
+            properties = dict()
+        if node is None:
+            return None
+
+        if isinstance(node, Singleton):
+            return dict(node.properties)
+        elif isinstance(node, SetOfSingletons):
+            for entity in node.entities:
+                properties |= Singleton.get_props(entity, properties)
+            return properties
 
     @staticmethod
     def update_node_props(node, node_props):

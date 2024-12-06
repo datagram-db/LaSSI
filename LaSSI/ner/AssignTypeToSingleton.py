@@ -167,7 +167,7 @@ class AssignTypeToSingleton:
                     gsm_item,
                     is_compound,
                     norm_confidence,
-                    'compound',
+                    {'compound', 'none'}, # Treat 'none' as compound also
                     False)
                 if not is_compound:
                     has_conj, norm_confidence = self.get_relationship_entities(
@@ -176,7 +176,7 @@ class AssignTypeToSingleton:
                         gsm_item,
                         has_conj,
                         norm_confidence,
-                        'conj',
+                        {'conj'},
                         False)
                     if has_conj:
                         grouped_nodes.insert(0, self.nodes[self.node_functions.get_node_id(gsm_item['id'])])
@@ -187,7 +187,7 @@ class AssignTypeToSingleton:
                             gsm_item,
                             has_compound_prt,
                             norm_confidence,
-                            'compound_prt')
+                            {'compound_prt'})
 
             # Determine conjugation type
             if has_conj:
@@ -299,7 +299,7 @@ class AssignTypeToSingleton:
 
     # Phase 1.2
     def get_relationship_entities(self, grouped_nodes, gsm_json, gsm_item, has_relationship, norm_confidence,
-                                  edge_relationship_label='compound', deplete_phi=True):
+                                  edge_relationship_label={'compound'}, deplete_phi=True):
         gsm_id_json = {row['id']: row for row in gsm_json}  # Associate ID to key value
         edges_to_remove = []
         for idx, edge in enumerate(gsm_item['phi']):
@@ -822,12 +822,15 @@ class AssignTypeToSingleton:
         # Add child node if 'amod' as properties of source node
         for row, gsm_item, edge in self.iterateOverEdges(gsm_json, rejected_edges):
             edge_label_name = edge['containment']  # Name of edge label
-            if edge_label_name in {'amod', 'advmod'}:  # TODO: Is this 'amod' or just 'mod' as could have 'nmod' (e.g. (traffic)-[nmod]->(Newcastle)
+            if edge_label_name in {'amod', 'advmod', 'case'}:  # TODO: Is this 'amod' or just 'mod' as could have 'nmod' (e.g. (traffic)-[nmod]->(Newcastle)
                 source_node = self.nodes[self.node_functions.get_node_id(edge['score']['parent'])]
                 target_node = self.nodes[self.node_functions.get_node_id(edge['score']['child'])]
                 temp_prop = dict(copy(source_node.properties))
                 if isinstance(target_node, Singleton):
-                    type_key = self.node_functions.get_node_type(target_node)
+                    if edge_label_name != 'case':
+                        type_key = self.node_functions.get_node_type(target_node)
+                    else:
+                        type_key = 'case'
                 else:
                     from LaSSI.external_services.Services import Services
                     type_key = self.services.getParmenides().most_general_type(
@@ -926,7 +929,7 @@ class AssignTypeToSingleton:
             if 'end' in gsm_item['properties']:
                 node_max = gsm_item['properties']['end']
 
-        rejected_edges = {'amod', 'advmod', 'adv', 'neg', 'conj', 'cc'}
+        rejected_edges = {'amod', 'advmod', 'adv', 'neg', 'conj', 'cc', 'case', 'none'}
         target_gsm_item = self.node_functions.get_gsm_item_from_id(self.node_functions.get_node_id(target_node.id), gsm_json)
 
         if self.nodes[self.node_functions.get_node_id(source_node_id)].type == Grouping.MULTIINDIRECT:

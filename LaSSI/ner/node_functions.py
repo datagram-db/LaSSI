@@ -1,6 +1,6 @@
 from collections import deque, defaultdict
-
 from LaSSI.external_services.Services import Services
+from LaSSI.ner.string_functions import has_auxiliary
 from LaSSI.structures.internal_graph.EntityRelationship import Singleton, Grouping
 
 
@@ -146,3 +146,9 @@ class NodeFunctions:
     def get_min_from_nodes(self, nodes):
         valid_nodes = self.get_valid_nodes(nodes)
         return min(valid_nodes, key=lambda x: x.min).min if valid_nodes != -1 else -1
+
+    def check_node_coordinations_for_auxiliary(self, current_edge, all_edges):
+        if 'cc' in dict(current_edge.source.properties):
+            return any(map(has_auxiliary, [edge.edgeLabel.named_entity for edge in all_edges if edge.source.id == current_edge.source.id]))
+        else:
+            return has_auxiliary(current_edge.edgeLabel.named_entity)

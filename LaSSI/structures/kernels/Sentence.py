@@ -10,6 +10,8 @@ __status__ = "Production"
 import re
 from collections import defaultdict
 from copy import copy
+from typing import Any, Tuple
+
 from LaSSI.external_services.Services import Services
 from LaSSI.ner.node_functions import create_existential_node, create_props_for_singleton
 from LaSSI.ner.string_functions import lemmatize_verb, check_semi_modal
@@ -146,12 +148,14 @@ def create_cop(node, kernel, target_or_source):
         )
     return kernel
 
-def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposition_labels, node_functions) -> Singleton:
+def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposition_labels, node_functions, given_edge_to_loop):
+    edge_to_loop = [False, None]
+
     root_node = nodes[root_sentence_id]
     if root_node.type == 'verb' and len(edges) <= 0:
-        return create_edge_kernel(root_node)
+        return create_edge_kernel(root_node), edge_to_loop
     elif len(edges) <= 0:
-        return root_node
+        return root_node, edge_to_loop
 
     # With graph created, make the 'Sentence' object
     kernel = None
@@ -193,6 +197,14 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
             )
             kernel, properties, kernel_nodes = add_to_properties(kernel, edge_kernel, 'edgeLabel', kernel_nodes, properties, negations, node_functions)
 
+        # If we have an edge that is a verb and not already in the kernel nodes, use this as the "edge to loop", out the next iteration on the same root node
+        if edge.edgeLabel.type == 'verb' and kernel.edgeLabel.named_entity != edge.edgeLabel.named_entity and not is_node_in_kernel_nodes(edge.edgeLabel, kernel_nodes):
+            edge_to_loop = [True, edge]
+
+    # If we have a kernel returned from the previous loop, add this to the properties
+    if len(given_edge_to_loop) > 2:
+        kernel, properties, kernel_nodes = add_to_properties(kernel, given_edge_to_loop[2] , 'target', kernel_nodes, properties, negations, node_functions)
+
     edge_label = replaceNamed(kernel.edgeLabel, lemmatize_verb(kernel.edgeLabel.named_entity)) if kernel.edgeLabel is not None else None
 
     properties_to_keep = defaultdict()
@@ -228,7 +240,7 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
 
     if new_kernel is not None:
         valid_nodes = node_functions.get_valid_nodes([kernel.source, kernel.target])
-        return Singleton(
+        final_kernel = Singleton(
             id=root_sentence_id,
             named_entity="",
             type="SENTENCE",
@@ -243,8 +255,13 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
             ),
             properties=create_props_for_singleton(properties_to_keep),
         )
+        if edge_to_loop[0]:
+            edge_to_loop.append(final_kernel)
+        return final_kernel, edge_to_loop
     else:
-        return final_kernel
+        if edge_to_loop[0]:
+            edge_to_loop.append(final_kernel)
+        return final_kernel, edge_to_loop
 
 def analyse_kernel_node(kernel, kernel_nodes, kernel_node_type):
     if kernel_node_type == 'source':
@@ -390,7 +407,7 @@ def is_node_in_kernel_nodes(check_node, kernel_nodes):
             if (check_node.named_entity == kernel_node.named_entity and check_node.id == kernel_node.id
                     #and check_node.type == kernel_node.type and check_node.min == kernel_node.min and check_node.max == kernel_node.max
                 #check_node.named_entity == kernel_node.named_entity and
-            ):
+            ) or (check_node.type == 'verb' and lemmatize_verb(check_node.named_entity) == lemmatize_verb(kernel_node.named_entity) and check_node.id == kernel_node.id):
                 return True
         elif isinstance(check_node, SetOfSingletons) and isinstance(kernel_node, SetOfSingletons):
             if check_node.entities == kernel_node.entities and check_node.type == kernel_node.type and check_node.min == kernel_node.min and check_node.max == kernel_node.max:
@@ -402,12 +419,12 @@ def is_node_in_kernel_nodes(check_node, kernel_nodes):
 def assign_kernel(edges, kernel, negations, nodes, root_sentence_id, found_proposition_labels):
     chosen_edge = None
     for edge in edges:
-        if edge.edgeLabel.type == "verb" and (root_sentence_id in found_proposition_labels or edge.edgeLabel.named_entity not in found_proposition_labels.values()):
+        if edge.edgeLabel.type == "verb" and (root_sentence_id in found_proposition_labels or edge.edgeLabel.named_entity not in found_proposition_labels.values()) and edge.source.id == root_sentence_id:
             chosen_edge = edge
             break
 
     for edge in edges:
-        if ((edge.edgeLabel.type == "verb" or edge.source.type == "verb" and chosen_edge is None) or (chosen_edge is not None and chosen_edge == edge)) and (root_sentence_id in found_proposition_labels or edge.edgeLabel.named_entity not in found_proposition_labels.values()):
+        if (((edge.edgeLabel.type == "verb" or edge.source.type == "verb") and chosen_edge is None) or (chosen_edge is not None and chosen_edge == edge)) and (root_sentence_id in found_proposition_labels or edge.edgeLabel.named_entity not in found_proposition_labels.values()):
             edge_label = edge.edgeLabel if edge.edgeLabel.type == "verb" else edge.source  # If the source is a verb, assign it to the edge label
 
             # If not semi-modal AND not in nodes then remove source
@@ -521,6 +538,8 @@ def case_in_props(node_props, return_props=False):
     found_cases = []
 
     for key in node_props:
+        if key == 'case':
+            return True
         try:
             case_position = float(key)
             if node_props[key] not in ignore_cases:
