@@ -368,3 +368,14 @@ put
 provide
 take
 oppose
+weigh
+attend
+tackle
+inform
+score
+mend
+dare
+attack
+do
+visit
+rewind

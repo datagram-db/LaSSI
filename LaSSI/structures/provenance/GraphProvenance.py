@@ -2,6 +2,7 @@ from typing import List
 
 from LaSSI.external_services.Services import Services
 from LaSSI.ner.AssignTypeToSingleton import AssignTypeToSingleton
+from LaSSI.ner.CreateFinalKernel import CreateFinalKernel
 from LaSSI.structures.internal_graph.EntityRelationship import Singleton
 from LaSSI.structures.internal_graph.Graph import Graph
 
@@ -22,7 +23,7 @@ class GraphProvenance:
 
     def internal_graph(self) -> Graph:
         # Phase 0-4
-        self.atts_global.groupGraphNodes(self.gsm_json_graph)
+        self.gsm_json_graph = self.atts_global.groupGraphNodes(self.gsm_json_graph)
         # Phase 5
         self.atts_global.checkForNegation(self.gsm_json_graph)
 
@@ -36,5 +37,6 @@ class GraphProvenance:
         return self._internal_graph
 
     def sentence(self) -> Singleton:
-        self._sentence = self.atts_global.constructSentence()
+        create_final_kernel = CreateFinalKernel(self.atts_global.nodes, self.gsm_json_graph, self.atts_global.edges, self.atts_global.negations, self.atts_global.node_functions)
+        self._sentence = create_final_kernel.constructSentence()
         return self._sentence

@@ -117,8 +117,18 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
     kernel: Relationship = None
 
     @staticmethod
-    def get_props(node):
-        return dict(node.properties) if node is not None and isinstance(node, Singleton) else None
+    def get_props(node, properties=None):
+        if properties is None:
+            properties = dict()
+        if node is None:
+            return None
+
+        if isinstance(node, Singleton):
+            return dict(node.properties)
+        elif isinstance(node, SetOfSingletons):
+            for entity in node.entities:
+                properties |= Singleton.get_props(entity, properties)
+            return properties
 
     @staticmethod
     def update_node_props(node, node_props):
@@ -130,7 +140,26 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
             max=node.max,
             type=node.type,
             confidence=node.confidence,
+            kernel=node.kernel,
         )
+
+    @staticmethod
+    def add_root_property(node):
+        if isinstance(node, SetOfSingletons):
+            return SetOfSingletons(
+                id=node.id,
+                type=node.type,
+                entities=node.entities,
+                min=node.min,
+                max=node.max,
+                confidence=node.confidence,
+                root=True
+            )
+
+        node_props = dict(node.properties)
+        node_props['kernel'] = 'root'
+        return Singleton.update_node_props(node, node_props)
+
 
     @staticmethod
     def strip_root_properties(node):
@@ -174,30 +203,32 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
             if node_to_use is None or not isinstance(node_to_use, Singleton):
                 return ''
 
-            props_to_ignore = ['begin', 'pos', 'end', 'kernel', 'lemma', 'specification', 'number', 'root', 'expl', 'cc', 'conj']
+            props_to_ignore = ['begin', 'pos', 'end', 'kernel', 'lemma', 'specification', 'number', 'root', 'expl', 'cc', 'conj', 'neg']
             properties_list = []
             for key in dict(node_to_use.properties):
                 if key not in props_to_ignore:
                     properties_key_ = dict(node_to_use.properties)[key]
                     if key == 'cop':
-                        copula_sing = Singleton(
-                            int(properties_key_['id']),
-                            properties_key_['named_entity'],
-                            frozenset(dict(properties_key_['properties']).items()),
-                            int(properties_key_['min']),
-                            int(properties_key_['max']),
-                            properties_key_['type'],
-                            float(properties_key_['confidence'])
-                        )
-                        properties_list.append(f'({key}:{get_node_string(copula_sing)})')
+                        properties_list.append(f'({key}:{get_node_string(properties_key_)})')
                     elif isinstance(properties_key_, str) and properties_key_ != '':
+                        try:
+                            key = str(int(float(key)))
+                        except ValueError:
+                            key = key
+
                         properties_list.append(f'({key}:{properties_key_})')
                     else:
-                        for node in properties_key_:
-                            if key == 'SENTENCE':  # It is a node with kernel (most likely)
-                                properties_list.append(f'({key}:{self.to_string(node)})')
-                            else:
-                                properties_list.append(f'({key}:{get_node_string(node)})')
+                        if isinstance(properties_key_, Singleton):
+                            properties_list.append(f'({key}:{get_node_string(properties_key_)})')
+                        else:
+                            for node in properties_key_:
+                                if key == 'SENTENCE':  # It is a node with kernel (most likely)
+                                    properties_list.append(f'({key}:{self.to_string(node)})')
+                                else:
+                                    if key in {'nmod', 'nmod_poss', 'acl_relcl'}:
+                                        properties_list.append(f'({get_node_string(node)})')
+                                    else:
+                                        properties_list.append(f'({key}:{get_node_string(node)})')
 
             return f'[{", ".join(properties_list)}]' if len(properties_list) > 0 else ''
 

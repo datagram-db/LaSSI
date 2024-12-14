@@ -142,6 +142,12 @@ parmenides:at a parmenides:PrototypicalPreposition ;
 parmenides:atop a parmenides:PrototypicalPreposition ;
     rdfs:label "atop"^^xsd:string .
 
+parmenides:attack a parmenides:TransitiveVerb ;
+    rdfs:label "attack"^^xsd:string .
+
+parmenides:attend a parmenides:TransitiveVerb ;
+    rdfs:label "attend"^^xsd:string .
+
 parmenides:aux a parmenides:dependency ;
     rdfs:label "aux"^^xsd:string .
 
@@ -363,8 +369,7 @@ parmenides:d_object a owl:ObjectProperty .
 parmenides:dampen a parmenides:TransitiveVerb ;
     rdfs:label "dampen"^^xsd:string .
 
-parmenides:dare a parmenides:SemiModalVerb,
-        parmenides:Verb ;
+parmenides:dare a parmenides:TransitiveVerb ;
     rdfs:label "dare"^^xsd:string .
 
 parmenides:dash a parmenides:TransitiveVerb ;
@@ -435,6 +440,9 @@ parmenides:distinguish a parmenides:TransitiveVerb ;
 
 parmenides:disturb a parmenides:TransitiveVerb ;
     rdfs:label "disturb"^^xsd:string .
+
+parmenides:do a parmenides:TransitiveVerb ;
+    rdfs:label "do"^^xsd:string .
 
 parmenides:dobj a parmenides:dependency ;
     rdfs:label "dobj"^^xsd:string .
@@ -915,6 +923,9 @@ parmenides:me a parmenides:PersonalPronoun,
 parmenides:melt a parmenides:TransitiveVerb ;
     rdfs:label "melt"^^xsd:string .
 
+parmenides:mend a parmenides:TransitiveVerb ;
+    rdfs:label "mend"^^xsd:string .
+
 parmenides:mid a parmenides:PrototypicalPreposition ;
     rdfs:label "mid"^^xsd:string .
 
@@ -1316,6 +1327,9 @@ parmenides:retire a parmenides:TransitiveVerb ;
 parmenides:reveal a parmenides:TransitiveVerb ;
     rdfs:label "reveal"^^xsd:string .
 
+parmenides:rewind a parmenides:TransitiveVerb ;
+    rdfs:label "rewind"^^xsd:string .
+
 parmenides:ride a parmenides:TransitiveVerb ;
     rdfs:label "ride"^^xsd:string .
 
@@ -1363,6 +1377,9 @@ parmenides:scold a parmenides:TransitiveVerb ;
 
 parmenides:scoop a parmenides:TransitiveVerb ;
     rdfs:label "scoop"^^xsd:string .
+
+parmenides:score a parmenides:TransitiveVerb ;
+    rdfs:label "score"^^xsd:string .
 
 parmenides:scrub a parmenides:TransitiveVerb ;
     rdfs:label "scrub"^^xsd:string .
@@ -1555,6 +1572,9 @@ parmenides:swallow a parmenides:TransitiveVerb ;
 
 parmenides:switch a parmenides:TransitiveVerb ;
     rdfs:label "switch"^^xsd:string .
+
+parmenides:tackle a parmenides:TransitiveVerb ;
+    rdfs:label "tackle"^^xsd:string .
 
 parmenides:take a parmenides:TransitiveVerb ;
     rdfs:label "take"^^xsd:string .
@@ -1775,6 +1795,9 @@ parmenides:violate a parmenides:TransitiveVerb ;
 parmenides:vis-%C3%A0-vis a parmenides:PrototypicalPreposition ;
     rdfs:label "vis-à-vis"^^xsd:string .
 
+parmenides:visit a parmenides:TransitiveVerb ;
+    rdfs:label "visit"^^xsd:string .
+
 parmenides:vocative a parmenides:dependency ;
     rdfs:label "vocative"^^xsd:string .
 
@@ -1808,6 +1831,9 @@ parmenides:we a parmenides:PersonalPronoun,
 
 parmenides:wear a parmenides:TransitiveVerb ;
     rdfs:label "wear"^^xsd:string .
+
+parmenides:weigh a parmenides:TransitiveVerb ;
+    rdfs:label "weigh"^^xsd:string .
 
 parmenides:what a parmenides:Pronoun,
         parmenides:RelativePronoun ;
@@ -1977,6 +2003,9 @@ parmenides:jam a parmenides:Noun ;
     parmenides:entryPoint parmenides:traffic%23n ;
     parmenides:eqTo <https://lo-ds.github.io/parmenides#traffic+congestion> .
 
+parmenides:SemiModalVerb a owl:Class ;
+    rdfs:subClassOf parmenides:Verb .
+
 <https://lo-ds.github.io/parmenides#city+center> a parmenides:LOC ;
     rdfs:label "city center"^^xsd:string ;
     parmenides:entryPoint parmenides:city ;
@@ -2035,9 +2064,6 @@ parmenides:slow%23adj a parmenides:Adjective ;
     rdfs:label "slow"^^xsd:string ;
     parmenides:entryPoint parmenides:slow%23adj ;
     parmenides:neqTo parmenides:fast .
-
-parmenides:SemiModalVerb a owl:Class ;
-    rdfs:subClassOf parmenides:Verb .
 
 parmenides:center a parmenides:Adjective ;
     rdfs:label "center"^^xsd:string ;
@@ -2098,11 +2124,11 @@ parmenides:Adjective a owl:Class ;
 parmenides:Noun a owl:Class ;
     rdfs:subClassOf parmenides:GrammaticalFunction .
 
-parmenides:IndefinitePronoun a owl:Class ;
-    rdfs:subClassOf parmenides:Pronoun .
-
 parmenides:Verb a owl:Class ;
     rdfs:subClassOf parmenides:GrammaticalFunction .
+
+parmenides:IndefinitePronoun a owl:Class ;
+    rdfs:subClassOf parmenides:Pronoun .
 
 parmenides:city a parmenides:LOC ;
     rdfs:label "city"^^xsd:string ;
