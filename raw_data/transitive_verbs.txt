@@ -379,3 +379,9 @@ attack
 do
 visit
 rewind
+evaluate
+fulfil
+crank
+dispose
+frame
+graduate

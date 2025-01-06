@@ -54,7 +54,9 @@ class Parmenides():
     def most_specific_type(self, types):
         types = list(map(lambda x: str(x).lower(), types))
         ### TODO: within .ttl and type inference
-        if "gpe" in types:
+        if any(map(lambda x: "verb" in x, types)):
+            return "VERB"
+        elif "gpe" in types:
             return "GPE"
         elif "loc" in types:
             return "LOC"
@@ -64,8 +66,6 @@ class Parmenides():
             return "noun"
         elif "entity" in types:
             return "ENTITY"
-        elif any(map(lambda x: "verb" in x, types)):
-            return "VERB"
         elif "adjective" in types:
             return "JJ"
         else:

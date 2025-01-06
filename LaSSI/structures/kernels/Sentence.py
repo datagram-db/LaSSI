@@ -51,20 +51,44 @@ def create_existential(edges, nodes):
 
         # node_props = dict(node.properties)
         if is_kernel_in_props(node) or len(nodes) == 1:
-            edges.append(Relationship(
-                source=node,
-                target=create_existential_node(),
-                edgeLabel=Singleton(
-                    id=-1,
-                    named_entity="is",
-                    properties=frozenset(dict().items()),
-                    min=-1,
-                    max=-1,
-                    type="verb",
-                    confidence=-1
-                ),
-                isNegated=False
-            ))
+            if node.type == 'verb':
+                node_props = dict(node.properties)
+                new_target = None
+                if 'extra' in node_props:
+                    # TODO: If node has an extra, make as target
+                    new_target = Singleton(
+                        id=-1,
+                        named_entity=node_props['extra'],
+                        properties=frozenset(dict().items()),
+                        min=-1,
+                        max=-1,
+                        type="None",
+                        confidence=-1
+                    )
+                    node_props.pop('extra')
+                    node = Singleton.update_node_props(node, node_props)
+
+                edges.append(Relationship(
+                    source=create_existential_node(),
+                    target=new_target,
+                    edgeLabel=node,
+                    isNegated=False
+                ))
+            else:
+                edges.append(Relationship(
+                    source=node,
+                    target=create_existential_node(),
+                    edgeLabel=Singleton(
+                        id=-1,
+                        named_entity="is",
+                        properties=frozenset(dict().items()),
+                        min=-1,
+                        max=-1,
+                        type="verb",
+                        confidence=-1
+                    ),
+                    isNegated=False
+                ))
 
             return
 
@@ -95,7 +119,7 @@ def create_cop(node, kernel, target_or_source):
             # if isinstance(node, SetOfSingletons):
             #     temp_prop = dict(copy(node.entities[0].properties))
             # else:
-            temp_prop = dict(copy(node.properties))
+            temp_prop = dict(copy(kernel.target.properties))
             temp_prop['cop'] = node
 
             if isinstance(kernel.target, Singleton):
@@ -198,7 +222,7 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
             kernel, properties, kernel_nodes = add_to_properties(kernel, edge_kernel, 'edgeLabel', kernel_nodes, properties, negations, node_functions)
 
         # If we have an edge that is a verb and not already in the kernel nodes, use this as the "edge to loop", out the next iteration on the same root node
-        if edge.edgeLabel.type == 'verb' and kernel.edgeLabel.named_entity != edge.edgeLabel.named_entity and not is_node_in_kernel_nodes(edge.edgeLabel, kernel_nodes):
+        if edge.edgeLabel.type == 'verb' and kernel.edgeLabel is not None and edge.edgeLabel is not None and kernel.edgeLabel.named_entity != edge.edgeLabel.named_entity and not is_node_in_kernel_nodes(edge.edgeLabel, kernel_nodes):
             edge_to_loop = [True, edge]
 
     # If we have a kernel returned from the previous loop, add this to the properties
@@ -323,7 +347,8 @@ def add_to_kernel_nodes(node, kernel_nodes):
                                 add_to_kernel_nodes(prop_entity, kernel_nodes)
 
         if node.kernel is not None:
-            add_to_kernel_nodes(node.kernel.edgeLabel, kernel_nodes)
+            if node.kernel.edgeLabel is not None:
+                add_to_kernel_nodes(node.kernel.edgeLabel, kernel_nodes)
             if node.kernel.source is not None:
                 add_to_kernel_nodes(node.kernel.source, kernel_nodes)
             if node.kernel.target is not None:
@@ -413,7 +438,13 @@ def is_node_in_kernel_nodes(check_node, kernel_nodes):
             if check_node.entities == kernel_node.entities and check_node.type == kernel_node.type and check_node.min == kernel_node.min and check_node.max == kernel_node.max:
                 return True
         elif isinstance(check_node, Singleton) and isinstance(kernel_node, Singleton) and check_node.kernel is not None and kernel_node.kernel is not None:
-            if ((check_node.kernel.source is not None and kernel_node.kernel.source is not None and check_node.kernel.source.id == kernel_node.kernel.source.id) or (check_node.kernel.source is None and kernel_node.kernel.source is None)) and ((check_node.kernel.target is not None and kernel_node.kernel.target is not None and check_node.kernel.target.id == kernel_node.kernel.target.id) or (check_node.kernel.target is None and kernel_node.kernel.target is None)) and ((check_node.kernel.edgeLabel is not None and kernel_node.kernel.edgeLabel is not None and check_node.kernel.edgeLabel.named_entity == kernel_node.kernel.edgeLabel.named_entity) or (check_node.kernel.edgeLabel is None and kernel_node.kernel.edgeLabel is None)):
+            if (
+                    ((check_node.kernel.source is not None and kernel_node.kernel.source is not None and check_node.kernel.source.id == kernel_node.kernel.source.id) or (check_node.kernel.source is None and kernel_node.kernel.source is None))
+                    and
+                    ((check_node.kernel.target is not None and kernel_node.kernel.target is not None and check_node.kernel.target.id == kernel_node.kernel.target.id) or (check_node.kernel.target is None and kernel_node.kernel.target is None))
+                    and
+                    ((check_node.kernel.edgeLabel is not None and kernel_node.kernel.edgeLabel is not None and check_node.kernel.edgeLabel.named_entity == kernel_node.kernel.edgeLabel.named_entity) or (check_node.kernel.edgeLabel is None and kernel_node.kernel.edgeLabel is None))
+            ):
                 return True
 
     return False
@@ -427,7 +458,9 @@ def assign_kernel(edges, kernel, negations, nodes, root_sentence_id, found_propo
             break
 
     for edge in edges:
-        if (((edge.edgeLabel.type == "verb" or edge.source.type == "verb") and chosen_edge is None) or (chosen_edge is not None and chosen_edge == edge)) and (root_sentence_id in found_proposition_labels or edge.edgeLabel.named_entity not in found_proposition_labels.values()):
+        if ((((edge.edgeLabel.type == "verb" or edge.source.type == "verb") and chosen_edge is None) or (chosen_edge is not None and chosen_edge == edge))
+                and (root_sentence_id in found_proposition_labels or edge.edgeLabel.named_entity not in found_proposition_labels.values())):
+            # edge_label = edge.edgeLabel if edge.edgeLabel.type == "verb" and (root_sentence_id in found_proposition_labels or edge.edgeLabel.named_entity not in found_proposition_labels.values()) else edge.source  # If the source is a verb, assign it to the edge label
             edge_label = edge.edgeLabel if edge.edgeLabel.type == "verb" else edge.source  # If the source is a verb, assign it to the edge label
 
             # If not semi-modal AND not in nodes then remove source
@@ -583,6 +616,14 @@ def is_kernel_in_props(node, check_jj=True):
         else:
             for entity in node.entities:
                 return is_kernel_in_props(entity)
-    return (('kernel' in dict(node.properties) or 'root' in dict(node.properties)) and ('JJ' not in node.type and check_jj or not check_jj)) or 'verb' in node.type
+
+    if isinstance(node, Singleton):
+        node_props = dict(node.properties)
+        return (('kernel' in node_props or 'root' in node_props) and (
+                    'JJ' not in node.type and check_jj or not check_jj)) or 'verb' in node.type
+    elif isinstance(node, dict):
+        node_props = node['properties']
+        return 'kernel' in node_props or 'root' in node_props
+
     # TODO: Do we need to check if the JJ is/not a verb?
     # ('JJ' not in x.type or ('JJ' in x.type and self.is_label_verb(x.named_entity))))

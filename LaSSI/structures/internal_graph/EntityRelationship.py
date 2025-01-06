@@ -6,7 +6,8 @@ __version__ = "2.0"
 __maintainer__ = "Oliver R. Fox, Giacomo Bergami"
 __status__ = "Production"
 
-
+import re
+from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
 from typing import List
@@ -204,33 +205,33 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
                 return ''
 
             props_to_ignore = ['begin', 'pos', 'end', 'kernel', 'lemma', 'specification', 'number', 'root', 'expl', 'cc', 'conj', 'neg']
-            properties_list = []
+            properties_list = defaultdict(list)
             for key in dict(node_to_use.properties):
                 if key not in props_to_ignore:
                     properties_key_ = dict(node_to_use.properties)[key]
                     if key == 'cop':
-                        properties_list.append(f'({key}:{get_node_string(properties_key_)})')
+                        properties_list[key].append(get_node_string(properties_key_))
                     elif isinstance(properties_key_, str) and properties_key_ != '':
                         try:
                             key = str(int(float(key)))
                         except ValueError:
                             key = key
 
-                        properties_list.append(f'({key}:{properties_key_})')
+                        properties_list[key].append(properties_key_)
                     else:
                         if isinstance(properties_key_, Singleton):
-                            properties_list.append(f'({key}:{get_node_string(properties_key_)})')
+                            properties_list[key].append(get_node_string(properties_key_))
                         else:
                             for node in properties_key_:
                                 if key == 'SENTENCE':  # It is a node with kernel (most likely)
-                                    properties_list.append(f'({key}:{self.to_string(node)})')
+                                    properties_list[key].append(self.to_string(node))
                                 else:
                                     if key in {'nmod', 'nmod_poss', 'acl_relcl'}:
-                                        properties_list.append(f'({get_node_string(node)})')
+                                        properties_list[key].append(get_node_string(node))
                                     else:
-                                        properties_list.append(f'({key}:{get_node_string(node)})')
+                                        properties_list[key].append(get_node_string(node))
 
-            return f'[{", ".join(properties_list)}]' if len(properties_list) > 0 else ''
+            return re.sub(r"(nmod|nmod_poss|acl_relcl):\1", r"\1", f"""[{", ".join(f'({k}:{v[0] if len(v) == 1 else "[" + ", ".join(v) + "]"})' for k, v in properties_list.items())}]""" if len(properties_list) > 0 else '')
 
         def get_node_string(node):
             node_string = node.named_entity if node is not None and isinstance(node, Singleton) else 'None'

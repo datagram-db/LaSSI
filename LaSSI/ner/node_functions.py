@@ -39,7 +39,7 @@ class NodeFunctions:
         if gsm_id in gsm_id_json:
             ids_to_remove.append(gsm_id_json[gsm_id])
 
-    def get_node_parents(self, node, gsm_json):
+    def get_node_parents(self, node, gsm_json, return_edge=False):
         parents = []
         number_of_nodes = range(len(gsm_json))
         for row in number_of_nodes:
@@ -48,7 +48,10 @@ class NodeFunctions:
                 for edge in gsm_item['phi']:
                     if (isinstance(node, Singleton) and edge['score']['child'] == node.id) or (
                             not isinstance(node, Singleton) and edge['score']['child'] == node['id']):
-                        parents.append(edge['score']['parent'])
+                        if return_edge:
+                            parents.append([edge['score']['parent'], edge['containment']])
+                        else:
+                            parents.append(edge['score']['parent'])
 
         return parents
 
@@ -62,7 +65,7 @@ class NodeFunctions:
     def get_original_node_id(self, node_id, nodes):
         for old_id, new_id in self.node_id_map.items():
             # If we have MULTIINDIRECT, we just want the original ID as the passed on
-            if old_id in nodes and nodes[old_id].type == Grouping.MULTIINDIRECT and len(
+            if new_id == node_id and old_id in nodes and nodes[old_id].type == Grouping.MULTIINDIRECT and len(
                     nodes[old_id].entities) == 1:
                 return node_id
 
