@@ -32,7 +32,7 @@ The busy Newcastle city centre is closed for traffic ⇒ close(?1, Newcastle[(ex
 There is traffic but not in the Newcastle city centre ⇒ be(traffic, ?1)[(AND:NOT(Newcastle[(det:the), (extra:city centre), (6:in)]))]
 
 //Newcastle has traffic but not in the city centre ⇒ have(Newcastle, AND(traffic, NOT(city centre[(det:the), (6:in)])))
-Newcastle has traffic but not in the city centre ⇒ have(Newcastle, None)[(AND:NOT(city centre[(det:the), (6:in)])), (AND:traffic)]
+Newcastle has traffic but not in the city centre ⇒ have(Newcastle, None)[(AND:[NOT(city centre[(det:the), (6:in)]), traffic])]
 
 In Newcastle city center on Saturdays, traffic is flowing ⇒ flow(traffic, None)[(nmod(Newcastle[(extra:city center), (1:In)], Saturdays[(5:on)]))]
 Traffic is flowing in Newcastle city centre, on Saturdays ⇒ flow(Traffic, None)[(GPE:Newcastle[(4:in), (extra:city centre)]), (DATE:Saturdays[(9:on)])]
@@ -44,7 +44,6 @@ There is traffic in the Newcastle city centre ⇒ be(traffic, ?1)[(nmod(traffic,
 In the Newcastle city centre there is traffic ⇒ be(traffic, ?2)[(GPE:Newcastle[(extra:city centre), (1:In), (det:the)])]
 Newcastle city centre has traffic ⇒ have(Newcastle[(extra:city centre)], traffic)
 There is traffic but not in the Newcastle city centre ⇒ be(traffic, ?3)[(AND:NOT(Newcastle[(det:the), (6:in), (extra:city centre)]))]
-Newcastle has traffic but not in the city centre ⇒ have(Newcastle, None)[(AND:NOT(city centre[(det:the), (6:in)])), (AND:traffic)]
 Newcastle city center does not have traffic ⇒ NOT(have(Newcastle[(extra:city center)], traffic))
 Newcastle city centre is trafficked ⇒ traffic(?2[(subjpass:subjpass)], None)[(GPE:Newcastle[(extra:city centre)])]
 It is busy in Newcastle ⇒ be(It, busy)[(GPE:Newcastle[(4:in)])]
@@ -63,7 +62,7 @@ This is a fabulous Golden Gate Bridge picture ⇒ be(This[(det:det)], picture[(e
 // Sub kernels
 //To live freely you need to fight ⇒ need(you, fight[(mark:to)](?1, None)[(mark:to)])[(SENTENCE:live[(advmod:freely), (mark:To)](?1, None))]
 To live freely you need to fight ⇒ need(you, fight[(mark:to)](?2, None)[(mark:to)])[(SENTENCE:live[(mark:To), (ENTITY:freely)](?1, None))]
-to be, or not to be, that is the question ⇒ be(that[(det:det)], question[(punct:,), (det:the)])[(OR:be[(mark:to), (punct:,)]), (OR:NOT(be[(mark:to)]))]
+to be, or not to be, that is the question ⇒ be(that[(det:det)], question[(det:the), (punct:,)])[(OR:[NOT(be[(mark:to)]), be[(mark:to), (punct:,)]])]
 
 // Single node
 the dog ⇒ be(dog[(det:the)], ?1)
@@ -73,7 +72,7 @@ to be ⇒ be[(mark:to)](?4, None)
 
 // Part 1
 waste your time ⇒ waste(?1, time[(nmod_poss:your)])
-coming to false conclusions ⇒ come to(?3, None)[(ENTITY:conclusions[(amod:false), (2:to)])]
+coming to false conclusions ⇒ come to(?3, None)[(ENTITY:conclusions[(amod:false)])]
 bolt from blue ⇒ be(bolt, ?5[(cop:blue[(2:from)]), (2:from)])
 things to be neat and orderly ⇒ be(things, AND(neat[(mark:to)], orderly))[(ENTITY:things)]
 characters in movies ⇒ be(characters, ?6)[(nmod(characters, movies[(2:in)]))]
@@ -95,7 +94,7 @@ privately administered region ⇒ administer(?1, region[(actioned:administered),
 accumulate fuel in a central location ⇒ accumulate(?3, fuel)[(ENTITY:location[(3:in), (amod:central), (det:a)])]
 going off reservation ⇒ go off(?5, None)[(ENTITY:reservation)]
 you become more wise ⇒ become(you[(cop:wise[(advmod:more)])], None)
-going across the street ⇒ go across(?7, None)[(ENTITY:street[(det:the), (2:across)])]
+going across the street ⇒ go across(?7, None)[(ENTITY:street[(det:the)])]
 eat a healthy salad ⇒ eat(?9, salad[(amod:healthy), (det:a)])
 propulsion of aircraft ⇒ be(propulsion, ?11)[(nmod(propulsion, aircraft[(2:of)]))]
 
@@ -111,7 +110,7 @@ a person to die ⇒ be(person[(det:a)], ?21)[(SENTENCE:die[(mark:to)](?1, None))
 information on current events ⇒ be(information, ?22)[(nmod(information, events[(amod:current), (2:on)]))]
 investing money in stock markets ⇒ invest(?23, money)[(ENTITY:stock markets[(3:in)])]
 get one quart beer bottles ⇒ get(?25, quart beer bottles[(nummod:one)])
-go to dogs ⇒ go to(?27, None)[(ENTITY:dogs[(2:to)])]
+go to dogs ⇒ go to(?27, None)[(ENTITY:dogs)]
 a band classroom ⇒ be(band classroom[(det:a)], ?29)
 buying a beer ⇒ buy(?30, beer[(det:a)])
 
@@ -147,7 +146,7 @@ Music that is not classical ⇒ be(Music, ?1)[(SENTENCE:be(that, NOT(classical))
 a letter from a friend ⇒ be(letter[(det:a)], ?2)[(nmod(letter[(det:a)], friend[(3:from), (det:a)]))]
 line of longitude ⇒ be(line, ?3)[(nmod(line, longitude[(2:of)]))]
 second battle of Ypres ⇒ be(battle[(amod:second)], ?4)[(nmod(battle[(amod:second)], Ypres[(3:of)]))]
-made into mummies ⇒ make into(?5, None)[(ENTITY:mummies[(2:into)])]
+made into mummies ⇒ make into(?5, None)[(ENTITY:mummies)]
 weigh the consequences ⇒ weigh(?7, consequences[(det:the)])
 embryoma of the kidney ⇒ be(embryoma, ?9)[(nmod(embryoma, kidney[(det:the), (2:of)]))]
 attend an interview ⇒ attend(?10, interview[(det:an)])
@@ -162,7 +161,7 @@ A hard working person ⇒ be(person[(det:A)], ?23)[(SENTENCE:work(?21[(cop:hard)
 tackle the ball carrier ⇒ tackle(?23, ball carrier[(det:the)])
 Mailboxes on the street ⇒ be(Mailboxes, ?26)[(nmod(Mailboxes, street[(det:the), (2:on)]))]
 having a burger ⇒ have(?27, burger[(det:a)])
-being informed about ongoings ⇒ inform about(?31, None)[(ENTITY:ongoings[(3:about)])]
+being informed about ongoings ⇒ inform about(?31, None)[(ENTITY:ongoings)]
 you score well on tests ⇒ score well(you, None)[(ENTITY:tests[(4:on)])]
 run alot ⇒ run(?31, alot)
 study closely ⇒ study(?1, closely)
@@ -181,10 +180,10 @@ come closer ⇒ come[(ENTITY:closer)](?13, None)
 get a heart attack ⇒ get(?10, heart attack[(det:a)])
 make a silly noise ⇒ make(?12, noise[(det:a), (amod:silly)])
 enjoying the car ⇒ enjoy(?14, car[(det:the)])
-look for it ⇒ look for(?16, None)[(ENTITY:it[(2:for)])]
+look for it ⇒ look for(?16, None)[(ENTITY:it)]
 you might marry them ⇒ marry(you, them)
 applaud the speaker ⇒ applaud(?18, None)[(ENTITY:speaker[(det:the)])]
-friction between moms and their sons ⇒ between(friction, None)[(AND:moms[(2:between)]), (AND:sons[(nmod_poss:their)])]
+friction between moms and their sons ⇒ between(friction, None)[(AND:[moms, sons[(nmod_poss:their)]])]
 discussing a business deal ⇒ discuss(?21, business deal[(det:a)])
 
 //the essence of seeing is everywhere ⇒ be[(advmod:everywhere)](?1, essence[(action:is), (det:the)])[(SENTENCE:seeing[(mark:of)](?1, None))]
@@ -197,13 +196,13 @@ get some fresh air and exercise ⇒ get(?22, AND(air[(amod:fresh), (det:some)], 
 your family gathers by your bedside ⇒ gather(family[(nmod_poss:your)], bedside[(nmod_poss:your), (4:by)])
 search for answers ⇒ search(?1, None)[(nmod(search, answers[(2:for)]))]
 smell rather unpleasant ⇒ smell(?1, unpleasant[(advmod:rather)])
-go to the store ⇒ go to(?1, None)[(ENTITY:store[(det:the), (2:to)])]
+go to the store ⇒ go to(?1, None)[(ENTITY:store[(det:the)])]
 use a crosswalk ⇒ use(?3, crosswalk[(det:a)])
 
 // Possible change in future
 you see a head-on collision coming ⇒ see(you, head[(det:a), (punct:-)])[(nmod(head[(det:a), (punct:-)], collision[(6:on)])), (SENTENCE:coming(?1, None))]
 
-turning in completed homework assignments ⇒ turn in(?5, None)[(ENTITY:homework assignments[(actioned:completed), (2:in)])]
+turning in completed homework assignments ⇒ turn in(?5, None)[(ENTITY:homework assignments[(actioned:completed)])]
 open your mouth and chew ⇒ open(?7, AND(mouth[(nmod_poss:your)], chew))
 clear your vision ⇒ be(vision[(JJ:clear), (nmod_poss:your)], ?9)
 desire to win an election ⇒ be(desire, ?10)[(SENTENCE:to win(?1, election[(det:an)]))]
@@ -222,29 +221,108 @@ getting something you really want ⇒ get(?30, something)[(SENTENCE:want(you[(ac
 getting messy fingers ⇒ get(?1, fingers[(amod:messy)])
 
 // Wrong interpretation from Stanza...
-it makes great christmas presents ⇒ make(it, great)
+it makes great christmas presents ⇒ make(it, great)[(SENTENCE:present(christmas[(cop:great), (action:presents)], None))]
 
 a family room in most homes ⇒ be(family room[(det:a)], ?4)[(nmod(family room[(det:a)], homes[(amod:most), (4:in)]))]
+washing ones hair ⇒ wash(?5, ones[(actioned:washing)])[(ENTITY:hair)]
 
-// Should "washing" be the edgeLabel?
-washing ones hair ⇒ be(ones[(actioned:washing)], ?5)[(ENTITY:hair)]
-
-four light years from the Earth ⇒ be(years[(nummod:four), (amod:light)], ?6)[(nmod(years[(nummod:four), (amod:light)], Earth[(4:from), (det:the)]))]
+four light years from the Earth ⇒ be(years[(nummod:four), (amod:light)], ?5)[(nmod(years[(nummod:four), (amod:light)], Earth[(det:the), (4:from)]))]
 you get your turn ⇒ get(you, turn[(nmod_poss:your)])
-a service plan will be selected ⇒ select(?7[(subjpass:subjpass)], service plan[(det:a)])
-close the curtains ⇒ be(curtains[(det:the), (advmod:close)], ?9)
-Lizards, snakes, turtles and dinosaurs ⇒ be(AND(Lizards[(punct:,)], snakes[(punct:,)], turtles, dinosaurs), ?10)
-The capital city of Ohio ⇒ be(capital city[(det:The)], ?11)[(nmod(capital city[(det:The)], Ohio[(4:of)]))]
-rewind the video ⇒ rewind(?12, video[(det:the)])
-accessories for laptop computer ⇒ be(accessories, ?14)[(nmod(accessories, laptop computer[(2:for)]))]
-fail to evaluate risks ⇒ fail(?17, None)[(SENTENCE:to evaluate(?15, None)[(ENTITY:risks)])]
-The surface of an object ⇒ be(surface[(det:The)], ?20)[(nmod(surface[(det:The)], object[(3:of), (det:an)]))]
+a service plan will be selected ⇒ select(?6[(subjpass:subjpass)], service plan[(det:a)])
+close the curtains ⇒ be(curtains[(det:the), (advmod:close)], ?8)
+Lizards, snakes, turtles and dinosaurs ⇒ be(AND(Lizards[(punct:,)], snakes[(punct:,)], turtles, dinosaurs), ?9)
+The capital city of Ohio ⇒ be(capital city[(det:The)], ?10)[(nmod(capital city[(det:The)], Ohio[(4:of)]))]
+rewind the video ⇒ rewind(?11, video[(det:the)])
+accessories for laptop computer ⇒ be(accessories, ?13)[(nmod(accessories, laptop computer[(2:for)]))]
+fail to evaluate risks ⇒ fail(?16, None)[(SENTENCE:to evaluate(?14, risks))]
+The surface of an object ⇒ be(surface[(det:The)], ?19)[(nmod(surface[(det:The)], object[(det:an), (3:of)]))]
 you enjoy outdoor sports ⇒ enjoy(you, sports[(amod:outdoor)])
 a coin falls and rolls ⇒ roll(coin[(det:a), (action:falls)], None)[(SENTENCE:fall(coin[(det:a), (action:falls)], None))]
-add as an ingredient to toothpaste ⇒ add as(?23, None)[(ENTITY:ingredient[(det:an), (2:as)]), (ENTITY:toothpaste[(5:to)])]
+add as an ingredient to toothpaste ⇒ add as(?22, None)[(ENTITY:[ingredient[(det:an)], toothpaste[(5:to)]])]
 you are visiting Griffith Park Observatory ⇒ visit(you, Griffith Park Observatory)
-a rug on the floor ⇒ be(rug[(det:a)], ?25)[(nmod(rug[(det:a)], floor[(3:on), (det:the)]))]
-providing access to medical care ⇒ provide(?26, access)[(ENTITY:care[(amod:medical), (3:to)])]
+a rug on the floor ⇒ be(rug[(det:a)], ?24)[(nmod(rug[(det:a)], floor[(det:the), (3:on)]))]
+providing access to medical care ⇒ provide(?25, access)[(ENTITY:care[(3:to), (amod:medical)])]
+
+
+
+// Part 8
+fulfill all requirements for a course ⇒ fulfill(?1, None)[(ENTITY:[requirements[(det:all)], course[(det:a), (4:for)]])]
+The love for people ⇒ be(love[(det:The)], ?3)[(nmod(love[(det:The)], people[(3:for)]))]
+At an art class you ⇒ be(you, ?4)[(ENTITY:art class[(det:an), (1:At)])]
+breathing things one is allergic to ⇒ be(one, allergic)[(ENTITY:to), (SENTENCE:breathe(?5, None)[(ENTITY:things)])]
+take a risk with money ⇒ take(?7, risk[(det:a)])[(ENTITY:money[(4:with)])]
+choose a convenient entrance ⇒ choose(?9, None)[(ENTITY:entrance[(det:a), (amod:convenient)])]
+
+// Missing """to write with"""
+get something to write with ⇒ get(?12, something)
+
+// Is this right?
+zero out the cash register ⇒ be(zero, ?14)[(ENTITY:cash register[(2:out), (det:the)])]
+
+enjoyment and relaxation ⇒ be(AND(enjoyment, relaxation), ?15)
+come to his senses ⇒ come to(?16, None)[(ENTITY:senses[(nmod_poss:his)])]
+lead to fatal diseases ⇒ lead to(?18, None)[(ENTITY:diseases[(amod:fatal)])]
+
+// "clean after up"?
+clean up after yourself ⇒ clean after up(?20, None)[(ENTITY:yourself)]
+
+// Missing "stops ringing"
+grab it before it stops ringing ⇒ grab(?22[(adv:it)], it)
+
+a football and protective padding ⇒ be(AND(football[(det:a)], padding[(amod:protective)]), ?24)
+putting images on paper ⇒ put(?25, images)[(ENTITY:paper[(3:on)])]
+cranking up your economy ⇒ crank up(?27, economy[(nmod_poss:your)])
+enjoying the company of your friends ⇒ enjoy(?29, company[(det:the)])[(nmod(company[(det:the)], friends[(nmod_poss:your), (4:of)]))]
+real time polymerase chain reaction ⇒ be(time[(extra:polymerase chain reaction), (amod:real)], ?31)
+
+// sworn in should be edgeLabel?
+get sworn in ⇒ be(sworn in, ?33)[(SENTENCE:get(?32, None))]
+
+an actor forgets his lines ⇒ forget(actor[(det:an)], lines[(nmod_poss:his)])
+
+
+// Part 9
+
+// Does it matter that "might" is removed through lemmatization?
+you might get a flat tire ⇒ get(you, tire[(det:a), (amod:flat)])
+
+you end up with a document ⇒ end up(you, None)[(ENTITY:document[(det:a), (4:with)])]
+go to a hospital ⇒ go to(?1, None)[(ENTITY:hospital[(det:a)])]
+dispose of trash ⇒ dispose of(?3, trash[(2:of)])
+they may foll on the ground ⇒ foll(they, None)[(ENTITY:ground[(4:on), (det:the)])]
+stand up from the barstool ⇒ stand from up(?5, None)[(ENTITY:barstool[(det:the)])]
+
+// "come with" / "back"?
+come back with mixed results ⇒ come with(?7[(adv:back)], None)[(ENTITY:results[(amod:mixed)])]
+
+viruses to get in your comuter ⇒ to get(viruses, None)[(ENTITY:comuter[(nmod_poss:your), (4:in)])]
+keeping our bodies healthy ⇒ keep(?9, bodies[(nmod_poss:our), (cop:healthy)])
+the cops break up a riot ⇒ break up(cops[(det:the)], riot[(det:a)])
+make some coffee ⇒ make(?11, coffee[(det:some)])
+
+// Missing "well-"
+find a well-payed job ⇒ find(?13, job[(det:a), (actioned:payed)])
+
+// "use" is interpreted as a noun
+// parent is "compound" edge, which is root
+// "use strength" now a verb, but #436 in Sentence.py causes problem...
+use strength to move an opponent ⇒ use strength(?16, to move(?15, opponent[(det:an)])[(verb:use strength)])
+framing the picture ⇒ frame(?17, picture[(det:the)])
+
+// disconnected graph
+poisonous, but tomatoes are not ⇒ be(?19[(cop:poisonous)], None)
+
+another mans trash ⇒ be(mans trash[(det:another)], ?21)
+finding a house ⇒ find(?22, house[(det:a)])
+
+// "aim" as noun, MEU does not contain "verb"
+aim at a tree ⇒ be(aim, ?24)[(nmod(aim, tree[(det:a), (2:at)]))]
+
+// "college" did have "from" so it removed as a target, but is removed from properties in the post-processing
+graduating from college ⇒ graduate from(?25, None)[(ENTITY:college)]
+eating breakfast cereal ⇒ eat(?27, breakfast cereal)
+
+
 
 
 // Subsentences

@@ -57,7 +57,12 @@ def GraphNER_withProperties(node, is_simplistic_rewriting, meu_db_row, parmenide
 
             all_types = [sorted_entities[z].type for z in x]
             specific_type = parmenides.most_specific_type(all_types)
-            candidate_meu_score, candidate_meu_type = score_from_meu(min_value, max_value, specific_type,
+
+            # TODO: Is this okay to do? This is done because min/max no match in MEU, but VERB is important to keep...
+            if specific_type == "VERB":
+                candidate_meu_score, candidate_meu_type = 1.0, "VERB"
+            else:
+                candidate_meu_score, candidate_meu_type = score_from_meu(min_value, max_value, specific_type,
                                                                      meu_db_row, parmenides)
             all_meu_score_prod = numpy.prod(list(map(lambda z: sorted_entities[z].confidence, x)))
 
@@ -114,7 +119,7 @@ def GraphNER_withProperties(node, is_simplistic_rewriting, meu_db_row, parmenide
         norm_confidence *= entity.confidence
 
         fusion_properties = merge_properties(dict(entity.properties), fusion_properties)
-        if entity.named_entity == list(d.values())[0] and len(resolved_d) > 0:
+        if (entity.named_entity == list(d.values())[0] and len(resolved_d) > 0) or entity.type.lower() == "verb":
             chosen_entity = entity
         else:
             extra = " ".join((extra, entity.named_entity))  # Ensure there is no leading space

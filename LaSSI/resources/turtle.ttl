@@ -349,6 +349,9 @@ parmenides:cover a parmenides:TransitiveVerb ;
 parmenides:crack a parmenides:TransitiveVerb ;
     rdfs:label "crack"^^xsd:string .
 
+parmenides:crank a parmenides:TransitiveVerb ;
+    rdfs:label "crank"^^xsd:string .
+
 parmenides:cross a parmenides:TransitiveVerb ;
     rdfs:label "cross"^^xsd:string .
 
@@ -434,6 +437,9 @@ parmenides:dislocated a parmenides:dependency ;
 
 parmenides:dismiss a parmenides:TransitiveVerb ;
     rdfs:label "dismiss"^^xsd:string .
+
+parmenides:dispose a parmenides:TransitiveVerb ;
+    rdfs:label "dispose"^^xsd:string .
 
 parmenides:distinguish a parmenides:TransitiveVerb ;
     rdfs:label "distinguish"^^xsd:string .
@@ -527,6 +533,9 @@ parmenides:ere a parmenides:PrototypicalPreposition ;
 
 parmenides:escort a parmenides:TransitiveVerb ;
     rdfs:label "escort"^^xsd:string .
+
+parmenides:evaluate a parmenides:TransitiveVerb ;
+    rdfs:label "evaluate"^^xsd:string .
 
 parmenides:examine a parmenides:TransitiveVerb ;
     rdfs:label "examine"^^xsd:string .
@@ -624,6 +633,9 @@ parmenides:former a parmenides:DemonstrativePronoun,
         parmenides:Pronoun ;
     rdfs:label "former"^^xsd:string .
 
+parmenides:frame a parmenides:TransitiveVerb ;
+    rdfs:label "frame"^^xsd:string .
+
 parmenides:freeze a parmenides:TransitiveVerb ;
     rdfs:label "freeze"^^xsd:string .
 
@@ -635,6 +647,9 @@ parmenides:from a parmenides:PrototypicalPreposition ;
 
 parmenides:fry a parmenides:TransitiveVerb ;
     rdfs:label "fry"^^xsd:string .
+
+parmenides:fulfil a parmenides:TransitiveVerb ;
+    rdfs:label "fulfil"^^xsd:string .
 
 parmenides:furnish a parmenides:TransitiveVerb ;
     rdfs:label "furnish"^^xsd:string .
@@ -650,6 +665,9 @@ parmenides:goeswith a parmenides:dependency ;
 
 parmenides:grab a parmenides:TransitiveVerb ;
     rdfs:label "grab"^^xsd:string .
+
+parmenides:graduate a parmenides:TransitiveVerb ;
+    rdfs:label "graduate"^^xsd:string .
 
 parmenides:grasp a parmenides:TransitiveVerb ;
     rdfs:label "grasp"^^xsd:string .

@@ -574,7 +574,11 @@ class AssignTypeToSingleton:
                                             (len(self.node_functions.get_node_parents(item, gsm_json)) > 0 and any(case_in_props(self.node_functions.get_gsm_item_from_id(x, gsm_json)['properties']) for x in self.node_functions.get_node_parents(item, gsm_json)))
                                             or
                                             # If a node is the last occurring in the root/kernel of all kernels and has no ingoing edges
-                                            (list(self.nodes)[-1] == item.id and is_kernel_in_props(item) and len(self.node_functions.get_node_parents(item, gsm_json)) == 0)
+                                            (list(self.nodes)[-1] == self.node_functions.get_original_node_id(item.id, self.nodes) and is_kernel_in_props(item) and len(self.node_functions.get_node_parents(item, gsm_json)) == 0)
+                                            or
+                                            # TODO: Is this an acceptable condition?
+                                            # If a node is last occurring, and has one parent which is a root connected by a compound edge, and no other ingoing edges
+                                            (list(self.nodes)[-1] == self.node_functions.get_original_node_id(item.id, self.nodes) and len(self.node_functions.get_node_parents(item, gsm_json)) == 1 and self.node_functions.get_node_parents(item, gsm_json, True)[0][1] == "compound" and is_kernel_in_props(self.node_functions.get_gsm_item_from_id(self.node_functions.get_node_parents(item, gsm_json)[0], gsm_json)))
                                     ))
                             ):
                                 best_type = "verb"
@@ -898,8 +902,9 @@ class AssignTypeToSingleton:
                     source_node_id = edge['score']['parent']
 
                     for child_edge in child_gsm_item['phi']:
-                        target_node_id = child_edge['score']['child']
-                        self.create_edges(edge_label_name, gsm_item, non_verbs, source_node_id, target_node_id, gsm_json)
+                        if 'orig' in child_edge['containment']:
+                            target_node_id = child_edge['score']['child']
+                            self.create_edges(edge_label_name, gsm_item, non_verbs, source_node_id, target_node_id, gsm_json)
 
                 # Make sure current edge is not in list of rejected edges, e.g. 'compound'
                 if edge['containment'] not in rejected_edges:
@@ -949,7 +954,7 @@ class AssignTypeToSingleton:
             if 'end' in gsm_item['properties']:
                 node_max = gsm_item['properties']['end']
 
-        rejected_edges = {'amod', 'advmod', 'adv', 'neg', 'conj', 'cc', 'case', 'none', 'appos'}
+        rejected_edges = {'amod', 'advmod', 'adv', 'neg', 'conj', 'cc', 'case', 'none', 'appos', 'compound_prt'}
         target_gsm_item = self.node_functions.get_gsm_item_from_id(self.node_functions.get_node_id(target_node.id), gsm_json)
 
         if self.nodes[self.node_functions.get_node_id(source_node_id)].type == Grouping.MULTIINDIRECT:

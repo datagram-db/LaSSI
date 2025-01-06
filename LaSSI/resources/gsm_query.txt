@@ -21,7 +21,7 @@ p4 = (>> V)<-[∀ ? w:]--(B)
         --[? advmod||advcl]->(>> ADM)
         --[? compound_prt]->(TB)
         --[? mark]->(M)
-     (Z)--[? case]->(T)
+     //(Z)--[? case]->(T)
       where ((V unmatched p3 . V) ∧ ((V unmatched p3pass . V) ∧ ((V unmatched p3expl . V) ∧ (ℓ 0 @ V = verb))))
      ↪  new j
         set (𝜋 kernel @ h) as kernel
@@ -37,10 +37,11 @@ p4 = (>> V)<-[∀ ? w:]--(B)
                                                      else
                                                       SCRIPT "^(^ (^ ([ (𝜉 ([⦃\"*.M\"⦄ 0]))  0]) \" \") (^ ([(° (fun y → { l cp (fun x → { ^ (^ ([⦃x⦄ 0]) \" \") ([⦃x⦄ 1]) }) (\" \")  y } ) ( zip ( a {   (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.V\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.T\"⦄) } ) )) 0]) \" \")) ([ (𝜉 ([⦃\"*.TB\"⦄ 0]))  0])"
                                                      ), j) as Z
-       del V                                             // Removing a node
+       //del V                                             // Removing a node
        //del T
        del E
-       del ADM
+       //del ADM
+       set (φ inherit_edge , Z ) as V
        (j);                                              // Instance of reference to be returned
 
 p0 = (>> Compl)<-[∀obl||xcomp||dep||obj]--(WithObl)
@@ -53,7 +54,7 @@ p0 = (>> Compl)<-[∀obl||xcomp||dep||obj]--(WithObl)
 
        (h);
 
-p1 = (X)--[l:det||nmod_poss||amod||mark||case||punct||advmod||advcl||cc||punct||neg||nummod]->(Y)                   // Graph matching, First pattern
+p1 = (X)--[l:det||nmod_poss||amod||mark||case||punct||advmod||advcl||cc||punct||neg||nummod||auxpass]->(Y)                   // Graph matching, First pattern
    where ((FILL ((ℓ 0 @ X ≠ verb) ∨ ((X unmatched p3fauxcop . V) ∧ ((X unmatched p3simple . V) ∧ ((X unmatched p3 . V) ∧ ((X unmatched p3expl . V) ∧ ((X unmatched p4 . V) ∧ (X unmatched p3pass . V)))))))) ∧ (FILL ((ℓ 0 @ Y = verb) ∧ ((Y unmatched p3fauxcop . V) ∧ ((Y unmatched p3simple . V) ∧ ((Y unmatched p3 . V) ∧ ((Y unmatched p3expl . V) ∧ ((Y unmatched p4 . V) ∧ (Y unmatched p3pass . V))))))))) ∨ (( FILL (label l ≠ neg)) ∧ ((TEST "= |𝜑 ⦃\"Y\"⦄ | 0 ") ∧ ( ( FILL (ℓ 0 @ Y ≠ CC) ) ∧ (( FILL (ℓ 0 @ X ≠ verb)) ∧ (( FILL (label l ≠ mark)) ∨ ((TEST "= |𝜑 ⦃\"X\"⦄ | 1 ")))))))
    ↪ set (𝜋 if (( ℓ 0 @ Y ) = verb) over Y then SCRIPT "\"actioned\"" else ((if (label l = case) over Y then (𝜋 pos @ Y) else (label l))) @ X) as (𝜉 0 @ Y)                        // Property extension
     X inheritpropfrom Y // Property inheritance, with no key overlaps
@@ -129,8 +130,8 @@ p3simple = (V)--[∀n:nsubj]->(>>S)
         --[? compound_prt]->(FB)
         --[? aux]->(A)
         --[? neg]->(N)
-        --[∀l:dobj||ccomp||nmod||advmod]->(>>Z) // Future work: nested join between >>Z and >>Z from the join, when required. This might require to re-do the join semantics
-     (Z)--[? case]->(T)
+        --[∀l:dobj||ccomp||nmod||advmod||advcl||parataxis]->(>>Z) // Future work: nested join between >>Z and >>Z from the join, when required. This might require to re-do the join semantics
+     //(Z)--[? case]->(T)
      where ((V unmatched p3pass . V) ∧ ((V unmatched p3expl . V) ∧((V unmatched p3 . V) ∧((ℓ 0 @ V = verb)))))
      ↪
         //new s
@@ -138,10 +139,11 @@ p3simple = (V)--[∀n:nsubj]->(>>S)
         //set(   𝜋 mark @ s) as (𝜉 0 @ M)
         //set(   φ orig , s) as S
         //set(   𝜉 0 @ s) as (𝜉 0 @ S)
-       del V
+       //del V
        //del T
        del M
        set (𝜋 kernel @ S) as kernel
+       set (φ inherit_edge , S ) as V
        (S) ;
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -159,7 +161,7 @@ p3 = (>> V)<-[∀ ? w:]--(B)
         --[? iobj||parataxis]->(IOZ)
         --[? advmod||advcl]->(>> ADM)
         --[ ge: dobj||ccomp||nmod||dep||obj||obl||xcomp]->( Z) // Future work: nested join between >>Z and >>Z from the join, when required. This might require to re-do the join semantics
-     (Z)--[? case]->(T)
+     //(Z)--[? case]->(T)
      (S)--[? neg]->(NN)
      where ((V unmatched p3pass . V) ∧ ((V unmatched p3expl . V) ∧((ℓ 0 @ V = verb))))
      ↪
@@ -188,9 +190,9 @@ p3expl = (V)--[∀n:nsubj]->(>> S)
         --[? neg]->(N)
         --[? iobj||parataxis]->(IOW)
         --[? advmod||advcl]->(>> ADM)
-        --[? xcomp||dep||obj||obl]->(XC)
+        --[? xcomp||dep||obj||obl||parataxis]->(XC)
         --[l:expl]->(>> Z) // Future work: nested join between >>Z and >>Z from the join, when required. This might require to re-do the join semantics
-     (Z)--[? case]->(T)
+     //(Z)--[? case]->(T)
      (S)--[? neg]->(NN)
      //(S)--[nmod]->(C)
      where (((ℓ 0 @ V = verb)))
@@ -212,7 +214,7 @@ p3expl = (V)--[∀n:nsubj]->(>> S)
        del M
        del A
        del NN
-       del ADM
+       //del ADM
        set (𝜋 kernel @ S) as kernel
        (S);
 
@@ -226,7 +228,7 @@ p3pass = (V)--[∀n:nsubjpass]->(>> S)
         --[? advmod||advcl]->(>> ADM)
        // --[? xcomp]->(XC)
         --[? l:ccomp||nmod||dep||xcomp]->(Z) // Future work: nested join between >>Z and >>Z from the join, when required. This might require to re-do the join semantics
-     (Z)--[? case]->(T)
+     //(Z)--[? case]->(T)
      (S)--[? neg]->(NN)
      where ((V unmatched p3expl . V) ∧ (ℓ 0 @ V = verb))
      ↪
@@ -249,7 +251,7 @@ p3pass = (V)--[∀n:nsubjpass]->(>> S)
        del A
        del E
        del NN
-       del ADM
+       //del ADM
        //set (𝜋 kernel @ S) as kernel
        (S);
 
