@@ -326,6 +326,9 @@ def analyse_kernel_node(kernel, kernel_nodes, kernel_node_type):
 
 
 def add_to_kernel_nodes(node, kernel_nodes):
+    # if is_node_in_kernel_nodes(node, kernel_nodes):
+    #     return kernel_nodes
+
     if isinstance(node, SetOfSingletons):
         kernel_nodes.add(node)
         for entity in node.entities:

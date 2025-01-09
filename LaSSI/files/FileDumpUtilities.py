@@ -22,7 +22,7 @@ def target_file_dump(file_name: str,
         end_time = time.time()
         execution_time = end_time - start_time
         if should_benchmark:
-            return obj, execution_time
+            return obj, [execution_time, 'w']
         else:
             return obj
     else:
@@ -30,7 +30,7 @@ def target_file_dump(file_name: str,
             end_time = time.time()
             execution_time = end_time - start_time
             if should_benchmark:
-                return file_load_and_transform(f), execution_time
+                return file_load_and_transform(f), [execution_time, 'r']
             else:
                 return file_load_and_transform(f)
 

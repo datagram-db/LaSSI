@@ -115,7 +115,7 @@ class LaSSI():
         if os.path.exists(self.string_rep_dir):
             os.remove(self.string_rep_dir)
         if not os.path.exists(self.benchmarking_file):
-            self.write_variable_to_file(self.benchmarking_file, "Dataset, Loading sentences, Generating/Loading meuDB, Generating gsmDB, Generating rewritten graphs, Generating intermediate representation\n")
+            self.write_variable_to_file(self.benchmarking_file, "Dataset, Loading sentences, Generating meuDB, Loading meuDB, Generating gsmDB, Generating rewritten graphs, Generating intermediate representation\n")
         else:
             # If last line is not finished, add new line to ensure next benchmark is written to file correctly
             with open(self.benchmarking_file, 'r') as file:
@@ -239,7 +239,7 @@ class LaSSI():
             json_dumps, True, self.should_benchmark
         )
         print(f"Generating intermediate representation time: {intermediate_execution_time} seconds")
-        self.write_variable_to_file(self.benchmarking_file, f"{meu_execution_time}, {gsm_execution_time}, {rewritten_execution_time}, {intermediate_execution_time}\n")
+        self.write_variable_to_file(self.benchmarking_file, f"{self.get_execution_time_string(meu_execution_time)}, {gsm_execution_time[0]}, {rewritten_execution_time[0]}, {intermediate_execution_time[0]}\n")
 
         if self.transformation == SentenceRepresentation.Logical:
             self.logger("[TODO]")
@@ -256,6 +256,12 @@ class LaSSI():
             #                                           json_dumps,
             #                                           self.force)
         self.logger("rewriting graphs")
+
+    def get_execution_time_string(self, execution_time):
+        if execution_time[1] == 'w':
+            return f"{execution_time[0]}, 0"
+        elif execution_time[1] == 'r':
+            return f"0, {execution_time[0]}"
 
     def run(self):
         from LaSSI.phases.SentenceLoader import SentenceLoader
