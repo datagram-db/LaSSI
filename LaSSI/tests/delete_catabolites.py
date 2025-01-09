@@ -14,7 +14,7 @@ def delete_files():
         print(f"Deleting folder: {dir_path}")
         shutil.rmtree(dir_path)
     for file in files:
-      if file in ("gsmDB.txt", "datagramdb_output.json"):
+      if file in ("gsmDB.txt", "datagramdb_output.json", "string_rep.txt"):
         file_path = os.path.join(subdir, file)
         print(f"Deleting file: {file_path}")
         os.remove(file_path)

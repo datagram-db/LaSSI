@@ -605,7 +605,7 @@ def create_edge_kernel(node):
             edgeLabel=node,
             isNegated=False
         ),
-        properties=node.properties,
+        properties=frozenset(), # TODO: Should this be empty?
     )
 
 def is_kernel_in_props(node, check_jj=True):

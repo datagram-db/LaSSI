@@ -11,6 +11,7 @@ import collections
 import io
 import json
 import os.path
+import time
 
 import numpy as np
 import pkg_resources
@@ -41,9 +42,11 @@ class LaSSI():
                  web_dir=None,
                  recall_threshold=0.1,
                  precision_threshold=0.8,
-                 force=False
+                 force=False,
+                 should_benchmark=True,
                  ):
         self.string_rep_dir = None
+        self.benchmarking_file = None
         self.create_catabolites_dir(dataset_name)
         self.dataset_name = dataset_name
         self.web_dir = web_dir
@@ -82,6 +85,7 @@ class LaSSI():
         self.precision_threshold = precision_threshold
         self.transformation = transformation
         self.force = force
+        self.should_benchmark = should_benchmark
         self.logger("init file structure")
         from pathlib import Path
         self.catabolites = os.path.join("catabolites", self.catabolites_dir)
@@ -107,8 +111,18 @@ class LaSSI():
             self.catabolites_dir = name_arr[0]
 
         self.string_rep_dir = os.path.join("catabolites", self.catabolites_dir, "string_rep.txt")
+        self.benchmarking_file = os.path.join("catabolites", "benchmark.csv")
         if os.path.exists(self.string_rep_dir):
             os.remove(self.string_rep_dir)
+        if not os.path.exists(self.benchmarking_file):
+            self.write_variable_to_file(self.benchmarking_file, "Dataset, Loading sentences, Generating/Loading meuDB, Generating gsmDB, Generating rewritten graphs, Generating intermediate representation\n")
+        else:
+            # If last line is not finished, add new line to ensure next benchmark is written to file correctly
+            with open(self.benchmarking_file, 'r') as file:
+                if file.readlines()[-1].rstrip('\n').endswith(', '):
+                    self.write_variable_to_file(self.benchmarking_file, "\n")
+
+
 
     def apply_graph_grammars(self, n):
         from PyDatagramDB import DatagramDB
@@ -132,9 +146,9 @@ class LaSSI():
 
         return L
 
-    def write_variable_to_file(self, text):
+    def write_variable_to_file(self, dir, text):
         try:
-            with open(self.string_rep_dir, 'a') as file:
+            with open(dir, 'a') as file:
                 file.write(str(text))
         except Exception as e:
             print(f"An error occurred: {e}")
@@ -145,12 +159,12 @@ class LaSSI():
             from LaSSI.structures.provenance.GraphProvenance import GraphProvenance
             g = GraphProvenance(graph, meu_db, self.transformation == SentenceRepresentation.SimpleGraph)
             self.logger(f"{meu_db.first_sentence}")
-            self.write_variable_to_file(meu_db.first_sentence)
+            self.write_variable_to_file(self.string_rep_dir, meu_db.first_sentence)
             internal_graph = g.internal_graph()
             final_form = internal_graph
             if self.transformation == SentenceRepresentation.Logical:
                 final_form = g.sentence()
-                self.write_variable_to_file(f" ⇒ {final_form.to_string()}\n")
+                self.write_variable_to_file(self.string_rep_dir, f" ⇒ {final_form.to_string()}\n")
             internal_representations.append(InternalRepresentation(internal_graph, final_form))
         return internal_representations
 
@@ -189,33 +203,43 @@ class LaSSI():
         from LaSSI.files.FileDumpUtilities import target_file_dump
         n = len(sentences)
         self.logger("generating meuDB")
-        meu_db = target_file_dump(self.meuDB,
-                                  lambda x: [MeuDB.from_dict(k) for k in json.load(x)],
-                                  lambda: ExplainTextWithNER(self, sentences),
-                                  json_dumps,
-                                  self.force)
+        start_time = time.time()
+        meu_db, meu_execution_time = target_file_dump(
+            self.meuDB,
+            lambda x: [MeuDB.from_dict(k) for k in json.load(x)],
+            lambda: ExplainTextWithNER(self, sentences),
+            json_dumps, self.force, self.should_benchmark
+        )
+        print(f"Generating meuDB time: {meu_execution_time} seconds")
 
         self.logger("generating gsmDB")
-        gsm_db = target_file_dump(self.gsmDB,
-                                  lambda x: x.read(),
-                                  lambda: GetGSMString(self, sentences),
-                                  lambda x: x,
-                                  self.force)
+        gsm_db, gsm_execution_time = target_file_dump(
+            self.gsmDB,
+            lambda x: x.read(),
+            lambda: GetGSMString(self, sentences),
+            lambda x: x,
+            self.force, self.should_benchmark
+        )
+        print(f"Generating gsmDB time: {gsm_execution_time} seconds")
 
         self.logger("generating rewritten graphs")
-        rewritten_graphs = target_file_dump(self.datagramdb_output,
-                                            json.load,
-                                            lambda: ApplyGraphGrammars(self, n),
-                                            json_dumps,
-                                            self.force)
+        rewritten_graphs, rewritten_execution_time = target_file_dump(
+            self.datagramdb_output,
+            json.load,
+            lambda: ApplyGraphGrammars(self, n),
+            json_dumps, self.force, self.should_benchmark
+        )
+        print(f"Generating rewritten graphs time: {rewritten_execution_time} seconds")
 
         self.logger("generating intermediate representation (before final logical form in eFOL)")
-        intermediate_representations = target_file_dump(self.internals,
-                                                       lambda x: [InternalRepresentation.from_dict(k) for k in
-                                                                  json.load(x)],
-                                                       lambda: SemanticGraphRewriting(self, meu_db, rewritten_graphs),
-                                                       json_dumps,
-                                                       True)
+        intermediate_representations, intermediate_execution_time = target_file_dump(
+            self.internals,
+            lambda x: [InternalRepresentation.from_dict(k) for k in json.load(x)],
+            lambda: SemanticGraphRewriting(self, meu_db, rewritten_graphs),
+            json_dumps, True, self.should_benchmark
+        )
+        print(f"Generating intermediate representation time: {intermediate_execution_time} seconds")
+        self.write_variable_to_file(self.benchmarking_file, f"{meu_execution_time}, {gsm_execution_time}, {rewritten_execution_time}, {intermediate_execution_time}\n")
 
         if self.transformation == SentenceRepresentation.Logical:
             self.logger("[TODO]")
@@ -235,7 +259,14 @@ class LaSSI():
 
     def run(self):
         from LaSSI.phases.SentenceLoader import SentenceLoader
+
+        start_time = time.time()
         sentences = SentenceLoader(self.sentences)
+        end_time = time.time()
+        loading_sentences_execution_time = end_time - start_time
+        print(f"Loading sentences time: {loading_sentences_execution_time} seconds")
+        self.write_variable_to_file(self.benchmarking_file, f"{self.dataset_name.split('/')[-1].split('.yaml')[0]}, {loading_sentences_execution_time}, ")
+
         result = self.sentence_transform(sentences)
 
     def close(self):

@@ -12,7 +12,8 @@ passivity = (V)--[l:nsubjpass]->(subject)
           set(   𝜋 root @ V) as SCRIPT "\"root\""
           (V);
 
-       // Case matching the sentences having no subject!
+
+// Case matching the sentences having no subject!
 p4 = (>> V)<-[∀ ? w:]--(B)
         --[∀l:dobj||ccomp||nmod||dep||obj||xcomp||obl]->(Z)
         --[? nmod_tmod]->(TN)
@@ -44,8 +45,9 @@ p4 = (>> V)<-[∀ ? w:]--(B)
        set (φ inherit_edge , Z ) as V
        (j);                                              // Instance of reference to be returned
 
+
 p0 = (>> Compl)<-[∀obl||xcomp||dep||obj]--(WithObl)
-       where ((WithObl unmatched p2 . X))
+       where ((WithObl unmatched p2 . X) ∧ (WithObl unmatched p3pass . V))
      ↪  new h
        set (ℓ 0 @ h) as SCRIPT "\"multipleindobj\""
        set (φ orig , h) as Compl
@@ -54,14 +56,18 @@ p0 = (>> Compl)<-[∀obl||xcomp||dep||obj]--(WithObl)
 
        (h);
 
+
 p1 = (X)--[l:det||nmod_poss||amod||mark||case||punct||advmod||advcl||cc||punct||neg||nummod||auxpass]->(Y)                   // Graph matching, First pattern
    where ((FILL ((ℓ 0 @ X ≠ verb) ∨ ((X unmatched p3fauxcop . V) ∧ ((X unmatched p3simple . V) ∧ ((X unmatched p3 . V) ∧ ((X unmatched p3expl . V) ∧ ((X unmatched p4 . V) ∧ (X unmatched p3pass . V)))))))) ∧ (FILL ((ℓ 0 @ Y = verb) ∧ ((Y unmatched p3fauxcop . V) ∧ ((Y unmatched p3simple . V) ∧ ((Y unmatched p3 . V) ∧ ((Y unmatched p3expl . V) ∧ ((Y unmatched p4 . V) ∧ (Y unmatched p3pass . V))))))))) ∨ (( FILL (label l ≠ neg)) ∧ ((TEST "= |𝜑 ⦃\"Y\"⦄ | 0 ") ∧ ( ( FILL (ℓ 0 @ Y ≠ CC) ) ∧ (( FILL (ℓ 0 @ X ≠ verb)) ∧ (( FILL (label l ≠ mark)) ∨ ((TEST "= |𝜑 ⦃\"X\"⦄ | 1 ")))))))
+   // OPTION 2: where ((Y unmatched p3pass . A) ∧ ( ((FILL ((ℓ 0 @ X ≠ verb) ∨ ((X unmatched p3fauxcop . V) ∧ ((X unmatched p3simple . V) ∧ ((X unmatched p3 . V) ∧ ((X unmatched p3expl . V) ∧ ((X unmatched p4 . V) ∧ ((Y unmatched p3pass . A) ∧ (X unmatched p3pass . V))))))))) ∧ (FILL ((ℓ 0 @ Y = verb) ∧ ((Y unmatched p3fauxcop . V) ∧ ((Y unmatched p3simple . V) ∧ ((Y unmatched p3 . V) ∧ ((Y unmatched p3expl . V) ∧ ((Y unmatched p4 . V) ∧ (Y unmatched p3pass . V))))))))) ∨ (( FILL (label l ≠ neg)) ∧ ((TEST "= |𝜑 ⦃\"Y\"⦄ | 0 ") ∧ ( ( FILL (ℓ 0 @ Y ≠ CC) ) ∧ (( FILL (ℓ 0 @ X ≠ verb)) ∧ (( FILL (label l ≠ mark)) ∨ ((TEST "= |𝜑 ⦃\"X\"⦄ | 1 ")))))))))
    ↪ set (𝜋 if (( ℓ 0 @ Y ) = verb) over Y then SCRIPT "\"actioned\"" else ((if (label l = case) over Y then (𝜋 pos @ Y) else (label l))) @ X) as (𝜉 0 @ Y)                        // Property extension
     X inheritpropfrom Y // Property inheritance, with no key overlaps
     //del Y                                             // Removing a node
     del l
     set (φ inherit_edge , X ) as Y
     (X);                                              // Instance of reference to be returned
+
+
 docop = (target)--[cop]->(V)
                 --[l:nsubj||csubj||nsubj]->(subject)
         where ((V unmatched p3 . V) ∧ ((V unmatched p3pass . V) ∧ ((V unmatched p3expl . V) ∧ ((V unmatched p3expl . V) ∧ (V unmatched p4 . V)))))
@@ -227,7 +233,7 @@ p3pass = (V)--[∀n:nsubjpass]->(>> S)
         --[? iobj||parataxis]->(IOB)
         --[? advmod||advcl]->(>> ADM)
        // --[? xcomp]->(XC)
-        --[? l:ccomp||nmod||dep||xcomp]->(Z) // Future work: nested join between >>Z and >>Z from the join, when required. This might require to re-do the join semantics
+        --[? l:ccomp||nmod||dep||xcomp||obl]->(Z) // Future work: nested join between >>Z and >>Z from the join, when required. This might require to re-do the join semantics
      //(Z)--[? case]->(T)
      (S)--[? neg]->(NN)
      where ((V unmatched p3expl . V) ∧ (ℓ 0 @ V = verb))
@@ -239,7 +245,8 @@ p3pass = (V)--[∀n:nsubjpass]->(>> S)
                                              else
                                               SCRIPT "^(^(^(^(  ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ⦃\"M\"⦄)  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])"
                                              ), Z) as S
-    set(   𝜉 1 @ Z) as (SCRIPT "\"subjpass\"")
+    set (𝜉 0 @ Z) as (𝜉 0 @ Z)
+    set (𝜉 1 @ Z) as SCRIPT "\"subjpass\""
        set (φ iobj , Z) as IOB
        set (𝜋 adv @ Z) as (𝜉 0 @ ADM)
        //set (φ dep , Z) as XC
