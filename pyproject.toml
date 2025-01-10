@@ -39,7 +39,10 @@ dependencies = [
     "fastapi==0.115.0",
     "uvicorn==0.30.6",
     "numpy",
-    "tqdm"
+    "tqdm",
+    "markov-clustering==0.0.6.dev0",
+    "scikit-learn==1.6.0",
+    "networkx==3.4.2"
 ]
 
 #[tool.scikit-build]
