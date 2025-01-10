@@ -9,8 +9,8 @@ from tqdm import tqdm
 
 
 def sort_by_numeric_value(file_path):
-  match = re.search(r'(\d+)', file_path)
-  return int(match.group(1)) if match else 0
+  match = re.search(r'(\d+).yaml', file_path)
+  return int(match.group(1).split('.yaml')[0]) if match else 0
 
 
 def get_and_run_all_sentences(folders):
@@ -41,6 +41,6 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         folders = sys.argv[1:]
     else:
-        folders = ["extension", "orig", "real_data", "benchmarking"]
+        folders = ["extension", "orig", "real_data"]
 
     get_and_run_all_sentences(folders)

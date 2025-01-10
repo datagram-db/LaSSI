@@ -1,7 +1,7 @@
 from collections import deque, defaultdict
 from LaSSI.external_services.Services import Services
 from LaSSI.ner.string_functions import has_auxiliary
-from LaSSI.structures.internal_graph.EntityRelationship import Singleton, Grouping
+from LaSSI.structures.internal_graph.EntityRelationship import Singleton, Grouping, Relationship
 
 
 def create_existential_node():
@@ -155,3 +155,23 @@ class NodeFunctions:
             return any(map(has_auxiliary, [edge.edgeLabel.named_entity for edge in all_edges if edge.source.id == current_edge.source.id]))
         else:
             return has_auxiliary(current_edge.edgeLabel.named_entity)
+
+    def convert_relationship_to_sentence(self, sentence_id, kernel, edge_label=None, properties=None):
+        if edge_label is None:
+            edge_label = kernel.edgeLabel
+        valid_nodes = self.get_valid_nodes([kernel.source, kernel.target])
+        return Singleton(
+            id=sentence_id,
+            named_entity="",
+            type="SENTENCE",
+            min=self.get_min_from_nodes(valid_nodes),
+            max=self.get_max_from_nodes(valid_nodes),
+            confidence=1,
+            kernel=Relationship(
+                source=kernel.source,
+                target=kernel.target,
+                edgeLabel=edge_label,
+                isNegated=kernel.isNegated
+            ),
+            properties=frozenset() if properties is None else create_props_for_singleton(properties),
+        )

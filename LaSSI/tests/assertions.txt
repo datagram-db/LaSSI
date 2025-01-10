@@ -147,7 +147,8 @@ A hard working person ⇒ be(person[(det:A)], ?23)[(SENTENCE:work(?21[(cop:hard)
 tackle the ball carrier ⇒ tackle(?23, ball carrier[(det:the)])
 Mailboxes on the street ⇒ be(Mailboxes, ?26)[(nmod(Mailboxes, street[(det:the), (2:on)]))]
 having a burger ⇒ have(?27, burger[(det:a)])
-being informed about ongoings ⇒ inform(?31, None)[(SENTENCE:being(?33, None)), (ENTITY:ongoings[(3:about)])]
+//being informed about ongoings ⇒ inform(?31, None)[(SENTENCE:being(?33, None)), (ENTITY:ongoings[(3:about)])]
+being informed about ongoings ⇒ inform(?31, None)[(ENTITY:ongoings[(3:about)])]         // Missing "being"? due to delete V in p4?
 you score well on tests ⇒ score well(you, None)[(ENTITY:tests[(4:on)])]
 run alot ⇒ run(?31, alot)
 study closely ⇒ study(?1, closely)
@@ -251,7 +252,7 @@ go to a hospital ⇒ go(?1, None)[(ENTITY:hospital[(2:to), (det:a)])]
 dispose of trash ⇒ dispose(?3, trash[(2:of)])
 they may foll on the ground ⇒ foll(they, None)[(ENTITY:ground[(4:on), (det:the)])]
 stand up from the barstool ⇒ stand up(?5, None)[(ENTITY:barstool[(3:from), (det:the)])]
-come back with mixed results ⇒ come(?7[(adv:back)], None)[(ENTITY:results[(3:with), (amod:mixed), (ENTITY:back)])]      // Merge as phrasal verb (come back) eventually
+come back with mixed results ⇒ come(?7[(adv:back)], None)[(ENTITY:results[(amod:mixed), (3:with)])]      // Merge as phrasal verb (come back) eventually
 viruses to get in your comuter ⇒ to get(viruses, None)[(ENTITY:comuter[(nmod_poss:your), (4:in)])]
 keeping our bodies healthy ⇒ keep(?9, bodies[(nmod_poss:our), (cop:healthy)])
 the cops break up a riot ⇒ break up(cops[(det:the)], riot[(det:a)])
@@ -259,13 +260,44 @@ make some coffee ⇒ make(?11, coffee[(det:some)])
 find a well-payed job ⇒ find(?13, job[(det:a), (actioned:payed)])       // Missing "well-", it is disconnected from graph
 use strength to move an opponent ⇒ use(?16, strength)[(SENTENCE:to move(?15, opponent[(det:an)]))]
 framing the picture ⇒ frame(?17, picture[(det:the)])
-poisonous, but tomatoes are not ⇒ be(?19[(cop:poisonous[(punct:,)])], None)     // Weird graph...
+poisonous, but tomatoes are not ⇒ NOT(be(?19[(cop:poisonous)], None))     // Weird graph...
 another mans trash ⇒ be(mans trash[(det:another)], ?21)
 finding a house ⇒ find(?22, house[(det:a)])
 aim at a tree ⇒ be(aim, ?24)[(nmod(aim, tree[(det:a), (2:at)]))]        // "aim" as noun, MEU does not contain "verb" (interpreting as is)
 graduating from college ⇒ graduate(?25, None)[(ENTITY:college[(2:from)])]       // "college" did have "from" so it removed as a target, but is removed from properties in the post-processing
 eating breakfast cereal ⇒ eat(?27, breakfast cereal)
 
+// Part 10
+prepare money ⇒ prepare(?1, money)
+expressing ideas ⇒ express(?3, ideas[(actioned:expressing)])
+make the final alimony payment ⇒ make(?4, alimony payment[(amod:final), (det:the)])
+making you angry ⇒ make(?6, angry)[(ENTITY:you)]
+eating a sandwich ⇒ eat(?8, sandwich[(det:a)])
+laughing at humor ⇒ laugh(?10, None)[(ENTITY:humor[(2:at)])]
+proved successful in tests on monkeys ⇒ prove(?12[(cop:successful)], None)[(nmod(tests[(3:in)], monkeys[(5:on)]))]
+being cooked ⇒ cooked[(actioned:being)](?14, None)
+think about their origin ⇒ think(?15, None)[(ENTITY:origin[(2:about), (nmod_poss:their)])]
+Fruits, vegetables, and meats ⇒ be(AND(Fruits[(punct:,)], vegetables, meats), ?17)
+others to know ⇒ be(others[(action:know)], ?20)[(SENTENCE:to know(?19, None))]
+reflect sounds ⇒ reflect(?21, None)[(ENTITY:sounds)]
+not getting your utilities cut off ⇒ NOT(get(?24, utilities[(action:cut), (nmod_poss:your)])[(SENTENCE:cut off(utilities[(action:cut), (nmod_poss:your)], ?23))])
+the front of a letter ⇒ be(front[(det:the)], ?27)[(nmod(front[(det:the)], letter[(det:a), (3:of)]))]
+you buy a new graphics card ⇒ buy(you, graphics card[(amod:new), (det:a)])
+angry need to cool down ⇒ be(need[(amod:angry)], ?28)[(ENTITY:cool down[(mark:to)])]
+that you will get wet ⇒ that get(you, wet)      // that get?? (will)
+a desire for justice ⇒ be(desire[(det:a)], ?29)[(nmod(desire[(det:a)], justice[(3:for)]))]
+be frightful and/or learning ⇒ be(?30, None)        // Incorrect
+locate the brake ⇒ locate(?31, None)[(ENTITY:brake[(det:the)])]
+that you will learn something ⇒ that learn(you, None)[(ENTITY:something)]       // that learn?? (will)
+one kind of bread ⇒ be(kind[(nummod:one)], ?33)[(nmod(kind[(nummod:one)], bread[(3:of)]))]
+expressign your ideas ⇒ expressign(?34, None)[(ENTITY:ideas[(nmod_poss:your)])]
+look into the facts ⇒ look(?36, None)[(ENTITY:facts[(2:into), (det:the)])]
+utilized for many different things ⇒ utilize(?38, None)[(ENTITY:things[(amod:different), (2:for)])]
+raises one’s hand to ⇒ raise(?39[(adv:to)], hand)[(ENTITY:one[(3:’s)]), (nmod_poss(hand, one[(3:’s)]))]
+If something resembles a horse, it ⇒ be(it[(punct:,)], ?43)[(SENTENCE:resemble[(mark:If)](?42, None)[(ENTITY:[something, horse[(det:a)]])])]        // Not sure
+scissors need sharpening ⇒ need(scissors, sharpening(?44, None))
+know how to use it best ⇒ know(?46, None)[(SENTENCE:to use(?44[(adv:how)], best)[(ENTITY:it)])]
+you don't have any change ⇒ NOT(have(you, change[(det:any)]))
 
 
 

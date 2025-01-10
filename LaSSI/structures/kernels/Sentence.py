@@ -227,7 +227,21 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
 
     # If we have a kernel returned from the previous loop, add this to the properties
     if len(given_edge_to_loop) > 2:
-        kernel, properties, kernel_nodes = add_to_properties(kernel, given_edge_to_loop[2] , 'target', kernel_nodes, properties, negations, node_functions)
+        # Check which order the kernel should be, should we add the NEW kernel as a property, or remain as the root kernel, based on the topological position of the nodes
+        topological_node_id_positions = {x.id: idx for idx, x in enumerate(nodes.values())}
+        kernel_id_to_check = get_kernel_top_id(kernel, topological_node_id_positions)
+        returned_kernel_id_to_check = get_kernel_top_id(given_edge_to_loop[2].kernel, topological_node_id_positions)
+
+        if topological_node_id_positions[kernel_id_to_check] < topological_node_id_positions[returned_kernel_id_to_check]:
+            kernel, properties, kernel_nodes = add_to_properties(
+                given_edge_to_loop[2].kernel,
+                node_functions.convert_relationship_to_sentence(root_sentence_id, kernel),
+                'target', kernel_nodes,  properties, negations, node_functions
+            )
+        else:
+            kernel, properties, kernel_nodes = add_to_properties(
+                kernel, given_edge_to_loop[2] , 'target', kernel_nodes, properties, negations, node_functions
+            )
 
     edge_label = replaceNamed(kernel.edgeLabel, lemmatize_verb(kernel.edgeLabel.named_entity)) if kernel.edgeLabel is not None else None
 
@@ -245,22 +259,7 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
         else:
             properties_to_keep[key] = properties[key]
 
-    valid_nodes = [kernel.source, kernel.target]
-    final_kernel = Singleton(
-        id=root_sentence_id,
-        named_entity="",
-        type="SENTENCE",
-        min=node_functions.get_min_from_nodes(valid_nodes),
-        max=node_functions.get_max_from_nodes(valid_nodes),
-        confidence=1,
-        kernel=Relationship(
-            source=kernel.source,
-            target=kernel.target,
-            edgeLabel=edge_label,
-            isNegated=kernel.isNegated
-        ),
-        properties=create_props_for_singleton(properties_to_keep),
-    )
+    final_kernel = node_functions.convert_relationship_to_sentence(root_sentence_id, kernel, edge_label, properties_to_keep)
 
     if new_kernel is not None:
         valid_nodes = node_functions.get_valid_nodes([kernel.source, kernel.target])
@@ -275,7 +274,7 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
                 source=create_existential_node(),
                 target=final_kernel,
                 edgeLabel=new_kernel,
-                isNegated=False, # TODO
+                isNegated=new_kernel.isNegated, # TODO: Check this is correctly negated
             ),
             properties=create_props_for_singleton(properties_to_keep),
         )
@@ -286,6 +285,11 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
         if edge_to_loop[0]:
             edge_to_loop.append(final_kernel)
         return final_kernel, edge_to_loop
+
+
+def get_kernel_top_id(kernel, topological_node_id_positions):
+    return kernel.source.id if kernel.source.id in topological_node_id_positions else kernel.target.id if kernel.target is not None and kernel.target.id in topological_node_id_positions else None
+
 
 def analyse_kernel_node(kernel, kernel_nodes, kernel_node_type):
     if kernel_node_type == 'source':
