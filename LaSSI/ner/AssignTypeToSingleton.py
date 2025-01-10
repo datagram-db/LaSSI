@@ -90,7 +90,7 @@ class AssignTypeToSingleton:
                         else:
                             gsm_item['ell'][len(gsm_item['ell']):] = node_to_inherit['ell'][1:]
 
-                        if not node_to_inherit['ell'][0] in dict(gsm_item['properties']):
+                        if self.shouldInheritNode(node_to_inherit, gsm_item, gsm_json):
                             new_properties = merge_properties(dict(gsm_item['properties']), dict(node_to_inherit['properties']), {'begin', 'end', 'pos'})
                             gsm_item['properties'] = new_properties
 
@@ -117,6 +117,35 @@ class AssignTypeToSingleton:
             gsm_item['phi'] = edges_to_keep
 
         return [item for idx, item in enumerate(gsm_json) if idx not in ids_to_remove]
+
+    def shouldInheritNode(self, node_to_inherit, gsm_item, gsm_json):
+        # Check if 'orig' descendant positions are > 'inherit_edge' positions
+        if not node_to_inherit['ell'][0] in dict(gsm_item['properties']):
+            min_orig_pos = self.getMinMaxNodePos(gsm_json, gsm_item, 'orig', min)
+            max_inherit_pos = self.getMinMaxNodePos(gsm_json, gsm_item, '_edge', max)
+
+            if min_orig_pos < 0 or max_inherit_pos < 0 or min_orig_pos < max_inherit_pos:
+                return True
+
+        return False
+
+    def getMinMaxNodePos(self, gsm_json, gsm_item, edge_label, min_or_max, pos=-1):
+        # Recursively get children from edge_label
+        # TODO: Sometimes children are already removed through inherit/mark edges etc. (does this affect the logic?)
+        for edge in gsm_item['phi']:
+            if edge_label == True or edge_label in edge['containment']:
+                child_node = self.node_functions.get_gsm_item_from_id(edge['score']['child'], gsm_json)
+                if 'pos' in child_node['properties']:
+                    child_node_pos = int(float(child_node['properties']['pos']))
+                    if pos < 0:
+                        pos = child_node_pos
+                    else:
+                        pos = min_or_max(pos, child_node_pos)
+
+                    if len(child_node['phi']) > 0:
+                        self.getMinMaxNodePos(gsm_json, child_node, True, min_or_max, pos)
+        return pos
+
 
     # Phase 1
     def extractLogicalConnectorsAsGroups(self, gsm_json):

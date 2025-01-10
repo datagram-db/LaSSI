@@ -13,8 +13,12 @@ class TestLaSSI(unittest.TestCase):
         file_path = os.path.join(rel_dir, "assertions.txt")
         with open(file_path, 'r') as f:
             for line in f:
-                if not "//" in line and line.strip() != "":
+                if not line.startswith('//') and line.strip() != "":
                     line = self.replace_existential(line)
+
+                    if "//" in line:
+                        line = line.split('//')[0].strip()
+
                     split_line = re.split(" ⇒ ", line)
                     assertions[split_line[0].lower()] = split_line[1].lower()
 

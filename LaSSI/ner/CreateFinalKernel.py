@@ -123,7 +123,7 @@ class CreateFinalKernel:
 
         used_edges = set()
         for node_id in filtered_top_node_ids:
-            edge_to_loop = [True, None]  # [should_loop?, edge_to_use_for_kernel, returned_kernel_from_last_loop]
+            edge_to_loop = [True, None]  # Represents: [should_loop?, edge_to_use_for_kernel, returned_kernel_from_last_loop]
             while edge_to_loop[0]:
                 descendant_node_ids = self.node_functions.node_bfs(new_edges, node_id)
 
@@ -185,8 +185,7 @@ class CreateFinalKernel:
                 nodes = {final_kernel.id: final_kernel}
                 if not hasattr(final_kernel, 'properties') or not actioned_node:
                     create_existential(edges, nodes)
-                    final_kernel, edge_to_loop = create_sentence_obj(edges, nodes, self.negations, final_kernel.id, {},
-                                                                     self.node_functions, edge_to_loop)
+                    final_kernel, edge_to_loop = create_sentence_obj(edges, nodes, self.negations, final_kernel.id, {}, self.node_functions, edge_to_loop)
                     final_kernel = self.kernel_post_processing(final_kernel, position_pairs)
                 else:
                     # Get label from action prop
@@ -306,7 +305,7 @@ class CreateFinalKernel:
             if 'SENTENCE' in dict(kernel.properties):
                 properties_to_keep['SENTENCE'] = []
                 for sentence_elm in list(dict(kernel.properties)['SENTENCE']):
-                    if int(float(dict(sentence_elm.properties)['pos'])) == position_value:
+                    if int(float(dict(sentence_elm.kernel.edgeLabel.properties)['pos'])) == position_value:
                         new_target = sentence_elm
                     else:
                         properties_to_keep['SENTENCE'].append(sentence_elm)
