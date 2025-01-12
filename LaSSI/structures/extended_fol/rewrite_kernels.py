@@ -15,9 +15,12 @@ from LaSSI.structures.internal_graph.EntityRelationship import NodeEntryPoint, S
 from LaSSI.structures.extended_fol.Sentences import FNot, FOr, FAnd, FUnaryPredicate, FVariable, FBinaryPredicate, Formula, \
     prune_from_cop
 
-bogus_dst = FVariable(name="there", type="non_verb", specification=None, cop=None)
+bogus_dst = FVariable(name="there", type="non_verb", specification=None, cop=None, id=-1)
 bogus_src = {"it"}
-
+discard_properties = {"end", "lemma", "begin", "kernel", "expl", "pos"}
+relative_pronouns = {"which","that", "who", "whom" }
+interrogative_pronouns = {"what", "which", "who", "whom", "whose"}
+demonstrative_pronouns = {"this", "these", "that", "those"}
 
 def property_write(key, val: NodeEntryPoint) -> str:
     value = '""'
@@ -37,8 +40,10 @@ def make_cop(entity) -> FVariable:
 def make_arg(entity):
     if entity is None:
         return None
-    elif isinstance(entity, FVariable):
+    elif isinstance(entity, FVariable) or isinstance(entity, FBinaryPredicate):
         return entity
+    elif hasattr(entity, "kernel") and entity.kernel is not None:
+        return rewrite_kernels(entity)
     props = entity if isinstance(entity, dict) else dict(entity.properties)
     specification = props["extra"] if "extra" in props else None
     coplist = []
@@ -55,7 +60,11 @@ def make_arg(entity):
     type = props["type"] if isinstance(entity, dict) else entity.type
     if type != "GPE":
         named_entity = named_entity.lower()
-    return FVariable(name=named_entity, type=type, specification=specification, cop=cop)
+    props = dict()
+    for k, v in entity.properties:
+        if k not in discard_properties:
+            props[k] = v
+    return FVariable(name=named_entity, type=type, specification=specification, cop=cop, id=entity.id, properties=frozenset(props.items()))
 
 
 def make_and(entities):
@@ -93,6 +102,8 @@ def make_unary(rel, dst, score, prop):
 
 
 def make_binary(rel, src, dst, score, prop):
+    if (rel == "be" and (dst is None or dst.type == "existential")) or dst is None:
+        return make_unary(rel, src, score, prop)
     if rel == "have":  # TODO: generalise
         if src is not None and (
                 src.type == "DATE" or src.type == "GPE" or src.type == "LOC") and src.cop is None:  # TODO: generalise
@@ -159,7 +170,8 @@ def make_prop(src, rel, negated, score, properties, dst):
             else:
                 p = dict()
                 for k, v in properties.items():
-                    p[k] = v
+                    if k not in discard_properties:
+                        p[k] = v
                 src = make_arg(src)
                 p["src"] = []
                 p["dst"] = []
@@ -186,7 +198,8 @@ def make_prop(src, rel, negated, score, properties, dst):
         else:
             p = dict()
             for k, v in properties.items():
-                p[k] = v
+                if k not in discard_properties:
+                    p[k] = v
             p["src"] = []
             p["dst"] = []
             if src is not None:
@@ -228,4 +241,4 @@ def rewrite_kernels(obj: Singleton) -> Formula:
     if main_pop.target is not None:
         score *= main_pop.target.confidence
 
-    return src_make_prop(main_pop.source, rel, negated, score, properties, main_pop.target)
+    return src_make_prop(main_pop.source, rel, negated, score, dict(properties), main_pop.target)

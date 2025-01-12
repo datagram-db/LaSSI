@@ -28,7 +28,7 @@ class StanzaService:
 
     def __new__(cls):
         if cls._instance is None:
-            stanza.download('en', processors='tokenize,mwt,pos,lemma', verbose=False)
+            stanza.download('en', processors='tokenize,mwt,pos,lemma')
             cls._instance = super(StanzaService, cls).__new__(cls)
 
         return cls._instance

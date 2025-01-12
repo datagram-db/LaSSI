@@ -1,5 +1,7 @@
 import itertools
 import re
+import string
+
 import numpy
 from collections import defaultdict
 from LaSSI.external_services.Services import Services
@@ -399,7 +401,7 @@ class CreateFinalKernel:
                             inner_properties_to_keep = dict()
                             for inner_key in dict(node.properties):
                                 value = dict(node.properties)[inner_key]
-                                if (kernel.kernel.edgeLabel is not None and isinstance(value, str) and not re.search(
+                                if (value in string.punctuation) or (kernel.kernel.edgeLabel is not None and isinstance(value, str) and not re.search(
                                         r"\b" + value + r"\b", kernel.kernel.edgeLabel.named_entity)) or not isinstance(
                                         value, str) or kernel.kernel.edgeLabel is None:
                                     inner_properties_to_keep[inner_key] = value

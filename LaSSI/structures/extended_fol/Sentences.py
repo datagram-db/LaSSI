@@ -166,6 +166,8 @@ class FVariable(Formula):
     type: str
     specification: str #extra
     cop: Formula
+    id: int
+    properties: frozenset = field(default_factory=lambda : frozenset())
     meta: str = field(default_factory=lambda : "FVariable")
     matched: bool = field(default_factory=lambda : False)
 
@@ -177,6 +179,8 @@ class FVariable(Formula):
             s += (" [of] "+ self.specification)
         if self.cop is not None:
             s += (" JJ:" + str(self.cop))
+        if self.properties is not None:
+            s += json.dumps({k:[str(x) for x in v] for k,v in self.properties})
         return s
 
     def isOntoUnmatched(self):
@@ -184,15 +188,27 @@ class FVariable(Formula):
         if isStringUnresolved(self.type): return True
         if isStringUnresolved(self.specification): return True
         if self.cop is not None and self.cop.isOntoUnmatched(): return True
+        for x,y in self.properties:
+            for z in y:
+                if z is not None and z.isOntoUnmatched(): return True
         return False
 
     def getFlattenedProperties(self):
+        props = defaultdict(set)
         if self.cop is not None:
-            return self.cop.getFlattenedProperties()
-        return super().getFlattenedProperties()
+            for x, y in self.cop.getFlattenedProperties():
+                props[x] = set(y)
+        if self.properties is not None:
+            for x, y in self.properties:
+                props[x] = props[x].union(set(y))
+        return frozenset({x: tuple(y) for x,y in props.items()}.items())
+        # if self.cop is not None:
+        #     return self.cop.getFlattenedProperties()
+        # return super().getFlattenedProperties()
 
     def removePropertiesFrom(self, coll, onMatch=False):
-        return FVariable(self.name, self.type, self.specification, self.cop.removePropertiesFrom(coll, onMatch) if self.cop is not None else None, matched=self.matched)
+        prop = remove_properties_from(self.properties, coll) if (not onMatch) or (self.matched) else self.properties
+        return FVariable(self.name, self.type, self.specification, self.cop.removePropertiesFrom(coll, onMatch) if self.cop is not None else None, matched=self.matched, id=self.id, properties = prop)
 
     def isUnresolved(self):
         if self.matched: return False
@@ -200,12 +216,18 @@ class FVariable(Formula):
         if is_string_unresolved(self.type): return True
         if is_string_unresolved(self.specification): return True
         if is_formula_unresolved(self.cop): return True
+        if is_frozenset_unresolved(self.properties): return True
         return False
 
     def collectIds(self):
         yield id(self)
         if self.cop is not None:
             yield from self.cop.collectIds()
+        if self.properties is not None:
+            for k,v in self.properties:
+                for y in v:
+                    if (y is not None) and (isinstance(y, Formula)):
+                        yield from y.collectIds()
 
     def matchWith(self, f, d, ancestor, fugitive):
         isAncestorNone = ancestor is None
@@ -220,17 +242,18 @@ class FVariable(Formula):
                 for k,y in dd.items():
                     d[k] = y
                 cop = match_formula(self.cop, f.cop, d, ancestor, fugitive)
-                var = FVariable(name_value, type_value, spec_value, cop=cop, matched=True)
+                var = FVariable(name_value, type_value, spec_value, cop=cop, matched=True, id=self.id, properties=self.properties)
                 if isAncestorNone:
                     retaliate_dd(d, self, var, fugitive)
                 return var
         if isAncestorNone:
             ancestor = None
         # cop = match_formula(self.cop, f, d, ancestor, fugitive)
-        return FVariable(self.name, self.type, self.specification, cop=self.cop)
+        return FVariable(self.name, self.type, self.specification, cop=self.cop, id=self.id, properties=self.properties)
 
     def updateWithProperties(self, toFrozenSet):
-        return self
+        r = {k: tuple(v) for k, v in toFrozenSet.items()}
+        return FVariable(self.name, self.type, self.specification, cop=self.cop, id=self.id, properties=r)
 
     def replaceWith(self, map, onObjectId=False, d=None, fugitive=None, forAllProperties=None):
         if map is None or len(map) == 0:
@@ -246,18 +269,27 @@ class FVariable(Formula):
             type = replace_string(self.type, map)
         specification = replace_string(self.specification, map)
         cop = replace_formula(self.cop, map, onObjectId, d, fugitive, forAllProperties)
-        var = FVariable(name=name, type=type, specification=specification, cop=cop, matched=self.matched)
+        properties = replace_frozenset(self.properties, map, onObjectId, d, fugitive, forAllProperties)
+        if forAllProperties is not None and self in forAllProperties:
+            properties = {x:set(y) for x,y in properties}
+            for x, y in forAllProperties[self].getFlattenedProperties():
+                if x in properties:
+                    properties[x] = properties[x]#.union(set(y))
+                else:
+                    properties[x] = set(y)
+            properties = frozenset({x:tuple(y) for x,y in properties.items()}.items())
+        var = FVariable(name=name, type=type, specification=specification, cop=cop, matched=self.matched, id=self.id, properties=properties)
         retaliate_dd(d, self, var, fugitive)
         return var
 
     def strippedByType(self):
-        return FVariable(name=self.name, type="TODO", specification=self.specification, cop=stripArg(self.cop), matched=self.matched)
+        return FVariable(name=self.name, type="TODO", specification=self.specification, cop=stripArg(self.cop), matched=self.matched, id=self.id, properties=self.properties)
 
-def make_variable(var, type=None, spec=None, cop:Formula=None):
-    return FVariable(name="@"+str(var), type=type, specification=spec, cop=cop)
+def make_variable(var, type=None, spec=None, cop:Formula=None, id=-1):
+    return FVariable(name="@"+str(var), type=type, specification=spec, cop=cop, id=id)
 
-def make_name(var, type=None, spec=None, cop:Formula=None):
-    return FVariable(name=str(var) if var is not None else None, type=type, specification=spec, cop=cop)
+def make_name(var, type=None, spec=None, cop:Formula=None, id=-1):
+    return FVariable(name=str(var) if var is not None else None, type=type, specification=spec, cop=cop, id=id)
 
 def stripArg(x):
     if x is None:
@@ -266,7 +298,7 @@ def stripArg(x):
         return x.strippedByType()
 
 def prune_from_cop(var:FVariable):
-    return FVariable(name=var.name, type=var.type, specification=var.specification, cop=None)
+    return FVariable(name=var.name, type=var.type, specification=var.specification, cop=None, id=var.id)
 
 def stripFrozenProperties(coll):
     d = dict()
@@ -883,9 +915,10 @@ def formula_from_dict(f:Union[dict,str]):
     if meta == "FVariable":
         name = str(f["name"]) if "name" in f and f["name"] is not None else None
         type = str(f["type"]) if "name" in f and f["type"] is not None else None
+        id = int(f["id"]) if "id" in f and f["id"] is not None else -1
         specification = str(f["specification"]) if "specification" in f and f["specification"] is not None else None
         cop = formula_from_dict(f["cop"]) if "cop" in f else None
-        return FVariable(name=name, type=type, specification=specification, cop=cop)
+        return FVariable(name=name, type=type, specification=specification, cop=cop, id=id)
     if meta == "FUnaryPredicate":
         rel = str(f["rel"]) if "rel" in f and f["rel"] is not None else ""
         arg = formula_from_dict(f["arg"]) if "arg" in f and f["arg"] is not None else None

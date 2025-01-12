@@ -274,7 +274,7 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
                 source=create_existential_node(),
                 target=final_kernel,
                 edgeLabel=new_kernel,
-                isNegated=new_kernel.isNegated, # TODO: Check this is correctly negated
+                isNegated=new_kernel.isNegated if hasattr(new_kernel, "isNegated") else False, # TODO: Check this is correctly negated
             ),
             properties=create_props_for_singleton(properties_to_keep),
         )

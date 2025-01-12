@@ -39,6 +39,16 @@ class EnhancedJSONEncoder(json.JSONEncoder):
             return o.value
         return super().default(o)
 
+def obj_pickle(obj):
+    import pickle
+    return pickle.dumps(obj)
+
+def obj_unmarshall(file):
+    import pickle
+    data = pickle.load(file)
+    # close the file
+    file.close()
+    return data
 
 def json_dumps(obj):
     return json.dumps(obj, cls=EnhancedJSONEncoder, indent=4)

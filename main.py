@@ -2,8 +2,8 @@ import sys
 from LaSSI.LaSSI import LaSSI
 
 if __name__ == '__main__':
-    dataset_name = "test_sentences/real_data/part10.yaml"
-    fuzzyDBs = "connection.yaml"
+    dataset_name = "test_sentences/all_concept.yaml"
+    fuzzyDBs = "connection_giacomo.yaml"
 
     if len(sys.argv) > 1:
         dataset_name = sys.argv[1]

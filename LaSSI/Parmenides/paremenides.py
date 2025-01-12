@@ -16,6 +16,7 @@ from collections import defaultdict
 from functools import reduce, lru_cache
 from string import Template
 
+import dacite
 import pandas
 import rdflib
 from rdflib.graph import Graph, ConjunctiveGraph
@@ -50,6 +51,7 @@ class Parmenides():
         self.transitive_verbs = set(self.get_transitive_verbs())
         self.rejected_edges = set(self.get_rejected_edges())
         self.non_verbs = set(self.get_universal_dependencies())
+        self.prepositions = None
 
     def most_specific_type(self, types):
         types = list(map(lambda x: str(x).lower(), types))
@@ -367,6 +369,54 @@ WHERE {
                 k[type[1:]] = str(d.get("dst"))[len(Parmenides.parmenides_ns):]
             yield k
 
+    def _run_custom_sparql_query(self, query, bindings=None):
+        ## You can test custom SPARQL queries in https://atomgraph.github.io/SPARQL-Playground/
+        qres = self.g.query(query, initBindings=bindings)
+        for x in qres:
+            yield x.asdict()
+
+    def collect_prepositions(self):
+        ## This is the way to have explicit caching and control
+        if self.prepositions is not None:
+            return self.prepositions
+        query = """
+SELECT *
+WHERE {
+    { ?src a <https://logds.github.io/parmenides#Preposition>. }
+    UNION
+{ ?s a ?t. ?t rdfs:subClassOf  <https://logds.github.io/parmenides#Preposition>. }
+ ?src rdfs:label ?src_label.
+}"""
+        from LaSSI.Parmenides.Prepositions import Preposition
+        result = defaultdict(dict)
+        for d in self._run_custom_sparql_query(query):
+            rel = str(d.get("t", ""))[len(Parmenides.parmenides_ns):]
+            # rel = str(d.get("rel", ""))[len(Parmenides.parmenides_ns):]
+            label = str(d["src_label"])
+            local = result[label]
+            # print(label)
+            result[label] = Preposition.update_with_label(local, rel)
+        query = """
+        SELECT *
+        WHERE {
+         ?src ?prop ?value.
+         ?prop a owl:ObjectProperty.
+         ?src rdfs:label ?label.
+        }"""
+        for k in result.keys():
+            binding = {"label": Literal(k, datatype=XSD.string)}
+            for d in self._run_custom_sparql_query(query, bindings=binding):
+                rel = str(d.get("prop", ""))[len(Parmenides.parmenides_ns):]
+                if isinstance(d["value"], Literal):
+                    # print(rel)
+                    result[k][rel] = d["value"].value
+
+        self.prepositions = dict()
+        for k, v in result.items():
+            v["name"] = k
+            self.prepositions[k] =  dacite.from_dict(Preposition, v)
+        return self.prepositions
+
     def single_edge_dst_unary_capability(self, src, edge_type, verb, subj):
         knows_query = """
          SELECT DISTINCT ?src ?edge_type ?dst ?src_label ?verb ?subj
@@ -623,8 +673,10 @@ WHERE {
 
 
 if __name__ == "__main__":
-    g = Parmenides()
+    g = Parmenides(filename="/home/giacomo/projects/LaSSI/LaSSI/Parmenides/turtle.ttl")
     print({str(x)[len(Parmenides.parmenides_ns):] for x in g.typeOf("fabulous")})
+    L = list(g.collect_prepositions())
+    print(L)
     # l = g.dumpTypedObjectsToTAB("tabby.tab")
     # count = 1
     # for k, v in l.items():

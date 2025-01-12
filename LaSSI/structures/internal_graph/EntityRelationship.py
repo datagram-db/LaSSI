@@ -61,6 +61,13 @@ class SetOfSingletons(NodeEntryPoint):  # Graph node representing conjunction/di
     confidence: float
     root: bool = False
 
+    def extract_properties(self, p):
+        if (self.entities is None) or len(self.entities) == 0:
+            yield from []
+        else:
+            for x in self.entities:
+                yield from x.extract_properties(p)
+
 
 def deserialize_NodeEntryPoint(data: dict) -> NodeEntryPoint:
     if data is None:
@@ -93,6 +100,15 @@ class Relationship:  # Representation of an edge
     edgeLabel: 'Singleton'  # Edge label, also represented as an entity with properties
     isNegated: bool = False  # Whether the edge expresses a negated action
 
+    def extract_properties(self, p):
+        if (self.source is None) and (self.target is None):
+            yield from []
+        else:
+            if self.source is not None:
+                yield from self.source.extract_properties(p)
+            if self.target is not None:
+                yield from self.target.extract_properties(p)
+
     @staticmethod
     def from_nodes(r, nodes):
         return Relationship(source=nodes[r.source.id] if r.source.id >= 0 else r.source, target=nodes[r.target.id] if r.target.id >= 0 else r.target, edgeLabel=r.edgeLabel, isNegated=r.isNegated)
@@ -116,6 +132,25 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
     type: str
     confidence: float
     kernel: Relationship = None
+
+    def extract_properties(self, p):
+        if ((self.properties is None) or len(self.properties) == 0) and self.kernel is None:
+            yield from []
+        else:
+            for k, v in self.properties:
+                if isinstance(v, list) or isinstance(v, tuple):
+                   for x in v:
+                       if p(k, x):
+                           yield k, x
+                       if type(x).__name__ == 'Relationship' or type(x).__name__ == 'Singleton' or type(x).__name__ == 'SetOfSingletons':
+                            yield from x.extract_properties(p)
+                elif p(k, v):
+                    yield k, v
+                if type(v).__name__ == 'Relationship' or type(v).__name__ == 'Singleton' or type(
+                            v).__name__ == 'SetOfSingletons':
+                    yield from v.extract_properties(p)
+            if self.kernel is not None:
+                yield from self.kernel.extract_properties(p)
 
     @staticmethod
     def get_props(node, properties=None):

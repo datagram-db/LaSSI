@@ -21,7 +21,7 @@ from LaSSI.external_services.Services import Services
 from LaSSI.external_services.utilities.DatabaseConfiguration import DatabaseConfiguration, load_db_configuration
 from LaSSI.external_services.utilities.FuzzyStringMatchDatabase import FuzzyStringMatchDatabase
 from LaSSI.external_services.web_cralwer.ScraperConfiguration import ScraperConfiguration
-from LaSSI.files.JSONDump import json_dumps
+from LaSSI.files.JSONDump import json_dumps, obj_unmarshall, obj_pickle
 from LaSSI.phases.ApplyGraphGrammars import ApplyGraphGrammars
 from LaSSI.phases.GetGSMString import GetGSMString
 from LaSSI.phases.LogicalRewriting import LogicalRewriting
@@ -101,14 +101,16 @@ class LaSSI():
         self.query_file = pkg_resources.resource_filename("LaSSI.resources", "gsm_query.txt")
 
     def create_catabolites_dir(self, dataset_name):
-        if "/" in dataset_name:
-            name_arr = dataset_name.split("/")
-            self.catabolites_dir = name_arr[len(name_arr) - 1]
-        else:
-            self.catabolites_dir = dataset_name
-        if "." in self.catabolites_dir:
-            name_arr = self.catabolites_dir.split(".")
-            self.catabolites_dir = name_arr[0]
+        # if "/" in dataset_name:
+        #     name_arr = dataset_name.split("/")
+        #     self.catabolites_dir = name_arr[len(name_arr) - 1]
+        # else:
+        #     self.catabolites_dir = dataset_name
+        # if "." in self.catabolites_dir:
+        #     name_arr = self.catabolites_dir.split(".")
+        #     self.catabolites_dir = name_arr[0]
+        from pathlib import Path
+        self.catabolites_dir = Path(dataset_name).stem
 
         self.string_rep_dir = os.path.join("catabolites", self.catabolites_dir, "string_rep.txt")
         self.benchmarking_file = os.path.join("catabolites", "benchmark.csv")
@@ -173,8 +175,8 @@ class LaSSI():
 
         # Loop over each Sentence
         for intermediate_representation in intermediate_representations:
-            for sentence in intermediate_representation.sentences:
-                logical_representations.append(rewrite_kernels(sentence))
+            # for sentence in intermediate_representation.sentences:
+            logical_representations.append(rewrite_kernels(intermediate_representation.sentences))
 
         return logical_representations
 
@@ -234,10 +236,11 @@ class LaSSI():
         self.logger("generating intermediate representation (before final logical form in eFOL)")
         intermediate_representations, intermediate_execution_time = target_file_dump(
             self.internals,
-            lambda x: [InternalRepresentation.from_dict(k) for k in json.load(x)],
+            obj_unmarshall,
             lambda: SemanticGraphRewriting(self, meu_db, rewritten_graphs),
-            json_dumps, True, self.should_benchmark
+            obj_pickle, False, self.should_benchmark, True
         )
+        # rewrite_kernels(intermediate_representations[0].sentences)
         print(f"Generating intermediate representation time: {intermediate_execution_time} seconds")
         self.write_variable_to_file(self.benchmarking_file, f"{self.get_execution_time_string(meu_execution_time)}, {gsm_execution_time[0]}, {rewritten_execution_time[0]}, {intermediate_execution_time[0]}\n")
 
