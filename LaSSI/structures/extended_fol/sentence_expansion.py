@@ -75,7 +75,7 @@ def with_true_variables_from(l):
     return pandas.DataFrame({str(x): [1] for x in l})
 
 class SentenceExpansion:
-    def __init__(self, sentence_list:List[Formula], kb):
+    def __init__(self, sentence_list:List[Formula], kb, folder):
         self.sentence_list = []
         self.sentence_to_id = dict()
         for idx in range(len(sentence_list)):
@@ -85,9 +85,9 @@ class SentenceExpansion:
         self.minimal_constituents = CountingDictionary()
         self.U = None
         self.d = defaultdict(set)
-        self.d = defaultdict(set)
         self.buildup = False
         self.ec = None
+        self.folder = folder
 
     def getSentenceAtomsFromId(self, sentence_id)->List[Formula]:
         return self.sentence_list[sentence_id].getAtoms()
@@ -133,11 +133,11 @@ class SentenceExpansion:
         for i in range(len(self.sentence_list)):
             for x in self.getSentenceAtomsFromId(sentence_id):
                 self.d[sentence_id].add(self.minimal_constituents.add(x))
-        from gsmtosimilarity.graph_similarity import EnhancedJSONEncoder
+        # from gsmtosimilarity.graph_similarity import EnhancedJSONEncoder
 
     def build_up_truth_table(self):
         if not self.buildup:
-            from Parmenides.TBox.ExpandConstituents import ExpandConstituents
+            from LaSSI.Parmenides.TBox.ExpandConstituents import ExpandConstituents
             for i in range(len(self.sentence_list)):
                 self.collect_sentence_constituents(i)
             # with open("/home/giacomo/wtcf.txt", "w") as f:
@@ -146,11 +146,13 @@ class SentenceExpansion:
             #     f.write(os.linesep+os.linesep)
             #     for i in range(len(self.minimal_constituents)):
             #         f.write(f"Constituent #{i}: {str(self.minimal_constituents.fromId(i))}"+os.linesep)
-            with open(self.cfg["hand_dataset"]+"_d.pickle", "wb") as p:
+            d_folder = os.path.join(self.folder, "_d.pickle")
+            cd_folder = os.path.join(self.folder, "_cd.pickle")
+            with open(d_folder, "wb") as p:
                 pickle.dump(self.d, p, protocol=pickle.HIGHEST_PROTOCOL)
-            with open(self.cfg["hand_dataset"]+"_cd.pickle", "wb") as p:
+            with open(cd_folder, "wb") as p:
                 pickle.dump(self.minimal_constituents, p, protocol=pickle.HIGHEST_PROTOCOL)
-            self.ec = ExpandConstituents(self.cfg, self.kb, self.minimal_constituents.getAllObjects())
+            self.ec = ExpandConstituents(self.folder, self.kb, self.minimal_constituents.getAllObjects())
             # self.U = self.universal_truth()
             self.buildup = True
 

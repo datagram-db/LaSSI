@@ -214,9 +214,9 @@ def best_clustering_match(minedClusters, expectedClusters):
             total_alignment_score += score
         if len(matched_mined_clusters) == len(expectedClusters):
             break
-    unmatched_clusters = len(minedClusters) - len(matched_mined_clusters)
-    assert unmatched_clusters >= 0
-    return (total_alignment_score + unmatched_clusters) / len(minedClusters)
+    unmatched_clusters = abs(len(expectedClusters) - len(matched_mined_clusters))
+    # assert unmatched_clusters >= 0
+    return (total_alignment_score + unmatched_clusters) / len(expectedClusters)
 
 def dimsum(matrix, row=True):
     return matrix.sum(axis=1 if row else 0)
@@ -242,9 +242,12 @@ def test_with_maximal_matching(similarity_matrix, expected_clusters, experiment_
     graph_plot(matrix, mkv_clusters, f"{experiment_name}_mkv.png")
 
     agg_score = best_clustering_match(agg_cluster_assignment, expected_clusters)
-    print(f"Best Clustering Match (Agglomerative Clustering): {agg_score}")
+    agg_similarity = 1-agg_score
+    print(f"Best Clustering Match (Agglomerative Clustering): {agg_similarity}. {agg_cluster_assignment}")
+
     mkv_score = best_clustering_match(mkv_cluster_assignment, expected_clusters)
-    print(f"Best Clustering Match (Markov Clustering): {mkv_score}")
+    mkv_similarity = 1-mkv_score
+    print(f"Best Clustering Match (Markov Clustering): {mkv_similarity}. {mkv_cluster_assignment}")
 
 
 if __name__ == '__main__':

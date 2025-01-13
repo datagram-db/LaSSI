@@ -5,7 +5,7 @@ import json
 from collections.abc import Iterable
 from typing import Tuple
 
-from logical_repr.Sentences import formula_from_dict
+# from logical_repr.Sentences import formula_from_dict
 
 
 @dataclasses.dataclass(order=True, frozen=True, eq=True)
@@ -132,9 +132,10 @@ def field_match(self, query:FieldMatch, fields:list[str]):
             else:
                 return properties_match(self.properties, query, copy.deepcopy(fields))
         else:
-            from logical_repr.Sentences import FUnaryPredicate
-            from logical_repr.Sentences import FNot
-            from logical_repr.Sentences import FBinaryPredicate
+            # from logical_repr.Sentences import FUnaryPredicate
+            # from logical_repr.Sentences import FNot
+            # from logical_repr.Sentences import FBinaryPredicate
+            from LaSSI.structures.extended_fol.Sentences import FUnaryPredicate, FNot, FBinaryPredicate
             if curr == "0":
                 if isinstance(self, FUnaryPredicate) or isinstance(self, FNot):
                     curr = "arg"
@@ -184,7 +185,7 @@ def properties_match(frozenProperties, query:FieldMatch, fields:list[str]):
                 return []
     else:
         if len(fields) == 0:
-            from logical_repr.Sentences import Formula
+            from LaSSI.structures.extended_fol.Sentences import Formula
             if isinstance(frozenProperties, Formula):
                 return field_match(frozenProperties, query, fields)
             else:
@@ -193,7 +194,7 @@ def properties_match(frozenProperties, query:FieldMatch, fields:list[str]):
                     R.append({query:frozenProperties})
                 elif isinstance(frozenProperties, Iterable):
                     for field in frozenProperties:
-                        from logical_repr.Sentences import FVariable
+                        from LaSSI.structures.extended_fol.Sentences import FVariable
                         if isinstance(field, str):
                             R.append({query: field})
                         elif isinstance(field, FVariable):
@@ -341,12 +342,12 @@ def test_query(list_json, qs, i, n):
         print(x)
 
 
-if __name__ == "__main__":
-    with open("/old_specifications/newcastle_sentences.txt_logical_rewriting.json", "r") as f:
-        list_json = json.load(f)
-        list_json = formula_from_dict(list_json)
-        n, m = -1,0
-        # test_query(list_json, qs, 7, n)
-        for i in range(len(list_json)):
-            test_query(list_json, qs, i, n)
+# if __name__ == "__main__":
+#     with open("/old_specifications/newcastle_sentences.txt_logical_rewriting.json", "r") as f:
+#         list_json = json.load(f)
+#         list_json = formula_from_dict(list_json)
+#         n, m = -1,0
+#         # test_query(list_json, qs, 7, n)
+#         for i in range(len(list_json)):
+#             test_query(list_json, qs, i, n)
 

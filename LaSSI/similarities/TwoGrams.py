@@ -8,9 +8,13 @@ __email__ = "bergamigiacomo@gmail.com"
 __status__ = "Production"
 import math
 
+from LaSSI.similarities.HuggingFace import HuggingFace
+from LaSSI.similarities.levenshtein import lev, MultiLevenshtein
+
+
 # from gsmtosimilarity.conceptnet.ConceptNet5 import ConceptNet5Numberbatch
-from gsmtosimilarity.huggingface.HuggingFace import HuggingFace
-from gsmtosimilarity.levenshtein import lev, MultiLevenshtein
+# from gsmtosimilarity.huggingface.HuggingFace import HuggingFace
+# from gsmtosimilarity.levenshtein import lev, MultiLevenshtein
 
 
 def get2Grams(x):

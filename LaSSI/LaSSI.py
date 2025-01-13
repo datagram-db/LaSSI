@@ -23,14 +23,18 @@ from LaSSI.external_services.utilities.FuzzyStringMatchDatabase import FuzzyStri
 from LaSSI.external_services.web_cralwer.ScraperConfiguration import ScraperConfiguration
 from LaSSI.files.JSONDump import json_dumps, obj_unmarshall, obj_pickle
 from LaSSI.phases.ApplyGraphGrammars import ApplyGraphGrammars
+from LaSSI.phases.CalculateMatrix import CalculateMatrix
 from LaSSI.phases.GetGSMString import GetGSMString
 from LaSSI.phases.LogicalRewriting import LogicalRewriting
 from LaSSI.phases.ResolveBasicTypes import ExplainTextWithNER
 from LaSSI.phases.SemanticGraphRewriting import SemanticGraphRewriting
+from LaSSI.similarities.graph_similarity import SimilarityScore
 from LaSSI.structures.extended_fol.rewrite_kernels import rewrite_kernels
 from LaSSI.structures.extended_fol.sentence_expansion import SentenceExpansion
+from LaSSI.structures.internal_graph.Graph import Graph
 from LaSSI.structures.internal_graph.InternalData import InternalRepresentation
 from LaSSI.structures.meuDB.meuDB import MeuDB
+from LaSSI.utils.configurations import LegacySemanticConfiguration
 
 
 class LaSSI():
@@ -44,11 +48,21 @@ class LaSSI():
                  precision_threshold=0.8,
                  force=False,
                  should_benchmark=True,
+                 legacy_conf:LegacySemanticConfiguration=None
                  ):
+        if legacy_conf is None:
+            self.legacy_conf = LegacySemanticConfiguration()
+        else:
+            self.legacy_conf = legacy_conf
         self.string_rep_dir = None
         self.benchmarking_file = None
         self.create_catabolites_dir(dataset_name)
         self.dataset_name = dataset_name
+        tmp = f"{self.dataset_name}_clusters.txt"
+        if os.path.isfile(tmp):
+            self.clusters_file = tmp
+        else:
+            self.clusters_file = None
         self.web_dir = web_dir
         if logger is None:
             logger = lambda x: print(x)
@@ -92,13 +106,14 @@ class LaSSI():
         self.catabolites_viz = os.path.join(self.catabolites, "viz")
         self.internals = os.path.join(self.catabolites, "internals.json")
         self.logical_rewriting = os.path.join(self.catabolites, "logical_rewriting.json")
-        self.confusion_matrices = os.path.join(self.catabolites, "confusion_matrices.json")
+        self.confusion_matrices = os.path.join(self.catabolites, "confusion_matrices_")
         Path(self.catabolites).mkdir(parents=True, exist_ok=True)
         Path(self.catabolites_viz).mkdir(parents=True, exist_ok=True)
         self.meuDB = os.path.join(self.catabolites, "meuDBs.json")
         self.gsmDB = os.path.join(self.catabolites, "gsmDB.txt")
         self.datagramdb_output = os.path.join(self.catabolites, "datagramdb_output.json")
         self.query_file = pkg_resources.resource_filename("LaSSI.resources", "gsm_query.txt")
+        self.sc = None
 
     def create_catabolites_dir(self, dataset_name):
         # if "/" in dataset_name:
@@ -111,8 +126,8 @@ class LaSSI():
         #     self.catabolites_dir = name_arr[0]
         from pathlib import Path
         self.catabolites_dir = Path(dataset_name).stem
-
-        self.string_rep_dir = os.path.join("catabolites", self.catabolites_dir, "string_rep.txt")
+        self.catabolites_of_dataset = os.path.join("catabolites", self.catabolites_dir)
+        self.string_rep_dir = os.path.join(self.catabolites_of_dataset, "string_rep.txt")
         self.benchmarking_file = os.path.join("catabolites", "benchmark.csv")
         if os.path.exists(self.string_rep_dir):
             os.remove(self.string_rep_dir)
@@ -167,35 +182,66 @@ class LaSSI():
             if self.transformation == SentenceRepresentation.Logical:
                 final_form = g.sentence()
                 self.write_variable_to_file(self.string_rep_dir, f" ⇒ {final_form.to_string()}\n")
-            internal_representations.append(InternalRepresentation(internal_graph, final_form))
+            internal_representations.append(final_form)
         return internal_representations
 
     def _logical_rewriting(self, intermediate_representations):
-        logical_representations = []
-
+        # logical_representations = []
+        #
         # Loop over each Sentence
-        for intermediate_representation in intermediate_representations:
-            # for sentence in intermediate_representation.sentences:
-            logical_representations.append(rewrite_kernels(intermediate_representation.sentences))
+        # for intermediate_representation in intermediate_representations:
+        #     for sentence in intermediate_representation.sentences:
+        #     logical_representations.append(rewrite_kernels(intermediate_representation))
+        return [rewrite_kernels(x) for x in intermediate_representations]
 
-        return logical_representations
+    def graph_with_logic_similarity(self, x:Graph, y:Graph)->float:
+        if self.sc is None:
+            self.sc = SimilarityScore(self.legacy_conf)
+        dist = self.sc.graph_distance(x, y) * 1.0
+        return 1.0 - dist #/ (1 + dist)
 
-    def _calculate_matrix(self, logical_representations):
-        from Parmenides.TBox.CrossMatch import DoExpand
-        # TODO: How to set this up with changed pipeline?
-        doexp = DoExpand(ontology, self.cfg['TBoxImpl'], self.cfg['TBoxEq'])
 
-        f = SentenceExpansion(logical_representations, doexp)
+    def fulltext_similarity(self, x:str, y:str)->float:
+        if self.sc is None:
+            self.sc = SimilarityScore(self.legacy_conf)
+        return self.sc.string_similarity(x, y)
+
+    def _calculate_matrix(self, obj_list):
+        if self.transformation == SentenceRepresentation.FullText:
+            f = self.fulltext_similarity
+        if self.transformation == SentenceRepresentation.Logical:
+            from LaSSI.Parmenides.TBox.CrossMatch import DoExpand#LogicalGraph
+            doexp = DoExpand()
+            f = SentenceExpansion(obj_list, doexp, self.catabolites_of_dataset)
+        elif (self.transformation == SentenceRepresentation.LogicalGraph or
+              self.transformation == SentenceRepresentation.SimpleGraph):
+            f = self.graph_with_logic_similarity
 
         matrices = []
-        for x in logical_representations:
+        for x in obj_list:
             ls = []
-            for y in logical_representations:
+            for y in obj_list:
                 ls.append(f(x, y))
             matrices.append(ls)
-        matrices = np.array(matrices)
+        # matrices = np.array(matrices)
 
         return matrices
+
+    def post_hoc_explain(self, lists):
+        from LaSSI.files.FileDumpUtilities import target_file_dump
+        self.logger("computing similarities")
+        confusion_matrices =  target_file_dump(self.confusion_matrices+self.transformation.name+".json",
+                                                  json.load,
+                                                  lambda: CalculateMatrix(self, lists),
+                                                  json_dumps,
+                                                  self.force)
+
+        if self.clusters_file is not None:
+            from LaSSI.similarities.ClusteringTest import test_with_maximal_matching
+            clusters = []
+            with open(self.clusters_file, "r") as f:
+                clusters = json.load(f)
+            test_with_maximal_matching(confusion_matrices, clusters, os.path.join(self.catabolites_of_dataset, self.transformation.name))
 
 
     def sentence_transform(self, sentences):
@@ -212,7 +258,7 @@ class LaSSI():
             lambda: ExplainTextWithNER(self, sentences),
             json_dumps, self.force, self.should_benchmark
         )
-        print(f"Generating meuDB time: {meu_execution_time} seconds")
+        self.logger(f"Generating meuDB time: {meu_execution_time} seconds")
 
         self.logger("generating gsmDB")
         gsm_db, gsm_execution_time = target_file_dump(
@@ -222,7 +268,7 @@ class LaSSI():
             lambda x: x,
             self.force, self.should_benchmark
         )
-        print(f"Generating gsmDB time: {gsm_execution_time} seconds")
+        self.logger(f"Generating gsmDB time: {gsm_execution_time} seconds")
 
         self.logger("generating rewritten graphs")
         rewritten_graphs, rewritten_execution_time = target_file_dump(
@@ -244,21 +290,13 @@ class LaSSI():
         print(f"Generating intermediate representation time: {intermediate_execution_time} seconds")
         self.write_variable_to_file(self.benchmarking_file, f"{self.get_execution_time_string(meu_execution_time)}, {gsm_execution_time[0]}, {rewritten_execution_time[0]}, {intermediate_execution_time[0]}\n")
 
-        if self.transformation == SentenceRepresentation.Logical:
+        if self.transformation == SentenceRepresentation.Logical: #LogicalGraph
             self.logger("[TODO]")
-            # logical_representations = target_file_dump(self.logical_rewriting,
+            # intermediate_representations = target_file_dump(self.logical_rewriting,
             #                                           json.load,
             #                                           lambda: LogicalRewriting(self, intermediate_representations),
             #                                           json_dumps,
             #                                           self.force)
-
-            # TODO: Post hoc Matrices output
-            # confusion_matrices =  target_file_dump(self.confusion_matrices,
-            #                                           json.load,
-            #                                           lambda: CalculateMatrix(self, logical_representations),
-            #                                           json_dumps,
-            #                                           self.force)
-        self.logger("rewriting graphs")
 
     def get_execution_time_string(self, execution_time):
         if execution_time[1] == 'w':
@@ -273,10 +311,11 @@ class LaSSI():
         sentences = SentenceLoader(self.sentences)
         end_time = time.time()
         loading_sentences_execution_time = end_time - start_time
-        print(f"Loading sentences time: {loading_sentences_execution_time} seconds")
+        self.logger(f"Loading sentences time: {loading_sentences_execution_time} seconds")
         self.write_variable_to_file(self.benchmarking_file, f"{self.dataset_name.split('/')[-1].split('.yaml')[0]}, {loading_sentences_execution_time}, ")
 
         result = self.sentence_transform(sentences)
+        # self.post_hoc_explain(result)
 
     def close(self):
         if isinstance(self.sentences, io.IOBase):

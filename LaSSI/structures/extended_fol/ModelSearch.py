@@ -1,6 +1,9 @@
-from Parmenides.TBox.ExpandConstituents import CasusHappening, test_pairwise_sentence_similarity, isImplication
-from logical_repr.Sentences import FUnaryPredicate, FBinaryPredicate, FNot
-from logical_repr.rewrite_kernels import make_not
+from LaSSI.Parmenides.TBox.ExpandConstituents import CasusHappening, test_pairwise_sentence_similarity, isImplication
+# from logical_repr.Sentences import FUnaryPredicate, FBinaryPredicate, FNot
+# from logical_repr.rewrite_kernels import make_not
+
+from LaSSI.structures.extended_fol.Sentences import FUnaryPredicate, FBinaryPredicate, FNot
+from LaSSI.structures.extended_fol.rewrite_kernels import make_not
 
 
 class ModelSearchBasis:

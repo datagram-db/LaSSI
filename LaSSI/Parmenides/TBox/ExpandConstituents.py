@@ -362,23 +362,24 @@ def instantiate_rules(e, constituents, expansion_dictionary, final_constituents,
 
 
 class ExpandConstituents:
-    def __init__(self, cfg, expander, list_of_impl_rules):
+    def __init__(self, folder, expander, list_of_impl_rules):
         print("Setting up the rule expander...")
         self.expander = expander
 
         self.constituents = list(list_of_impl_rules)
+        _ied = os.path.join(folder, "_ied.pickle")
+        _ic = os.path.join(folder, "_ic.pickle")
+        _eed = os.path.join(folder, "_eed.pickle")
+        _ec = os.path.join(folder, "_ec.pickle")
 
-        if (os.path.exists(cfg['hand_dataset'] + "_ied.pickle") and
-                os.path.exists(cfg['hand_dataset'] + "_ic.pickle") and
-                os.path.exists(cfg['hand_dataset'] + "_eed.pickle") and
-                os.path.exists(cfg['hand_dataset'] + "_ec.pickle")):
-            with open(cfg['hand_dataset'] + "_ied.pickle", "rb") as f:
+        if (os.path.exists(_ied) and os.path.exists(_ic) and os.path.exists(_eed) and os.path.exists(_ec)):
+            with open(_ied, "rb") as f:
                 self.impl_expansion_dictionary = pickle.load(f)
-            with open(cfg['hand_dataset'] + "_ic.pickle", "rb") as f:
+            with open(_ic, "rb") as f:
                 self.impl_constituents = pickle.load(f)
-            with open(cfg['hand_dataset'] + "_eed.pickle", "rb") as f:
+            with open(_eed, "rb") as f:
                 self.eq_expansion_dictionary = pickle.load(f)
-            with open(cfg['hand_dataset'] + "_ec.pickle", "rb") as f:
+            with open(_ec, "rb") as f:
                 self.eq_constituents = pickle.load(f)
         else:
             self.impl_expansion_dictionary = dict()
@@ -399,13 +400,13 @@ class ExpandConstituents:
             # self.outcome_eq_dictionary =
             instantiate_rules(self.expander, self.constituents, self.eq_expansion_dictionary, self.eq_constituents,
                               False)
-            with open(cfg['hand_dataset'] + "_ied.pickle", "wb") as f:
+            with open(_ied, "wb") as f:
                 pickle.dump(self.impl_expansion_dictionary, f, protocol=pickle.HIGHEST_PROTOCOL)
-            with open(cfg['hand_dataset'] + "_ic.pickle", "wb") as f:
+            with open(_ic, "wb") as f:
                 pickle.dump(self.impl_constituents, f, protocol=pickle.HIGHEST_PROTOCOL)
-            with open(cfg['hand_dataset'] + "_eed.pickle", "wb") as f:
+            with open(_eed, "wb") as f:
                 pickle.dump(self.eq_expansion_dictionary, f, protocol=pickle.HIGHEST_PROTOCOL)
-            with open(cfg['hand_dataset'] + "_ec.pickle", "wb") as f:
+            with open(_ec, "wb") as f:
                 pickle.dump(self.eq_constituents, f, protocol=pickle.HIGHEST_PROTOCOL)
 
         # with open("/home/giacomo/dump_impl.json", "w") as f:

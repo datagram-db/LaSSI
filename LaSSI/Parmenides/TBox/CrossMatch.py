@@ -310,7 +310,14 @@ def do_actual_match(datum, Q, g:Parmenides):
 
 
 class DoExpand:
-    def __init__(self, parmenides_file:str, tbox_file_impl:str, tbox_file_eq:str):
+    def __init__(self, parmenides_file:str=None, tbox_file_impl:str=None, tbox_file_eq:str=None):
+        import pkg_resources
+        if parmenides_file is None:
+            parmenides_file = pkg_resources.resource_filename("LaSSI.resources", "turtle.ttl")
+        if tbox_file_impl is None:
+            tbox_file_impl = pkg_resources.resource_filename("LaSSI.Parmenides.TBox", "file.txt")
+        if tbox_file_eq is None:
+            tbox_file_eq = pkg_resources.resource_filename("LaSSI.Parmenides.TBox", "file_eq.txt")
         from LaSSI.Parmenides.TBox.language.TBoxParse import load_tbox_rules
         print("Loading TBox Rules...")
         self.q_list_impl = load_tbox_rules(tbox_file_impl)

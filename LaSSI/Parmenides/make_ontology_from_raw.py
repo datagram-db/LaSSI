@@ -222,7 +222,7 @@ def make_ontology_from_raw():
     reject_T = p.create_class("Rejectable", "GraphParse", comment="Whether the edge shall be rejected in the internal rewriting pipeline")
     meta_T = p.create_class("MetaGrammaticalFunction")
     dep_T = p.create_class("dependency", "MetaGrammaticalFunction")
-    log_f_T = p.create_class("LogicalFunction", "MetaGrammaticalFunction", comment="The sentence constructs at the logical level (https://it.wikipedia.org/wiki/Analisi_logica_della_proposizione)")
+    log_f_T = p.create_class("LogicalFunction", "MetaGrammaticalFunction", comment="The sentence constructs at the logical level, similarly to English' Adverbial Phrases and Indirect Objects (https://it.wikipedia.org/wiki/Analisi_logica_della_proposizione vs. https://en.wikipedia.org/wiki/Adverbial_phrase)")
     log_f_T = p.create_class("LogicalRewritingRule", "MetaGrammaticalFunction", comment="Defines how to capture the elements within the sentence structure and rewriting them in the most appropriate way as properties of the kernel/singleton they refer to")
     gr_obj_T = p.create_class("GrammaticalFunction", "MetaGrammaticalFunction")
     verb_T = p.create_class("Verb", "GrammaticalFunction")
