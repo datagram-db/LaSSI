@@ -12,9 +12,11 @@ import io
 import os.path
 import pickle
 import re
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
+from dataclasses import dataclass
 from functools import reduce, lru_cache
 from string import Template
+from typing import List, Optional
 
 import dacite
 import pandas
@@ -49,8 +51,18 @@ class Parmenides():
         self.pronouns = set(self.get_pronouns())
         self.prototypical_prepositions = set(self.get_prototypical_prepositions())
         self.transitive_verbs = set(self.get_transitive_verbs())
+        self.causative_verbs = set(self.get_causative_verbs())
+        self.movement_verbs = set(self.get_movement_verbs())
+        self.means_verbs = set(self.get_means_verbs())
+        self.state_verbs = set(self.get_state_verbs())
+        self.materialisation_verbs = set(self.get_materialisation_verbs())
+        self.units_of_measure = set(self.get_units_of_measure())
+        self.abstract_entities = set(self.get_abstract_entities())
         self.rejected_edges = set(self.get_rejected_edges())
         self.non_verbs = set(self.get_universal_dependencies())
+        self.logical_rewriting_rules = self.get_logical_rewriting_rules()
+        self.nouns_with_properties = set(self.get_nouns_with_properties())
+        self.nouns_with_a = set(self.get_nouns_with_a())
         self.prepositions = None
 
     def most_specific_type(self, types):
@@ -117,6 +129,12 @@ class Parmenides():
 
         return lca
 
+    def getNounsWithProperties(self):
+        return self.nouns_with_properties
+
+    def getNounsWithA(self):
+        return self.nouns_with_a
+
     def getSemiModalVerbs(self):
         return self.semi_modal_verbs
 
@@ -134,6 +152,30 @@ class Parmenides():
 
     def getNonVerbs(self):
         return self.non_verbs
+
+    def getLogicalRewritingRules(self):
+        return self.logical_rewriting_rules
+
+    def getCausativeVerbs(self):
+        return self.causative_verbs
+
+    def getMovementVerbs(self):
+        return self.movement_verbs
+
+    def getUnitsOfMeasure(self):
+        return self.units_of_measure
+
+    def getMeansVerbs(self):
+        return self.means_verbs
+
+    def getAbstractEntities(self):
+        return self.abstract_entities
+
+    def getStateVerbs(self):
+        return self.state_verbs
+
+    def getMaterialisationVerbs(self):
+        return self.materialisation_verbs
 
     def extractPureHierarchy(self, t, flip=False):
         ye = list(self.single_edge("^src", t, "^dst"))
@@ -260,6 +302,28 @@ class Parmenides():
              ?a rdfs:label ?c .
          }"""
         return self._single_unary_query(knows_query, lambda x: str(x.c))
+
+    @lru_cache(maxsize=128)
+    def get_nouns_with_properties(self):
+        knows_query = """
+         SELECT DISTINCT ?hasProperty ?label
+         WHERE {
+             ?a a parmenides:Noun.
+             ?a rdfs:label ?label .
+             ?a parmenides:hasProperty ?hasProperty .
+         }"""
+        return self._single_unary_query(knows_query, lambda x: x)
+
+    @lru_cache(maxsize=128)
+    def get_nouns_with_a(self):
+        knows_query = """
+         SELECT DISTINCT ?isA ?label
+         WHERE {
+             ?a a parmenides:Noun.
+             ?a rdfs:label ?label .
+             ?a parmenides:isA ?isA .
+         }"""
+        return self._single_unary_query(knows_query, lambda x: x)
 
     @lru_cache(maxsize=128)
     def get_universal_dependencies(self):
@@ -662,6 +726,7 @@ WHERE {
         else:
             return []
 
+    @lru_cache(maxsize=128)
     def get_rejected_edges(self):
         knows_query = """
          SELECT DISTINCT ?c
@@ -671,12 +736,233 @@ WHERE {
          }"""
         return self._single_unary_query(knows_query, lambda x: str(x.c))
 
+    @lru_cache(maxsize=128)
+    def get_causative_verbs(self):
+        knows_query = """
+         SELECT DISTINCT ?c
+         WHERE {
+             ?a a parmenides:CausativeVerb.
+             ?a rdfs:label ?c .
+         }"""
+        return self._single_unary_query(knows_query, lambda x: str(x.c))
+
+    @lru_cache(maxsize=128)
+    def get_movement_verbs(self):
+        knows_query = """
+         SELECT DISTINCT ?c
+         WHERE {
+             ?a a parmenides:MovementVerb.
+             ?a rdfs:label ?c .
+         }"""
+        return self._single_unary_query(knows_query, lambda x: str(x.c))
+
+    @lru_cache(maxsize=128)
+    def get_units_of_measure(self):
+        knows_query = """
+         SELECT DISTINCT ?c
+         WHERE {
+             ?a a parmenides:UnitOfMeasure.
+             ?a rdfs:label ?c .
+         }"""
+        return self._single_unary_query(knows_query, lambda x: str(x.c))
+
+    @lru_cache(maxsize=128)
+    def get_means_verbs(self):
+        knows_query = """
+         SELECT DISTINCT ?c
+         WHERE {
+             ?a a parmenides:MeansVerb.
+             ?a rdfs:label ?c .
+         }"""
+        return self._single_unary_query(knows_query, lambda x: str(x.c))
+
+    @lru_cache(maxsize=128)
+    def get_abstract_entities(self):
+        knows_query = """
+         SELECT DISTINCT ?c
+         WHERE {
+             ?a a parmenides:AbstractEntity.
+             ?a rdfs:label ?c .
+         }"""
+        return self._single_unary_query(knows_query, lambda x: str(x.c))
+
+    @lru_cache(maxsize=128)
+    def get_state_verbs(self):
+        knows_query = """
+         SELECT DISTINCT ?c
+         WHERE {
+             ?a a parmenides:StateVerb.
+             ?a rdfs:label ?c .
+         }"""
+        return self._single_unary_query(knows_query, lambda x: str(x.c))
+
+    @lru_cache(maxsize=128)
+    def get_materialisation_verbs(self):
+        knows_query = """
+         SELECT DISTINCT ?c
+         WHERE {
+             ?a a parmenides:MaterialisationVerb.
+             ?a rdfs:label ?c .
+         }"""
+        return self._single_unary_query(knows_query, lambda x: str(x.c))
+
+    @lru_cache(maxsize=128)
+    def get_logical_rewriting_rules(self):
+        knows_query = """
+         SELECT DISTINCT ?label ?rule_order ?preposition ?logicalConstructName ?logicalConstructProperty ?verb_of_motion ?SingletonHasBeenMatchedBy ?not ?abstract_entity ?hasNMod ?hasNModPartOf ?hasNModIsA ?isSymmetricalIfComparedToNMod ?hasNumber ?hasUnitOfMeasure ?verb_of_aims ?verb_of_state ?causative_verb ?isMaterializationVerb
+         WHERE {
+             ?a a parmenides:LogicalRewritingRule.
+             ?a rdfs:label ?label .
+             ?a parmenides:logicalConstructName ?logicalConstructName .
+             ?a parmenides:rule_order ?rule_order .
+             OPTIONAL { ?a parmenides:preposition ?preposition }
+             OPTIONAL { ?a parmenides:logicalConstructProperty ?logicalConstructProperty }
+             OPTIONAL { ?a parmenides:SingletonHasBeenMatchedBy ?SingletonHasBeenMatchedBy }
+             OPTIONAL { ?a parmenides:not ?not }
+             OPTIONAL { ?a parmenides:abstract_entity ?abstract_entity }
+             OPTIONAL { ?a parmenides:hasNMod ?hasNMod }
+             OPTIONAL { ?a parmenides:hasNModPartOf ?hasNModPartOf }
+             OPTIONAL { ?a parmenides:hasNModIsA ?hasNModIsA }
+             OPTIONAL { ?a parmenides:isSymmetricalIfComparedToNMod ?isSymmetricalIfComparedToNMod }
+             OPTIONAL { ?a parmenides:causative_verb ?causative_verb }
+             OPTIONAL { ?a parmenides:hasNumber ?hasNumber }
+             OPTIONAL { ?a parmenides:hasUnitOfMeasure ?hasUnitOfMeasure }
+             OPTIONAL { ?a parmenides:verb_of_motion ?verb_of_motion }
+             OPTIONAL { ?a parmenides:verb_of_aims ?verb_of_aims }
+             OPTIONAL { ?a parmenides:verb_of_state ?verb_of_state }
+             OPTIONAL { ?a parmenides:isMaterializationVerb ?isMaterializationVerb }
+         }"""
+        # return self._single_unary_query(knows_query, lambda x: x)
+
+        not_query = """
+         SELECT DISTINCT ?preposition ?verb_of_motion ?SingletonHasBeenMatchedBy ?abstract_entity ?hasNMod ?hasNModPartOf ?hasNModIsA ?isSymmetricalIfComparedToNMod ?hasNumber ?hasUnitOfMeasure ?verb_of_aims ?verb_of_state ?causative_verb ?isMaterializationVerb
+         WHERE {
+             OPTIONAL { ?a parmenides:preposition ?preposition }
+             OPTIONAL { ?a parmenides:SingletonHasBeenMatchedBy ?SingletonHasBeenMatchedBy }
+             OPTIONAL { ?a parmenides:abstract_entity ?abstract_entity }
+             OPTIONAL { ?a parmenides:hasNMod ?hasNMod }
+             OPTIONAL { ?a parmenides:hasNModPartOf ?hasNModPartOf }
+             OPTIONAL { ?a parmenides:hasNModIsA ?hasNModIsA }
+             OPTIONAL { ?a parmenides:isSymmetricalIfComparedToNMod ?isSymmetricalIfComparedToNMod }
+             OPTIONAL { ?a parmenides:causative_verb ?causative_verb }
+             OPTIONAL { ?a parmenides:hasNumber ?hasNumber }
+             OPTIONAL { ?a parmenides:hasUnitOfMeasure ?hasUnitOfMeasure }
+             OPTIONAL { ?a parmenides:verb_of_motion ?verb_of_motion }
+             OPTIONAL { ?a parmenides:verb_of_aims ?verb_of_aims }
+             OPTIONAL { ?a parmenides:verb_of_state ?verb_of_state }
+             OPTIONAL { ?a parmenides:isMaterializationVerb ?isMaterializationVerb }
+         }"""
+
+        str_premises = {"preposition", "verb_of_motion", "SingletonHasBeenMatchedBy", "abstract_entity", "hasNMod", "hasNModPartOf", "hasNModIsA", "isSymmetricalIfComparedToNMod", "hasNumber", "hasUnitOfMeasure", "verb_of_aims", "verb_of_state", "causative_verb", "isMaterializationVerb"}
+
+        rules = defaultdict()
+
+        query_rules = list(self._single_unary_query(knows_query, lambda x: x))
+        query_rules.sort(key=lambda rule: rule.rule_order)  # So list is ordered numerically by rule_order
+        grouped_rules = defaultdict(list)
+        for rule in query_rules:
+            grouped_rules[rule.rule_order].append(rule)
+
+        for gr_key, grouped_rule in grouped_rules.items():
+            premises = defaultdict(list)
+            not_premises = defaultdict(list)
+            logical_construct_name = None
+            logical_construct_property = None
+            for rule in grouped_rule:
+                logical_construct_name = rule.logicalConstructName.value if logical_construct_name is None else logical_construct_name
+                logical_construct_property = rule.logicalConstructProperty.value if logical_construct_property is None and rule.logicalConstructProperty is not None else logical_construct_property
+                for str_premise in str_premises:
+                    if hasattr(rule, str_premise) and getattr(rule, str_premise) is not None:
+                        premises[str_premise].append(getattr(rule, str_premise).value)
+                if hasattr(rule, "not") and getattr(rule, "not") is not None:
+                    not_query_premises = self.g.query(not_query, initBindings={'a': getattr(rule, "not")})
+                    for not_query_premise in not_query_premises:
+                        for str_premise in str_premises:
+                            if hasattr(not_query_premise, str_premise) and getattr(not_query_premise, str_premise) is not None:
+                                not_premises[str_premise].append(getattr(not_query_premise, str_premise).value)
+
+            con_premises = list()
+            for p_key, premise in premises.items():
+                con_premises.append(Condition(
+                    name=p_key,
+                    values=list(set(premise))
+                ))
+
+            neg_con_premises = list()
+            for np_key, not_premise in not_premises.items():
+                neg_con_premises.append(Condition(
+                    name=np_key,
+                    values=list(set(not_premise))
+                ))
+
+            rules[gr_key.value] = Rule(
+                id=gr_key.value,
+                premises=con_premises,
+                not_premises=neg_con_premises,
+                logicalConstructName=logical_construct_name,
+                logicalConstructProperty=logical_construct_property
+            )
+
+        return rules
+
+    @lru_cache(maxsize=128)
+    def get_logical_functions(self, logical_construct_name, logical_construct_property):
+        knows_query = """
+         SELECT DISTINCT ?label ?attachTo ?argument
+         WHERE {
+             ?a a parmenides:LogicalFunction.
+             ?a rdfs:label ?label .
+             ?a parmenides:logicalConstructName ?logicalConstructName .
+             OPTIONAL { ?a parmenides:logicalConstructProperty ?logicalConstructProperty }
+             ?a parmenides:attachTo ?attachTo .
+             ?a parmenides:argument ?argument .
+         }"""
+
+        logical_functions = list()
+        query_functions = self.g.query(knows_query, initBindings={'logicalConstructName': Literal(logical_construct_name, datatype=XSD.string), 'logicalConstructProperty': Literal(logical_construct_property, datatype=XSD.string)})
+
+        for function in query_functions:
+            logical_functions.append(LogicalRewritingRule(
+                label=function.label.value,
+                attachTo=function.attachTo.value,
+                logicalConstructName=logical_construct_name,
+                logicalConstructProperty=logical_construct_property
+            ))
+
+        return logical_functions
+
+@dataclass()
+class LogicalRewritingRule:
+    label: str
+    attachTo: str
+    logicalConstructName: str
+    logicalConstructProperty: Optional[str]
+
+@dataclass()
+class Condition:
+    name: str
+    values: list
+
+@dataclass()
+class Rule:
+    id: int
+    premises: List[Condition]
+    not_premises: List[Condition]
+    logicalConstructName: str
+    logicalConstructProperty: Optional[str]
+
 
 if __name__ == "__main__":
-    g = Parmenides(filename="/home/giacomo/projects/LaSSI/LaSSI/Parmenides/turtle.ttl")
-    print({str(x)[len(Parmenides.parmenides_ns):] for x in g.typeOf("fabulous")})
-    L = list(g.collect_prepositions())
-    print(L)
+    g = Parmenides(filename="/home/fox/PycharmProjects/LaSSI-python/LaSSI/resources/turtle.ttl")
+
+    # test_arr = sorted([x for x in g.logical_rewriting_rules if str(x.preposition) in {"at"}], key=lambda x: int(x.rule_order))
+    # print(test_arr)
+
+    print([x for x in g.getNounsWithProperties() if "street" == str(x.label) and "corner" in str(x.hasProperty)])
+
+    # print({str(x)[len(Parmenides.parmenides_ns):] for x in g.typeOf("fabulous")})
+    # L = list(g.collect_prepositions())
+    # print(L)
     # l = g.dumpTypedObjectsToTAB("tabby.tab")
     # count = 1
     # for k, v in l.items():

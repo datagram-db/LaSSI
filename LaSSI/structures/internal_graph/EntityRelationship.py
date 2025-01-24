@@ -68,6 +68,18 @@ class SetOfSingletons(NodeEntryPoint):  # Graph node representing conjunction/di
             for x in self.entities:
                 yield from x.extract_properties(p)
 
+    @staticmethod
+    def update_entities(node, new_entities):
+        return SetOfSingletons(
+            id=node.id,
+            type=node.type,
+            entities=tuple(new_entities),
+            min=node.min,
+            max=node.max,
+            confidence=node.confidence,
+            root=node.root
+        )
+
 
 def deserialize_NodeEntryPoint(data: dict) -> NodeEntryPoint:
     if data is None:
@@ -168,16 +180,54 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
 
     @staticmethod
     def update_node_props(node, node_props):
+        from LaSSI.ner.node_functions import create_props_for_singleton
         return Singleton(
             id=node.id,
             named_entity=node.named_entity,
-            properties=frozenset(node_props.items()),
             min=node.min,
             max=node.max,
             type=node.type,
             confidence=node.confidence,
             kernel=node.kernel,
+            properties=create_props_for_singleton(node_props),
         )
+
+    @staticmethod
+    def update_name(node, new_name):
+        return Singleton(
+            id=node.id,
+            named_entity=new_name,
+            min=node.min,
+            max=node.max,
+            type=node.type,
+            confidence=node.confidence,
+            kernel=node.kernel,
+            properties=node.properties,
+        )
+
+    @staticmethod
+    def update_kernel(node, new_node, kernel_part):
+        return Singleton(
+            id=node.id,
+            named_entity='',
+            type='SENTENCE',
+            min=node.min,
+            max=node.max,
+            confidence=1,
+            kernel=Relationship(
+                source=new_node if kernel_part == "source" else node.kernel.source,
+                target=new_node if kernel_part == "target" else node.kernel.target,
+                edgeLabel=new_node if kernel_part == "edgeLabel" else node.kernel.edgeLabel,
+                isNegated=node.kernel.isNegated,
+            ),
+            properties=node.properties,
+        )
+
+    @staticmethod
+    def remove_prop(node, prop_name):
+        node_props = dict(node.properties)
+        node_props.pop(prop_name)
+        return Singleton.update_node_props(node, node_props)
 
     @staticmethod
     def add_root_property(node):

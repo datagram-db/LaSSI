@@ -144,17 +144,17 @@ class ParmenidesBuild():
             label = name
         if name not in self.names:
             self.names[name] = onta(ParmenidesBuild.parmenides_ns, name)
-            if (clazzL is not None):
-                if isinstance(clazzL, list):
-                    for clazz in clazzL:
-                        assert clazz in self.classes
-                        clazz = self.classes[clazz]
-                        self.g.add((self.names[name], RDF.type, clazz))
-                elif isinstance(clazzL, str):
-                    clazz = self.classes[clazzL]
+        if (clazzL is not None):
+            if isinstance(clazzL, list):
+                for clazz in clazzL:
+                    assert clazz in self.classes
+                    clazz = self.classes[clazz]
                     self.g.add((self.names[name], RDF.type, clazz))
-                self.g.add((self.names[name], RDFS.label, literal(label)))
-            self.extract_properties(self.names[name], kwargs)
+            elif isinstance(clazzL, str):
+                clazz = self.classes[clazzL]
+                self.g.add((self.names[name], RDF.type, clazz))
+            self.g.add((self.names[name], RDFS.label, literal(label)))
+        self.extract_properties(self.names[name], kwargs)
         if comment is not None:
             self.g.add((self.names[name], RDFS.comment, Literal(comment)))
         return self.names[name]
@@ -184,13 +184,16 @@ class ParmenidesBuild():
                         self.g.add((obj_src, self.relationships[k], result))
                 elif isinstance(val, bool):
                     result = boolean(val)
+                    self.g.add((obj_src, self.relationships[k], result))
                 elif isinstance(val, str):
                     result = literal(val)
+                    self.g.add((obj_src, self.relationships[k], result))
                 elif isinstance(val, int):
                     result = integer(val)
+                    self.g.add((obj_src, self.relationships[k], result))
                 elif isinstance(val, float):
                     result = double(val)
-                self.g.add((obj_src, self.relationships[k], result))
+                    self.g.add((obj_src, self.relationships[k], result))
 
     def create_class(self, name, subclazzOf=None, comment=None):
         if name not in self.classes:
@@ -225,6 +228,8 @@ def make_ontology_from_raw():
     log_f_T = p.create_class("LogicalFunction", "MetaGrammaticalFunction", comment="The sentence constructs at the logical level, similarly to English' Adverbial Phrases and Indirect Objects (https://it.wikipedia.org/wiki/Analisi_logica_della_proposizione vs. https://en.wikipedia.org/wiki/Adverbial_phrase)")
     log_f_T = p.create_class("LogicalRewritingRule", "MetaGrammaticalFunction", comment="Defines how to capture the elements within the sentence structure and rewriting them in the most appropriate way as properties of the kernel/singleton they refer to")
     gr_obj_T = p.create_class("GrammaticalFunction", "MetaGrammaticalFunction")
+    verb_T = p.create_class("Measure", "GrammaticalFunction")  # TODO: Is this a grammatical function
+    verb_T = p.create_class("Concept", "GrammaticalFunction")  # TODO: Is this a grammatical function
     verb_T = p.create_class("Verb", "GrammaticalFunction")
     verb_T = p.create_class("Preposition", "GrammaticalFunction")
     noun_T = p.create_class("Noun", "GrammaticalFunction")
@@ -233,6 +238,11 @@ def make_ontology_from_raw():
     adj_T = p.create_class("CompoundForm", "GrammaticalFunction")
     tverb_T = p.create_class("TransitiveVerb", "Verb")
     iverb_T = p.create_class("IntransitiveVerb", "Verb")
+    causverb_T = p.create_class("CausativeVerb", "Verb")
+    moveverb_T = p.create_class("MovementVerb", "Verb")
+    meansverb_T = p.create_class("MeansVerb", "Verb")
+    stateverb_T = p.create_class("StateVerb", "Verb")
+    matverb_T = p.create_class("MaterialisationVerb", "Verb")
     semimodalverb_T = p.create_class("SemiModalVerb", "Verb")
     proto_Prop = p.create_class("PrototypicalPreposition", "Preposition")
     dep_Prop = p.create_class("DependantPreposition", "Preposition")
@@ -244,6 +254,8 @@ def make_ontology_from_raw():
     pronoun_rel = p.create_class("RelativePronoun", "Pronoun")
     pronoun_indef = p.create_class("IndefinitePronoun", "Pronoun")
     pronoun_interro = p.create_class("InterrogativePronoun", "Pronoun")
+    unit_of_measure = p.create_class("UnitOfMeasure", "Measure")
+    abstract_concept = p.create_class("AbstractEntity", "Concept")
     to_reject = set()
     with open("../../raw_data/rejected_edge_types.txt", "r") as dep:
         for line in dep:
@@ -256,12 +268,70 @@ def make_ontology_from_raw():
             if line in to_reject:
                 classes.append("Rejectable")
             p.create_entity(line, classes)
-    with open("../../raw_data/transitive_verbs.txt", "r") as dep:
+    with open("../../raw_data/verbs/causative_verbs.txt", "r") as dep:
+        # , \
+        #     open("../../raw_data/transitive_verbs.txt", "r") as transitive_verbs_file, \
+        #         open("../../raw_data/materialisation_verbs.txt", "r") as materialisation_verbs_file):
+        # transitive_verbs = set(line.strip() for line in transitive_verbs_file)
+        # materialisation_verbs = set(line.strip() for line in materialisation_verbs_file)
+        for line in dep:
+            line = line.strip()
+            classes = ["CausativeVerb"]
+            if line in to_reject:
+                classes.append("Rejectable")  # TODO: Check
+            # if line in transitive_verbs:
+            #     classes.append("TransitiveVerb")
+            # if line in materialisation_verbs:
+            #     classes.append("MaterialisationVerb")
+            p.create_entity(line, classes)
+    with open("../../raw_data/verbs/transitive_verbs.txt", "r") as dep:
         for line in dep:
             line = line.strip()
             classes = ["TransitiveVerb"]
             if line in to_reject:
                 classes.append("Rejectable")
+            p.create_entity(line, classes)
+    with open("../../raw_data/units_of_measure.txt", "r") as dep:
+        for line in dep:
+            line = line.strip()
+            classes = ["UnitOfMeasure"]
+            if line in to_reject:
+                classes.append("Rejectable")  # TODO: Check
+            p.create_entity(line, classes)
+    with open("../../raw_data/abstract_entity_concepts.txt", "r") as dep:
+        for line in dep:
+            line = line.strip()
+            classes = ["AbstractEntity"]
+            if line in to_reject:
+                classes.append("Rejectable")  # TODO: Check
+            p.create_entity(line, classes)
+    with open("../../raw_data/verbs/stative_verbs.txt", "r") as dep:
+        for line in dep:
+            line = line.strip()
+            classes = ["CausativeVerb"]  # TODO: Should these be causative instead of "stative"?
+            if line in to_reject:
+                classes.append("Rejectable")  # TODO: Check
+            p.create_entity(line, classes)
+    with open("../../raw_data/verbs/state_verbs.txt", "r") as dep:
+        for line in dep:
+            line = line.strip()
+            classes = ["StateVerb"]
+            if line in to_reject:
+                classes.append("Rejectable")  # TODO: Check
+            p.create_entity(line, classes)
+    with open("../../raw_data/verbs/movement_verbs.txt", "r") as dep:
+        for line in dep:
+            line = line.strip()
+            classes = ["MovementVerb"]
+            if line in to_reject:
+                classes.append("Rejectable")  # TODO: Check
+            p.create_entity(line, classes)
+    with open("../../raw_data/verbs/materialisation_verbs.txt", "r") as dep:
+        for line in dep:
+            line = line.strip()
+            classes = ["MaterialisationVerb"]
+            if line in to_reject:
+                classes.append("Rejectable")  # TODO: Check
             p.create_entity(line, classes)
     for preposition in Prepositions.load_prepositions("../../raw_data/prepositions.json"):
         classes = preposition.generate_classes(preposition.name.lower() in to_reject)
@@ -326,7 +396,7 @@ def make_ontology_from_raw():
             if line in to_reject:
                 classes.append("Rejectable")
             p.create_entity(line, classes)
-    with open("../../raw_data/semi_modal_verbs.txt", "r") as dep:
+    with open("../../raw_data/verbs/semi_modal_verbs.txt", "r") as dep:
         for line in dep:
             line = line.strip()
             classes = ["Verb", "SemiModalVerb"]
@@ -407,7 +477,7 @@ def make_ontology_from_raw():
     p.create_concept("street#n", "Noun", entity_name="street")
     p.create_concept("corner#n", "Noun", entity_name="corner")
     p.create_relationship_instance("street#n", "hasProperty", "corner#n")
-    p.create_concept("cell_division#n", "Noun", entity_name="cell_division")
+    p.create_concept("cell_division#n", "Noun", entity_name="cell division")
     p.create_concept("phase#n", "Noun", entity_name="phase")
     p.create_relationship_instance("cell_division#n", "hasProperty", "phase#n")
     p.create_concept("object#n", "Noun", entity_name="object")

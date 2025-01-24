@@ -387,3 +387,11 @@ dispose
 frame
 graduate
 zero out
+learn
+expressing
+locate
+know
+reflect
+fail
+work
+resemble
