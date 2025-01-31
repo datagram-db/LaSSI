@@ -15,18 +15,18 @@ Alice is playing but not in Newcastle ⇒ play(Alice, NOT(Newcastle[(6:in)]))
 
 // Newcastle
 There is traffic in the Newcastle city centre ⇒ be(traffic, ?1)[(SPACE:Newcastle[(extra:city centre), (type:stay in place), (det:the)])]
-Newcastle city centre is trafficked ⇒ traffic(?2[(subjpass:subjpass)], None)[(GPE:Newcastle[(extra:city centre)])]
+In the Newcastle city centre there is traffic ⇒ be(traffic, ?5)[(SPACE:Newcastle[(extra:city centre), (type:stay in place), (det:the)])]
 There is traffic but not in the Newcastle city centre ⇒ be(traffic, ?4)[(SPACE:AND(NOT(Newcastle[(extra:city centre), (type:stay in place), (det:the)])))]
+Newcastle city centre is trafficked ⇒ traffic(?2[(subjpass:subjpass)], None)[(GPE:Newcastle[(extra:city centre)])]
 It is busy in Newcastle ⇒ be(It, busy)[(SPACE:Newcastle[(type:stay in place)])]
 Saturdays have usually busy city centers ⇒ have(Saturdays, city centers[(JJ:busy[(advmod:usually)])])
 In Newcastle city center on saturdays, traffic is flowing ⇒ flow(traffic, None)[(TIME:saturdays[(type:defined)]), (SPACE:Newcastle[(type:stay in place), (extra:city center)])]
 Traffic is flowing in Newcastle city centre, on Saturdays ⇒ flow(Traffic, None)[(TIME:Saturdays[(type:defined)]), (SPACE:Newcastle[(type:stay in place), (extra:city centre)])]
 On Saturdays, traffic is flowing in Newcastle city centre ⇒ flow(Traffic, None)[(TIME:Saturdays[(type:defined)]), (SPACE:Newcastle[(type:stay in place), (extra:city centre)])]
-In the Newcastle city centre there is traffic ⇒ be(traffic, ?5)[(SPACE:Newcastle[(extra:city centre), (type:stay in place), (det:the)])]
 Newcastle city centre has traffic ⇒ have(Newcastle[(extra:city centre)], traffic)
 Newcastle city center does not have traffic ⇒ NOT(have(Newcastle[(extra:city center)], traffic))
 Newcastle has traffic but not in the city centre ⇒ have(Newcastle, traffic)[(SPACE:AND(NOT(city centre[(type:stay in place), (det:the)])))]
-Newcastle city center does not have traffic but Newcastle has traffic ⇒ be(Newcastle, ?7)[(AND:Newcastle), (None:AND(NOT(have)))]
+Newcastle city center does not have traffic but Newcastle has traffic ⇒ be(Newcastle, ?7)[(AND:[Newcastle, NOT(have)])]
 The busy Newcastle city centre is closed for traffic ⇒ close(?9, Newcastle[(extra:city centre), (det:The), (amod:busy)])[(AIM_OBJECTIVE:traffic[(subjpass:subjpass), (8:for)])]
 
 
@@ -74,7 +74,7 @@ This is a fabulous Golden Gate Bridge picture ⇒ be(This[(det:det)], picture[(a
 // Part 1
 waste your time ⇒ waste(?1, time[(nmod_poss:your)])
 coming to false conclusions ⇒ come(?3, None)[(OFTERM:conclusions[(amod:false), (2:to)])]
-bolt from blue ⇒ be(bolt, ?5[(cop:blue[(2:from)])])
+bolt from blue ⇒ be(bolt, ?29[(PROVENANCE:blue[(2:from)])])
 things to be neat and orderly ⇒ be(things, AND(neat[(mark:to)], orderly))
 characters in movies ⇒ be(characters, ?6)[(SPACE:movies[(type:stay in place)])]
 you like quilts ⇒ like(you, quilts)
@@ -92,7 +92,7 @@ you become more wise ⇒ become(you[(cop:wise[(advmod:more)])], None)
 going across the street ⇒ go(?8, None)[(SPACE:street[(det:the), (type:motion through place)])]
 eat a healthy salad ⇒ eat(?10, salad[(amod:healthy), (det:a)])
 propulsion of aircraft ⇒ be(propulsion[(extra:aircraft[(2:of)])], ?12)
-emilia's short tailed opossum ⇒ be(opossum, ?15)[(nmod_poss(opossum, emilia[(2:'s)])), (SENTENCE:tail(?13[(cop:short)], None))]
+emilia's short tailed opossum ⇒ be(opossum[(extra:emilia[(2:'s)])], ?15)[(SENTENCE:tail(?13[(cop:short)], None))]
 If you move you ⇒ if move(you, you)
 eating potato crisps ⇒ eat(?16, potato crisps)
 reinforce it ⇒ reinforce(?18, it)
@@ -151,10 +151,10 @@ run alot ⇒ run(?33, alot)
 study closely ⇒ study(?35, closely)
 
 // Part 5
-use of many different muscles ⇒ use(?1, muscles[(amod:different), (2:of)])[(SPECIFICATION:use[(extra:muscles[(amod:different), (2:of)])])]
+use of many different muscles ⇒ use(?128, None)[(INSTRUMENT:muscles[(amod:different), (2:of)])]
 starting something new ⇒ start(?2, something[(amod:new)])
 the recipient opens the letter ⇒ open(recipient[(det:the)], letter[(det:the)])
-the corner of two streets ⇒ be(corner[(det:the)], ?4)[(SPECIFICATION:streets[(extra:corner[(det:the)])])]
+the corner of two streets ⇒ be(corner[(det:the)], ?4)[(SPECIFICATION:streets[(extra:corner[(det:the)]), (nummod:two)])]
 phase of cell division ⇒ be(phase, ?5)[(SPECIFICATION:cell division[(extra:phase)])]
 carrying foods ⇒ carry(?6, foods)
 mend a hole ⇒ mend(?8, hole[(det:a)])

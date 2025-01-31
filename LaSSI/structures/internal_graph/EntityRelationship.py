@@ -294,9 +294,7 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
             for key in dict(node_to_use.properties):
                 if key not in props_to_ignore:
                     properties_key_ = dict(node_to_use.properties)[key]
-                    if key == 'cop':
-                        properties_list[key].append(get_node_string(properties_key_))
-                    elif isinstance(properties_key_, str) and properties_key_ != '':
+                    if isinstance(properties_key_, str) and properties_key_ != '':
                         try:
                             key = str(int(float(key)))
                         except ValueError:

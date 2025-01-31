@@ -221,14 +221,14 @@
         "preposition": ["by"]
       },
       "classification": [{"type":  "space", "property":  "stay in place"}],
-      "__sentence_examples": [    "your family gathers by your bedside"]
+      "__sentence_examples": ["your family gathers by your bedside"]
     },
         {
       "premise": {
         "preposition": ["as"]
       },
       "classification": [{"type":  "comparison", "property":  "equivalence"}],
-      "__sentence_examples": [    "your family gathers by your bedside"]
+      "__sentence_examples": ["add as an ingredient to toothpaste"]
     },
         {
       "premise": {
@@ -247,7 +247,18 @@
     },
         {
       "premise": {
-        "preposition": ["'s"],
+        "preposition": ["of"],
+        "hasNMod": true,
+        "verb_of_means": true
+      },
+      "classification": [{"type":  "instrument"}],
+      "__sentence_examples": [
+    "use of many different muscles"
+      ]
+    },
+        {
+      "premise": {
+        "preposition": ["'s", "’s"],
         "hasNMod": true
       },
       "classification": [{"type":  "specification", "property":  "regular"}],

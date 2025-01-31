@@ -809,7 +809,7 @@ WHERE {
     @lru_cache(maxsize=128)
     def get_logical_rewriting_rules(self):
         knows_query = """
-         SELECT DISTINCT ?label ?rule_order ?preposition ?logicalConstructName ?logicalConstructProperty ?verb_of_motion ?SingletonHasBeenMatchedBy ?not ?abstract_entity ?hasNMod ?hasNModPartOf ?hasNModIsA ?isSymmetricalIfComparedToNMod ?hasNumber ?hasUnitOfMeasure ?verb_of_aims ?verb_of_state ?causative_verb ?isMaterializationVerb
+         SELECT DISTINCT ?label ?rule_order ?preposition ?logicalConstructName ?logicalConstructProperty ?verb_of_motion ?SingletonHasBeenMatchedBy ?not ?abstract_entity ?hasNMod ?hasNModPartOf ?hasNModIsA ?isSymmetricalIfComparedToNMod ?hasNumber ?hasUnitOfMeasure ?verb_of_aims ?verb_of_state ?verb_of_means ?causative_verb ?isMaterializationVerb
          WHERE {
              ?a a parmenides:LogicalRewritingRule.
              ?a rdfs:label ?label .
@@ -830,12 +830,13 @@ WHERE {
              OPTIONAL { ?a parmenides:verb_of_motion ?verb_of_motion }
              OPTIONAL { ?a parmenides:verb_of_aims ?verb_of_aims }
              OPTIONAL { ?a parmenides:verb_of_state ?verb_of_state }
+             OPTIONAL { ?a parmenides:verb_of_means ?verb_of_means }
              OPTIONAL { ?a parmenides:isMaterializationVerb ?isMaterializationVerb }
          }"""
         # return self._single_unary_query(knows_query, lambda x: x)
 
         not_query = """
-         SELECT DISTINCT ?preposition ?verb_of_motion ?SingletonHasBeenMatchedBy ?abstract_entity ?hasNMod ?hasNModPartOf ?hasNModIsA ?isSymmetricalIfComparedToNMod ?hasNumber ?hasUnitOfMeasure ?verb_of_aims ?verb_of_state ?causative_verb ?isMaterializationVerb
+         SELECT DISTINCT ?preposition ?verb_of_motion ?SingletonHasBeenMatchedBy ?abstract_entity ?hasNMod ?hasNModPartOf ?hasNModIsA ?isSymmetricalIfComparedToNMod ?hasNumber ?hasUnitOfMeasure ?verb_of_aims ?verb_of_state ?verb_of_means ?causative_verb ?isMaterializationVerb
          WHERE {
              OPTIONAL { ?a parmenides:preposition ?preposition }
              OPTIONAL { ?a parmenides:SingletonHasBeenMatchedBy ?SingletonHasBeenMatchedBy }
@@ -850,10 +851,11 @@ WHERE {
              OPTIONAL { ?a parmenides:verb_of_motion ?verb_of_motion }
              OPTIONAL { ?a parmenides:verb_of_aims ?verb_of_aims }
              OPTIONAL { ?a parmenides:verb_of_state ?verb_of_state }
+             OPTIONAL { ?a parmenides:verb_of_means ?verb_of_means }
              OPTIONAL { ?a parmenides:isMaterializationVerb ?isMaterializationVerb }
          }"""
 
-        str_premises = {"preposition", "verb_of_motion", "SingletonHasBeenMatchedBy", "abstract_entity", "hasNMod", "hasNModPartOf", "hasNModIsA", "isSymmetricalIfComparedToNMod", "hasNumber", "hasUnitOfMeasure", "verb_of_aims", "verb_of_state", "causative_verb", "isMaterializationVerb"}
+        str_premises = {"preposition", "verb_of_motion", "SingletonHasBeenMatchedBy", "abstract_entity", "hasNMod", "hasNModPartOf", "hasNModIsA", "isSymmetricalIfComparedToNMod", "hasNumber", "hasUnitOfMeasure", "verb_of_aims", "verb_of_state", "verb_of_means", "causative_verb", "isMaterializationVerb"}
 
         rules = defaultdict()
 

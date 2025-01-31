@@ -312,6 +312,13 @@ def make_ontology_from_raw():
             if line in to_reject:
                 classes.append("Rejectable")  # TODO: Check
             p.create_entity(line, classes)
+    with open("../../raw_data/verbs/means_verbs.txt", "r") as dep:
+        for line in dep:
+            line = line.strip()
+            classes = ["MeansVerb"]
+            if line in to_reject:
+                classes.append("Rejectable")  # TODO: Check
+            p.create_entity(line, classes)
     with open("../../raw_data/verbs/state_verbs.txt", "r") as dep:
         for line in dep:
             line = line.strip()

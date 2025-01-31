@@ -251,7 +251,6 @@ class LaSSI():
         from LaSSI.files.FileDumpUtilities import target_file_dump
         n = len(sentences)
         self.logger("generating meuDB")
-        start_time = time.time()
         meu_db, meu_execution_time = target_file_dump(
             self.meuDB,
             lambda x: [MeuDB.from_dict(k) for k in json.load(x)],

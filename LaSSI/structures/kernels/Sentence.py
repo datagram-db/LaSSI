@@ -58,16 +58,8 @@ def create_existential(edges, nodes):
                 node_props = dict(node.properties)
                 new_target = None
                 if 'extra' in node_props:
-                    # TODO: If node has an extra, make as target
-                    new_target = Singleton(
-                        id=-1,
-                        named_entity=node_props['extra'],
-                        properties=frozenset(dict().items()),
-                        min=-1,
-                        max=-1,
-                        type="None",
-                        confidence=-1
-                    )
+                    # If node has an extra, make as target
+                    new_target = node_props['extra'][0]
                     node_props.pop('extra')
                     node = Singleton.update_node_props(node, node_props)
 
@@ -101,7 +93,7 @@ def create_cop(node, kernel, target_or_source):
         # TODO: Ollie: Is it correct to say if target is None add to source otherwise add to target?
         if kernel.target is None:
             temp_prop = dict(copy(kernel.source.properties))
-            temp_prop['cop'] = node
+            temp_prop['cop'] = [node]
 
             new_source = Singleton(
                 id=kernel.source.id,
@@ -123,7 +115,7 @@ def create_cop(node, kernel, target_or_source):
             #     temp_prop = dict(copy(node.entities[0].properties))
             # else:
             temp_prop = dict(copy(kernel.target.properties))
-            temp_prop['cop'] = node
+            temp_prop['cop'] = [node]
 
             if isinstance(kernel.target, Singleton):
                 new_target = Singleton(
@@ -152,7 +144,7 @@ def create_cop(node, kernel, target_or_source):
             )
     else:
         temp_prop = dict(copy(kernel.source.properties))
-        temp_prop['cop'] = node
+        temp_prop['cop'] = [node]
 
         # Only add the copula if it differs from the target name
         kernel_target = kernel.target
@@ -190,7 +182,18 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
     # With graph created, make the 'Sentence' object
     kernel = None
     kernel = assign_kernel(edges, kernel, negations, nodes, root_sentence_id, found_proposition_labels)
+
+    # new_kernel_entities = []
+    # if not isinstance(assigned_kernel, SetOfSingletons):
+    #     kernel_entities = [assigned_kernel]
+    # else:
+    #     kernel_entities = assigned_kernel.entities
+
     kernel_nodes = set()
+    # for kernel in kernel_entities:
+    #     if isinstance(kernel, Singleton):
+    #         kernel = kernel.kernel
+
     properties = defaultdict(list)
 
     if kernel is not None:
@@ -200,6 +203,8 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
         if kernel.target is not None:
             kernel, kernel_nodes = analyse_kernel_node(kernel, kernel_nodes, "target")
 
+    # Only add properties after the first kernel
+    # if (isinstance(kernel_entities[0], Singleton) and kernel != kernel_entities[0].kernel) or not isinstance(kernel_entities[0], Singleton):
     for edge in edges:
         # Source
         kernel, properties, kernel_nodes = add_to_properties(kernel, edge.source, 'source', kernel_nodes, properties,
@@ -294,13 +299,17 @@ def create_sentence_obj(edges, nodes, negations, root_sentence_id, found_proposi
             ),
             properties=create_props_for_singleton(properties_to_keep),
         )
-        if edge_to_loop[0]:
-            edge_to_loop.append(final_kernel)
-        return final_kernel, edge_to_loop, acl_relcl_map
-    else:
-        if edge_to_loop[0]:
-            edge_to_loop.append(final_kernel)
-        return final_kernel, edge_to_loop, acl_relcl_map
+    if edge_to_loop[0]:
+        edge_to_loop.append(final_kernel)
+
+    # new_kernel_entities.append(final_kernel)
+
+    # if isinstance(assigned_kernel, SetOfSingletons):
+    #     return SetOfSingletons.update_entities(assigned_kernel, new_kernel_entities), edge_to_loop, acl_relcl_map
+    # else:
+    # return new_kernel_entities[0], edge_to_loop, acl_relcl_map
+
+    return final_kernel, edge_to_loop, acl_relcl_map
 
 
 def remove_acl_relcl_relationship(node):
@@ -630,6 +639,48 @@ def assign_kernel(edges, kernel, negations, nodes, root_sentence_id, found_propo
                     chosen_new_entities.append(node)
             nodes[kernel.target.id] = SetOfSingletons.update_entities(kernel.target, chosen_new_entities)
 
+            # new_kernels = [
+            #     Singleton(
+            #         id=root_sentence_id,
+            #         named_entity="",
+            #         type="SENTENCE",
+            #         min=min([kernel.source, chosen_target], key=lambda x: x.min).min,
+            #         max=max([kernel.source, chosen_target], key=lambda x: x.min).min,
+            #         confidence=1,
+            #         kernel=Relationship(
+            #             source=kernel.source,
+            #             target=chosen_target,
+            #             edgeLabel=kernel.edgeLabel,
+            #             isNegated=kernel.isNegated
+            #         ),
+            #         properties=frozenset(),
+            #     ),
+            #     Singleton(
+            #         id=-1, # TODO
+            #         named_entity="",
+            #         type="SENTENCE",
+            #         min=kernel.source.min,
+            #         max=kernel.source.max,
+            #         confidence=1,
+            #         kernel=Relationship(
+            #             source=kernel.source,
+            #             target=create_existential_node(),
+            #             edgeLabel=kernel.edgeLabel,
+            #             isNegated=kernel.isNegated
+            #         ),
+            #         properties=frozenset(),
+            #     )
+            # ]
+            #
+            # return SetOfSingletons(
+            #     id=-1,
+            #     type=kernel.target.type,
+            #     entities=tuple(new_kernels),
+            #     min=min(new_kernels, key=lambda x: x.min).min,
+            #     max=max(new_kernels, key=lambda x: x.max).max,
+            #     confidence=1
+            # )
+
         kernel = Relationship(
             source=kernel.source,
             target=chosen_target if isinstance(kernel.target, SetOfSingletons) else None,
@@ -807,7 +858,7 @@ def rewrite_action_ed_node(node, action_ed_node, negations):
                 kernel=None,
                 properties=frozenset(),  # TODO: Keep properties
             ),
-            isNegated=lemma_node_edge_label_name != refactored_lemma_node_edge_label_name,
+            isNegated=node.kernel.isNegated if node.kernel is not None else lemma_node_edge_label_name != refactored_lemma_node_edge_label_name,
         ),
         # properties=node.properties if node.id != action_ed_node.id else frozenset(),
         properties=node.properties,

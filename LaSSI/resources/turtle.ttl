@@ -78,9 +78,6 @@ parmenides:I a parmenides:PersonalPronoun,
 parmenides:IntransitiveVerb a owl:Class ;
     rdfs:subClassOf parmenides:Verb .
 
-parmenides:MeansVerb a owl:Class ;
-    rdfs:subClassOf parmenides:Verb .
-
 parmenides:SingletonHasBeenMatchedBy a owl:ObjectProperty .
 
 parmenides:a a parmenides:PrototypicalPreposition ;
@@ -1651,9 +1648,6 @@ parmenides:feel a parmenides:CausativeVerb,
         parmenides:TransitiveVerb ;
     rdfs:label "feel"^^xsd:string .
 
-parmenides:fence a parmenides:AbstractEntity ;
-    rdfs:label "fence"^^xsd:string .
-
 parmenides:fencing a parmenides:AbstractEntity ;
     rdfs:label "fencing"^^xsd:string .
 
@@ -3156,68 +3150,70 @@ parmenides:logrule%2F20 a parmenides:LogicalRewritingRule ;
 parmenides:logrule%2F21 a parmenides:LogicalRewritingRule ;
     rdfs:label "logrule/21"^^xsd:string ;
     parmenides:hasNMod true ;
-    parmenides:logicalConstructName "specification"^^xsd:string ;
-    parmenides:logicalConstructProperty "regular"^^xsd:string ;
-    parmenides:preposition "'s"^^xsd:string ;
-    parmenides:rule_order 21 .
+    parmenides:logicalConstructName "instrument"^^xsd:string ;
+    parmenides:preposition "of"^^xsd:string ;
+    parmenides:rule_order 21 ;
+    parmenides:verb_of_means true .
 
 parmenides:logrule%2F22 a parmenides:LogicalRewritingRule ;
     rdfs:label "logrule/22"^^xsd:string ;
+    parmenides:hasNMod true ;
+    parmenides:logicalConstructName "specification"^^xsd:string ;
+    parmenides:logicalConstructProperty "regular"^^xsd:string ;
+    parmenides:preposition "'s"^^xsd:string,
+        "’s"^^xsd:string ;
+    parmenides:rule_order 22 .
+
+parmenides:logrule%2F23 a parmenides:LogicalRewritingRule ;
+    rdfs:label "logrule/23"^^xsd:string ;
     parmenides:hasNMod true ;
     parmenides:hasNModIsA true ;
     parmenides:isSymmetricalIfComparedToNMod true ;
     parmenides:logicalConstructName "specification"^^xsd:string ;
     parmenides:logicalConstructProperty "inverse"^^xsd:string ;
     parmenides:preposition "of"^^xsd:string ;
-    parmenides:rule_order 22 .
-
-parmenides:logrule%2F23 a parmenides:LogicalRewritingRule ;
-    rdfs:label "logrule/23"^^xsd:string ;
-    parmenides:hasNMod true ;
-    parmenides:logicalConstructName "specification"^^xsd:string ;
-    parmenides:logicalConstructProperty "regular"^^xsd:string ;
-    parmenides:preposition "of"^^xsd:string ;
     parmenides:rule_order 23 .
 
 parmenides:logrule%2F24 a parmenides:LogicalRewritingRule ;
     rdfs:label "logrule/24"^^xsd:string ;
-    parmenides:hasNMod false ;
-    parmenides:logicalConstructName "topic"^^xsd:string ;
+    parmenides:hasNMod true ;
+    parmenides:logicalConstructName "specification"^^xsd:string ;
+    parmenides:logicalConstructProperty "regular"^^xsd:string ;
     parmenides:preposition "of"^^xsd:string ;
     parmenides:rule_order 24 .
 
 parmenides:logrule%2F25 a parmenides:LogicalRewritingRule ;
     rdfs:label "logrule/25"^^xsd:string ;
-    parmenides:isMaterializationVerb true ;
-    parmenides:logicalConstructName "material"^^xsd:string ;
-    parmenides:logicalConstructProperty "consequence"^^xsd:string ;
-    parmenides:preposition "into"^^xsd:string ;
+    parmenides:hasNMod false ;
+    parmenides:logicalConstructName "topic"^^xsd:string ;
+    parmenides:preposition "of"^^xsd:string ;
     parmenides:rule_order 25 .
 
 parmenides:logrule%2F26 a parmenides:LogicalRewritingRule ;
     rdfs:label "logrule/26"^^xsd:string ;
-    parmenides:hasNumber true ;
-    parmenides:hasUnitOfMeasure true ;
-    parmenides:logicalConstructName "measure"^^xsd:string ;
+    parmenides:isMaterializationVerb true ;
+    parmenides:logicalConstructName "material"^^xsd:string ;
+    parmenides:logicalConstructProperty "consequence"^^xsd:string ;
+    parmenides:preposition "into"^^xsd:string ;
     parmenides:rule_order 26 .
 
 parmenides:logrule%2F27 a parmenides:LogicalRewritingRule ;
     rdfs:label "logrule/27"^^xsd:string ;
     parmenides:hasNumber true ;
-    parmenides:logicalConstructName "quantity"^^xsd:string ;
+    parmenides:hasUnitOfMeasure true ;
+    parmenides:logicalConstructName "measure"^^xsd:string ;
     parmenides:rule_order 27 .
 
 parmenides:logrule%2F28 a parmenides:LogicalRewritingRule ;
     rdfs:label "logrule/28"^^xsd:string ;
-    parmenides:logicalConstructName "togetherness"^^xsd:string ;
-    parmenides:preposition "with"^^xsd:string ;
+    parmenides:hasNumber true ;
+    parmenides:logicalConstructName "quantity"^^xsd:string ;
     parmenides:rule_order 28 .
 
 parmenides:logrule%2F29 a parmenides:LogicalRewritingRule ;
     rdfs:label "logrule/29"^^xsd:string ;
-    parmenides:causative_verb true ;
-    parmenides:logicalConstructName "aim_objective"^^xsd:string ;
-    parmenides:preposition "for"^^xsd:string ;
+    parmenides:logicalConstructName "togetherness"^^xsd:string ;
+    parmenides:preposition "with"^^xsd:string ;
     parmenides:rule_order 29 .
 
 parmenides:logrule%2F3 a parmenides:LogicalRewritingRule ;
@@ -3230,27 +3226,34 @@ parmenides:logrule%2F3 a parmenides:LogicalRewritingRule ;
 
 parmenides:logrule%2F30 a parmenides:LogicalRewritingRule ;
     rdfs:label "logrule/30"^^xsd:string ;
+    parmenides:causative_verb true ;
     parmenides:logicalConstructName "aim_objective"^^xsd:string ;
     parmenides:preposition "for"^^xsd:string ;
     parmenides:rule_order 30 .
 
 parmenides:logrule%2F31 a parmenides:LogicalRewritingRule ;
     rdfs:label "logrule/31"^^xsd:string ;
-    parmenides:logicalConstructName "topic"^^xsd:string ;
-    parmenides:preposition "on"^^xsd:string ;
-    parmenides:rule_order 31 ;
-    parmenides:verb_of_motion false ;
-    parmenides:verb_of_state false .
+    parmenides:logicalConstructName "aim_objective"^^xsd:string ;
+    parmenides:preposition "for"^^xsd:string ;
+    parmenides:rule_order 31 .
 
 parmenides:logrule%2F32 a parmenides:LogicalRewritingRule ;
     rdfs:label "logrule/32"^^xsd:string ;
+    parmenides:logicalConstructName "topic"^^xsd:string ;
+    parmenides:preposition "on"^^xsd:string ;
+    parmenides:rule_order 32 ;
+    parmenides:verb_of_motion false ;
+    parmenides:verb_of_state false .
+
+parmenides:logrule%2F33 a parmenides:LogicalRewritingRule ;
+    rdfs:label "logrule/33"^^xsd:string ;
     parmenides:logicalConstructName "time"^^xsd:string ;
     parmenides:logicalConstructProperty "continuous"^^xsd:string ;
     parmenides:preposition "after"^^xsd:string,
         "before"^^xsd:string,
         "during"^^xsd:string,
         "while"^^xsd:string ;
-    parmenides:rule_order 32 .
+    parmenides:rule_order 33 .
 
 parmenides:logrule%2F4 a parmenides:LogicalRewritingRule ;
     rdfs:label "logrule/4"^^xsd:string ;
@@ -4223,6 +4226,9 @@ parmenides:propulsion a parmenides:AbstractEntity ;
 
 parmenides:protect a parmenides:TransitiveVerb ;
     rdfs:label "protect"^^xsd:string .
+
+parmenides:prove a parmenides:TransitiveVerb ;
+    rdfs:label "prove"^^xsd:string .
 
 parmenides:provide a parmenides:TransitiveVerb ;
     rdfs:label "provide"^^xsd:string .
@@ -5537,12 +5543,17 @@ parmenides:us a parmenides:PersonalPronoun,
         parmenides:Pronoun ;
     rdfs:label "us"^^xsd:string .
 
-parmenides:use a parmenides:TransitiveVerb ;
+parmenides:use a parmenides:MeansVerb,
+        parmenides:TransitiveVerb ;
     rdfs:label "use"^^xsd:string .
 
 parmenides:used a parmenides:SemiModalVerb,
         parmenides:Verb ;
     rdfs:label "used"^^xsd:string .
+
+parmenides:utilize a parmenides:MeansVerb,
+        parmenides:TransitiveVerb ;
+    rdfs:label "utilize"^^xsd:string .
 
 <https://logds.github.io/parmenides#v.> a parmenides:PrototypicalPreposition ;
     rdfs:label "v."^^xsd:string ;
@@ -5555,6 +5566,8 @@ parmenides:used a parmenides:SemiModalVerb,
 
 parmenides:vacate a parmenides:TransitiveVerb ;
     rdfs:label "vacate"^^xsd:string .
+
+parmenides:verb_of_means a owl:ObjectProperty .
 
 parmenides:verb_of_motion a owl:ObjectProperty .
 
@@ -6090,6 +6103,9 @@ parmenides:CompoundForm a owl:Class ;
 
 parmenides:Dimensions a owl:Class .
 
+parmenides:MeansVerb a owl:Class ;
+    rdfs:subClassOf parmenides:Verb .
+
 parmenides:corner%23n a parmenides:Noun ;
     rdfs:label "corner"^^xsd:string ;
     parmenides:entryPoint parmenides:corner%23n .
@@ -6289,12 +6305,12 @@ parmenides:Noun a owl:Class ;
 parmenides:StateVerb a owl:Class ;
     rdfs:subClassOf parmenides:Verb .
 
+parmenides:PersonalPronoun a owl:Class ;
+    rdfs:subClassOf parmenides:Pronoun .
+
 parmenides:LogicalRewritingRule a owl:Class ;
     rdfs:comment "Defines how to capture the elements within the sentence structure and rewriting them in the most appropriate way as properties of the kernel/singleton they refer to" ;
     rdfs:subClassOf parmenides:MetaGrammaticalFunction .
-
-parmenides:PersonalPronoun a owl:Class ;
-    rdfs:subClassOf parmenides:Pronoun .
 
 parmenides:LogicalFunction a owl:Class ;
     rdfs:comment "The sentence constructs at the logical level, similarly to English' Adverbial Phrases and Indirect Objects (https://it.wikipedia.org/wiki/Analisi_logica_della_proposizione vs. https://en.wikipedia.org/wiki/Adverbial_phrase)" ;

@@ -1,13 +1,13 @@
 from LaSSI.structures.kernels.Sentence import get_prepositions
 
 from LaSSI.external_services.Services import Services
-from LaSSI.ner.string_functions import lemmatize_verb
+from LaSSI.ner.string_functions import lemmatize_verb, is_label_verb
 
 parmenides = Services.getInstance().getParmenides()
 logical_rules = parmenides.getLogicalRewritingRules()
 
 def is_name_in_parmenides(name, parmenides_list, should_lemmatize=False):
-    return len({lemmatize_verb(name) if should_lemmatize else name}.intersection(parmenides_list)) > 0
+    return len(({lemmatize_verb(name), name} if should_lemmatize else {name}).intersection(parmenides_list)) > 0  # Check both lemmatized AND non-lemmatized (e.g. isAbstract could be tests -> test, fencing -> fencing (we do not want "fence" as an abstract, but we do want test)
 
 def is_nmod(kernel, node, initial_node, has_nmod, value):
     return has_nmod == value
@@ -17,14 +17,20 @@ def match_prepositions(kernel, node, initial_node, has_nmod, value):
     return value in prepositions
 
 def is_materialised(kernel, node, initial_node, has_nmod, value):
+    if kernel.kernel is None:
+        return False
     edge_label = kernel.kernel.edgeLabel.named_entity if kernel.kernel.edgeLabel is not None else "None"
     return is_name_in_parmenides(edge_label, parmenides.getMaterialisationVerbs(), True) == value
 
 def is_causative(kernel, node, initial_node, has_nmod, value):
+    if kernel.kernel is None:
+        return False
     edge_label = kernel.kernel.edgeLabel.named_entity if kernel.kernel.edgeLabel is not None else "None"
     return is_name_in_parmenides(edge_label, parmenides.getCausativeVerbs(), True) == value
 
 def has_movement(kernel, node, initial_node, has_nmod, value):
+    if kernel.kernel is None:
+        return False
     edge_label = kernel.kernel.edgeLabel.named_entity if kernel.kernel.edgeLabel is not None else "None"
     return is_name_in_parmenides(edge_label, parmenides.getMovementVerbs(), True) == value
 
@@ -32,7 +38,9 @@ def is_in_state(kernel, node, initial_node, has_nmod, value):
     return is_name_in_parmenides(node.named_entity, parmenides.getStateVerbs(), True) == value
 
 def has_means(kernel, node, initial_node, has_nmod, value):
-    return is_name_in_parmenides(node.named_entity, parmenides.getMeansVerbs(), True) == value
+    if has_nmod:
+        node = initial_node.kernel.source
+    return is_name_in_parmenides(node.named_entity, parmenides.getMeansVerbs(), False) == value
 
 def is_abstract_entity(kernel, node, initial_node, has_nmod, value):
     return is_name_in_parmenides(node.named_entity, parmenides.getAbstractEntities(), True) == value
@@ -46,6 +54,8 @@ def has_measurement(kernel, node, initial_node, has_nmod, value):
     return is_name_in_parmenides(possible_measurement, parmenides.getUnitsOfMeasure(), False) == value
 
 def has_nmod_part_of(kernel, node, initial_node, has_nmod, value):
+    if kernel.kernel is None:
+        return False
     return (kernel.kernel.source.id == (initial_node.kernel.source.id if initial_node.kernel is not None else node.id)) == value
 
 def is_symmetrical(kernel, node, initial_node, has_nmod, value):
@@ -68,6 +78,9 @@ def type_of_node(kernel, node, initial_node, has_nmod, value):
     # TODO: Is "DATE" always "SUTime", could we change the ontology to be matched "DATE"??
     return ("SUTime" if node.type == "DATE" else str(node.type) if node.type in {"GPE", "LOC"} else "None") == value
 
+def source_is_verb(kernel, node, initial_node, has_nmod, value):
+    return is_label_verb(node.named_entity) == value
+
 predicate_interpretation = {
     "isMaterializationVerb": is_materialised,
     "causative_verb": is_causative,
@@ -82,6 +95,8 @@ predicate_interpretation = {
     "hasNModIsA": is_a,
     "isSymmetricalIfComparedToNMod": is_symmetrical,
     "preposition": match_prepositions,
+    "sourceIsVerb": source_is_verb,
+    "verb_of_means": has_means
 }
 
 def get_matching_logical_rules(kernel, initial_node, has_nmod):

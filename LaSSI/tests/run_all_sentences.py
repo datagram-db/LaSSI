@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 import re
 
+from LaSSI.LaSSI import LaSSI
 from tqdm import tqdm
 
 
@@ -24,17 +25,20 @@ def get_and_run_all_sentences(folders):
         yaml_files.extend(glob.glob(os.path.join(folder_path, "*.yaml")))
 
     yaml_files.sort(key=sort_by_numeric_value)
+    os.chdir(os.path.dirname(os.path.abspath(main_script_path)))
 
     with tqdm(total=len(yaml_files), desc="Rewriting sentences") as pbar:
         for yaml_file in yaml_files:
             pbar.set_description(f"Rewriting sentences: {yaml_file.split('/')[-1]}")
             try:
-                os.chdir(root_dir)
                 with open(os.devnull, 'w') as devnull:
-                    subprocess.run([sys.executable, main_script_path, yaml_file], check=True, stdout=devnull,
-                                   stderr=devnull)
-            except subprocess.CalledProcessError as e:
-                print(f"\nError running LaSSI for: {yaml_file}")
+                    sys.stdout = devnull
+                    pipeline = LaSSI(yaml_file, "/home/fox/PycharmProjects/LaSSI-python/connection.yaml")
+                    pipeline.run()
+                    pipeline.close()
+                sys.stdout = sys.__stdout__
+            except Exception as e:
+                print(f"\nError running LaSSI for: {yaml_file}", e, file=sys.stderr)
             pbar.update(1)
 
 

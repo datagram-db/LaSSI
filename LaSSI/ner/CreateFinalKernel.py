@@ -209,8 +209,6 @@ class CreateFinalKernel:
         final_kernel = self.rewrite_properties_logically(final_kernel)
         final_kernel = self.check_for_adv(final_kernel)
 
-        # final_kernel = self.check_if_empty_kernel(final_kernel)
-
         print(f"{final_kernel.to_string()}\n")
         return final_kernel
 
@@ -234,7 +232,7 @@ class CreateFinalKernel:
                 properties_key_ = dict(kernel.properties)[key]
                 if isinstance(properties_key_, str):
                     properties_to_keep[key].append(properties_key_)
-                else:
+                elif properties_key_ is not None:
                     for node in properties_key_:
                         if key == 'SENTENCE':
                             properties_to_keep[key].append(self.check_for_adv(node))
@@ -246,54 +244,71 @@ class CreateFinalKernel:
         return kernel
 
     def rewrite_properties_logically(self, kernel):
-        # TODO: Possibly need to encompass properties of properties?
-        #  Are we also rewriting kernel target / source / edge Label?
+        # TODO: Need to check that properties of properties are encompassed
         properties_to_add = defaultdict(list)
         force_update = False
-        for key in dict(kernel.properties):
-            properties_key_ = dict(kernel.properties)[key]
-            if not isinstance(properties_key_, str):
-                if isinstance(properties_key_, Singleton):
-                    continue  # TODO
-                else:
-                    for prop_node in properties_key_:
-                        if isinstance(prop_node, Singleton):
-                            if prop_node.kernel is not None:
-                                if prop_node.kernel.edgeLabel.named_entity in {"nmod", "nmod_poss"}:
-                                    properties_to_add = self.rewrite_node_logically(
-                                        kernel, prop_node, properties_to_add, True)
-                                    kernel, properties_to_add, force_update = self.check_interjection_of_property(kernel, properties_to_add) # TODO: Do we want to do this?
-                                elif prop_node.type == "SENTENCE":
-                                    prop_node = self.rewrite_properties_logically(prop_node)
-                                    properties_to_add[key].append(prop_node)
+        if isinstance(kernel, Singleton):
+            for key in dict(kernel.properties):
+                properties_key_ = dict(kernel.properties)[key]
+                if key == 'extra':
+                    # As to not continually rewrite previously rewritten nodes
+                    properties_to_add[key] = properties_key_
+                    continue
+
+                if not isinstance(properties_key_, str):
+                    if isinstance(properties_key_, Singleton):
+                        properties_to_add = self.rewrite_node_logically(
+                            kernel, properties_key_, dict(kernel.properties), type_key=key)
+                    else:
+                        for prop_node in properties_key_:
+                            if isinstance(prop_node, Singleton):
+                                if prop_node.kernel is not None:
+                                    if prop_node.kernel.edgeLabel.named_entity in {"nmod", "nmod_poss"}:
+                                        properties_to_add = self.rewrite_node_logically(
+                                            kernel, prop_node, properties_to_add, True)
+                                        kernel, properties_to_add, force_update = self.check_interjection_of_property(kernel, properties_to_add) # TODO: Do we want to do this?
+                                    elif prop_node.type == "SENTENCE":
+                                        prop_node = self.rewrite_properties_logically(prop_node)
+                                        properties_to_add[key].append(prop_node)
+                                    # else:
+                                        # continue  # TODO
                                 else:
-                                    continue  # TODO
-                            else:
-                                properties_to_add = self.rewrite_node_logically(kernel, prop_node, properties_to_add, type_key=key)
-                        elif isinstance(prop_node, SetOfSingletons):
-                            # TODO: Is it - SPACE:AND:NOT(x[type:y])
-                            #  Or - AND:NOT(x[type:y])[SPACE:]
-                            rewritten_entities = []
-                            key_to_use = ""
-                            for entity in prop_node.entities:
-                                # TODO: Might need to be recursive?
-                                entity, key_to_use = self.rewrite_node_logically(kernel, entity, defaultdict(list), False, True)
-                                rewritten_entities.append(entity)
-                            prop_node = SetOfSingletons.update_entities(prop_node, rewritten_entities)
+                                    properties_to_add = self.rewrite_node_logically(kernel, prop_node, properties_to_add, type_key=key)
+                            elif isinstance(prop_node, SetOfSingletons):
+                                # TODO: Is it - SPACE:AND:NOT(x[type:y])
+                                #  Or - AND:NOT(x[type:y])[SPACE:]
+                                rewritten_entities = []
+                                key_to_use = ""
+                                for entity in prop_node.entities:
+                                    # TODO: Might need to be recursive?
+                                    entity, key_to_use = self.rewrite_node_logically(kernel, entity, defaultdict(list), False, True)
+                                    rewritten_entities.append(entity)
+                                prop_node = SetOfSingletons.update_entities(prop_node, rewritten_entities)
 
-                            # Create new SetOfSingletons encompassing previous key
-                            properties_to_add[key_to_use].append(SetOfSingletons(
-                                id=prop_node.id,
-                                type=Grouping[key],
-                                entities=tuple([prop_node]),
-                                min=min(rewritten_entities, key=lambda x: x.min).min,
-                                max=max(rewritten_entities, key=lambda x: x.max).max,
-                                confidence=1
-                            ))
-                            Singleton.update_node_props(kernel, properties_to_add)
+                                if key_to_use is not None:
+                                    # Create new SetOfSingletons encompassing previous key
+                                    properties_to_add[key_to_use].append(SetOfSingletons(
+                                        id=prop_node.id,
+                                        type=Grouping[key],
+                                        entities=tuple([prop_node]),
+                                        min=min(rewritten_entities, key=lambda x: x.min).min,
+                                        max=max(rewritten_entities, key=lambda x: x.max).max,
+                                        confidence=1
+                                    ))
+                                    Singleton.update_node_props(kernel, properties_to_add)
+                                else:
+                                    properties_to_add[key] = properties_key_
+                else:
+                    properties_to_add[key] = properties_key_
 
-        # Check if we can rewrite source and target
-        # kernel = Singleton.update_kernel(kernel, Singleton.update_node_props(kernel.kernel.source, self.rewrite_node_logically(kernel, kernel.kernel.source, properties_to_add)), "source")
+        # Rewrite source logically if SetOfSingletons
+        # if kernel.kernel is not None and isinstance(kernel.kernel, SetOfSingletons):
+        #     kernel = Singleton.update_kernel(kernel, SetOfSingletons.update_entities(kernel.kernel.source, [self.rewrite_properties_logically(x) for x in kernel.kernel.source.entities]), "source")
+
+        # Rewrite source and target properties
+        if hasattr(kernel, "kernel") and kernel.kernel is not None:
+            kernel = Singleton.update_kernel(kernel, self.rewrite_properties_logically(kernel.kernel.source), 'source') if kernel.kernel.source is not None else kernel
+            kernel = Singleton.update_kernel(kernel, self.rewrite_properties_logically(kernel.kernel.target), 'target') if kernel.kernel.target is not None else kernel
 
         if len(properties_to_add) > 0 or force_update:
             return Singleton.update_node_props(kernel, properties_to_add)
@@ -303,25 +318,25 @@ class CreateFinalKernel:
     def rewrite_node_logically(self, kernel, initial_node, properties, has_nmod=False, return_key=False, type_key=None):
         parmenides = Services.getInstance().getParmenides()
         prop_node, selected_rule = get_matching_logical_rules(kernel, initial_node, has_nmod)
-        node_props = dict(prop_node.properties)
         prepositions = get_prepositions(prop_node)
         number_value = dict(prop_node.properties)["nummod"] if "nummod" in dict(prop_node.properties) else None
 
         if selected_rule is not None:
-            # Remove prepositions as no longer needed
-            keys_to_remove = []
-            for prop_key, value in node_props.items():
-                if isinstance(value, str) and value.lower() in prepositions:
-                    keys_to_remove.append(prop_key)
-            if number_value is not None:
-                keys_to_remove.append("nummod")
-
-            for remove_key in keys_to_remove:
-                del node_props[remove_key]
+            # Remove prepositions (so long as construct property is not None) as no longer needed
+            node_props = {k: v for k, v in dict(prop_node.properties).items() if (
+                    isinstance(v, str) and
+                    v.lower() not in prepositions
+            ) or (
+                    not isinstance(v, str)
+            ) or (
+                    k not in {'nummod'} and
+                    selected_rule.logicalConstructName in {'quantity', 'measure'}
+            )}
+            # prop_node = Singleton.update_node_props(prop_node, node_props)  # TODO: If we do not remove the properties, then rewriting of source/target might re-rewrite the same preposition? We might lose information however
 
             selected_function = parmenides.get_logical_functions(selected_rule.logicalConstructName, selected_rule.logicalConstructProperty)
 
-            if len(selected_function) is not None:
+            if len(selected_function) > 0:
                 selected_function = selected_function[0]  # Use first function in list
                 type_key = selected_function.logicalConstructName.upper()
                 logical_type = selected_function.logicalConstructProperty
@@ -330,11 +345,15 @@ class CreateFinalKernel:
                     if logical_type is not None:
                         if type_key == "SPECIFICATION":
                             if logical_type == "inverse":
-                                node_props["extra"] = initial_node.kernel.source  # TODO: Should we check we are not overwriting an existing "extra"?
+                                node_props["extra"] = node_props["extra"].append(
+                                    initial_node.kernel.source) if 'extra' in node_props else [
+                                    initial_node.kernel.source]
                             else:
+                                node_to_add = prop_node
                                 prop_node = initial_node.kernel.source
                                 node_props = dict(prop_node.properties)
-                                node_props["extra"] = initial_node.kernel.target
+                                node_props["extra"] = node_props["extra"].append(node_to_add) if (
+                                        'extra' in node_props) else [node_to_add]
                         elif logical_type is not None:
                             node_props["type"] = logical_type  # TODO: node_props[key] and properties[key] would be duplicated, so use "type" instead?
                         prop_node = Singleton.update_node_props(prop_node, node_props)
@@ -348,8 +367,13 @@ class CreateFinalKernel:
         if return_key:
             return prop_node, type_key
         else:
-            if selected_rule is None:
-                properties[type_key if type_key is not None else initial_node.type].append(initial_node)
+            # If we don't find a rule, or function, add the initial node to its original key
+            if selected_rule is None or (isinstance(selected_function, list) and len(selected_function) == 0):
+                type_key = type_key if type_key is not None else initial_node.type
+                if isinstance(properties[type_key], list or tuple):
+                    properties[type_key].append(initial_node)
+                else:
+                    properties[type_key] = [initial_node]
             return properties
 
     def check_interjection_of_property(self, kernel, properties):
@@ -363,8 +387,11 @@ class CreateFinalKernel:
                         kernel = Singleton.update_kernel(kernel, prop_node, "source")
                         keys_to_remove.append(key)
                     elif kernel.kernel.target is not None and kernel.kernel.target.id == prop_node.id:
-                        kernel = Singleton.update_kernel(kernel, prop_node, "target")
-                        keys_to_remove.append(key)
+                        if key == 'INSTRUMENT':
+                            kernel = Singleton.update_kernel(kernel, None, "target")
+                        else:
+                            kernel = Singleton.update_kernel(kernel, prop_node, "target")
+                            keys_to_remove.append(key)
         for remove_key in keys_to_remove:
             force_update = True
             del properties[remove_key]
@@ -608,11 +635,11 @@ class CreateFinalKernel:
                             inner_properties_to_keep = dict()
                             for inner_key in dict(node.properties):
                                 value = dict(node.properties)[inner_key]
-                                if (value in string.punctuation) or (
-                                        kernel.kernel.edgeLabel is not None and isinstance(value,
-                                                                                           str) and not re.search(
-                                        r"\b" + value + r"\b", kernel.kernel.edgeLabel.named_entity)) or not isinstance(
-                                    value, str) or kernel.kernel.edgeLabel is None:
+                                if ((isinstance(value, str) and value in string.punctuation) or (
+                                        kernel.kernel.edgeLabel is not None and
+                                        isinstance(value, str) and
+                                        not re.search(r"\b" + value + r"\b", kernel.kernel.edgeLabel.named_entity)
+                                ) or not isinstance(value, str) or kernel.kernel.edgeLabel is None):
                                     inner_properties_to_keep[inner_key] = value
                             properties_to_keep[key].append(Singleton.update_node_props(node, inner_properties_to_keep))
                         else:
