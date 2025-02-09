@@ -135,6 +135,26 @@
       },
       "classification": [{"type":  "space", "property":  "motion to place"}],
       "__sentence_examples": ["viruses to get in your comuter"]
+    },{
+      "premise": {
+        "preposition": ["in","into"],
+        "SingletonHasBeenMatchedBy": ["GPE","LOC"]
+      },
+      "classification": [{"type":  "space", "property":  "stay in place"}],
+      "__sentence_examples": [    "look into the facts","characters in movies","a family room in most homes",
+    "People that work in warehouses",
+    "putting trash in it",
+    "Newcastle has traffic but not in the city centre",
+    "used in the game of chess",
+    "There is traffic in the Newcastle city centre",
+    "accumulate fuel in a central location",
+    "It is busy in Newcastle",
+    "Traffic is flowing in Newcastle city centre, on Saturdays",
+    "There is traffic but not in the Newcastle city centre",
+    "On Saturdays, traffic is flowing in Newcastle city centre",
+    "fish in the water",
+    "proved successful in tests on monkeys",
+    "investing money in stock markets"]
     },
         {
       "premise": {
@@ -159,14 +179,15 @@
     },        {
       "premise": {
         "preposition": ["in"],
-        "abstract_entity": false
+        "abstract_entity": true
       },
       "classification": [{"type":  "topic"}],
-      "__sentence_examples": [       "Taking classes in fencing" ]
+      "__sentence_examples": ["Taking classes in fencing"]
     },
         {
       "premise": {
-        "preposition": ["across"]
+        "preposition": ["across"],
+        "verb_of_motion": true
       },
       "classification": [{"type":  "space", "property":  "motion through place"}],
       "__sentence_examples": ["going across the street"]
@@ -200,14 +221,14 @@
         "preposition": ["by"]
       },
       "classification": [{"type":  "space", "property":  "stay in place"}],
-      "__sentence_examples": [    "your family gathers by your bedside"]
+      "__sentence_examples": ["your family gathers by your bedside"]
     },
         {
       "premise": {
         "preposition": ["as"]
       },
       "classification": [{"type":  "comparison", "property":  "equivalence"}],
-      "__sentence_examples": [    "your family gathers by your bedside"]
+      "__sentence_examples": ["add as an ingredient to toothpaste"]
     },
         {
       "premise": {
@@ -222,6 +243,30 @@
     "the corner of two streets",
     "phase of cell division",
     "The surface of an object"
+      ]
+    },
+        {
+      "premise": {
+        "preposition": ["of"],
+        "hasNMod": true,
+        "verb_of_means": true
+      },
+      "classification": [{"type":  "instrument"}],
+      "__sentence_examples": [
+    "use of many different muscles"
+      ]
+    },
+        {
+      "premise": {
+        "preposition": ["'s", "’s"],
+        "hasNMod": true
+      },
+      "classification": [{"type":  "specification", "property":  "regular"}],
+      "__sentence_examples": [
+        "attempt to steal someone's husband",
+        "emilia's short tailed opossum",
+        "one person's grade",
+        "raises one’s hand to"
       ]
     },
         {
@@ -308,7 +353,7 @@
     },        {
       "premise": {
         "preposition": ["for"],
-        "verb_of_aims": true
+        "causative_verb": true
       },
       "classification": [{"type":  "aim_objective"}],
       "__sentence_examples": [
@@ -320,7 +365,18 @@
     "a desire for justice",
     "accessories for laptop computer"
       ]
-    },        {
+    }, {
+      "premise": {
+        "preposition": ["for"]
+      },
+      "classification": [{"type":  "aim_objective"}],
+      "__sentence_examples": [
+    "utilized for many different things",
+    "The love for people",
+    "a desire for justice",
+    "accessories for laptop computer"
+      ]
+    },           {
       "premise": {
         "preposition": ["on"],
         "verb_of_motion": false,
@@ -331,6 +387,14 @@
     "proved successful in tests on monkeys",
     "information on current events",
     "you score well on tests"
+      ]
+    },{
+      "premise": {
+        "preposition": ["during", "before", "after", "while"]
+      },
+      "classification": [{"type":  "time", "property":  "continuous"}],
+      "__sentence_examples": [
+    "clean up after yourself"
       ]
     }
   ]

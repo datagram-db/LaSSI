@@ -48,7 +48,7 @@ class LaSSI():
                  precision_threshold=0.8,
                  force=False,
                  should_benchmark=True,
-                 legacy_conf:LegacySemanticConfiguration=None
+                 legacy_conf: LegacySemanticConfiguration = None
                  ):
         if legacy_conf is None:
             self.legacy_conf = LegacySemanticConfiguration()
@@ -132,14 +132,15 @@ class LaSSI():
         if os.path.exists(self.string_rep_dir):
             os.remove(self.string_rep_dir)
         if not os.path.exists(self.benchmarking_file):
-            self.write_variable_to_file(self.benchmarking_file, "Dataset, Loading sentences, Generating meuDB, Loading meuDB, Generating gsmDB, Generating rewritten graphs, Generating intermediate representation\n")
+            self.write_variable_to_file(self.benchmarking_file, "Dataset, Loading sentences, Generating meuDB, "
+                                                                "Loading meuDB, Generating gsmDB, Generating "
+                                                                "rewritten graphs, Generating intermediate "
+                                                                "representation\n")
         else:
             # If last line is not finished, add new line to ensure next benchmark is written to file correctly
             with open(self.benchmarking_file, 'r') as file:
                 if file.readlines()[-1].rstrip('\n').endswith(', '):
                     self.write_variable_to_file(self.benchmarking_file, "\n")
-
-
 
     def apply_graph_grammars(self, n):
         from PyDatagramDB import DatagramDB
@@ -194,14 +195,13 @@ class LaSSI():
         #     logical_representations.append(rewrite_kernels(intermediate_representation))
         return [rewrite_kernels(x) for x in intermediate_representations]
 
-    def graph_with_logic_similarity(self, x:Graph, y:Graph)->float:
+    def graph_with_logic_similarity(self, x: Graph, y: Graph) -> float:
         if self.sc is None:
             self.sc = SimilarityScore(self.legacy_conf)
         dist = self.sc.graph_distance(x, y) * 1.0
-        return 1.0 - dist #/ (1 + dist)
+        return 1.0 - dist  # / (1 + dist)
 
-
-    def fulltext_similarity(self, x:str, y:str)->float:
+    def fulltext_similarity(self, x: str, y: str) -> float:
         if self.sc is None:
             self.sc = SimilarityScore(self.legacy_conf)
         return self.sc.string_similarity(x, y)
@@ -210,7 +210,7 @@ class LaSSI():
         if self.transformation == SentenceRepresentation.FullText:
             f = self.fulltext_similarity
         if self.transformation == SentenceRepresentation.Logical:
-            from LaSSI.Parmenides.TBox.CrossMatch import DoExpand#LogicalGraph
+            from LaSSI.Parmenides.TBox.CrossMatch import DoExpand  # LogicalGraph
             doexp = DoExpand()
             f = SentenceExpansion(obj_list, doexp, self.catabolites_of_dataset)
         elif (self.transformation == SentenceRepresentation.LogicalGraph or
@@ -230,19 +230,19 @@ class LaSSI():
     def post_hoc_explain(self, lists):
         from LaSSI.files.FileDumpUtilities import target_file_dump
         self.logger("computing similarities")
-        confusion_matrices =  target_file_dump(self.confusion_matrices+self.transformation.name+".json",
-                                                  json.load,
-                                                  lambda: CalculateMatrix(self, lists),
-                                                  json_dumps,
-                                                  self.force)
+        confusion_matrices = target_file_dump(self.confusion_matrices + self.transformation.name + ".json",
+                                              json.load,
+                                              lambda: CalculateMatrix(self, lists),
+                                              json_dumps,
+                                              self.force)
 
         if self.clusters_file is not None:
             from LaSSI.similarities.ClusteringTest import test_with_maximal_matching
             clusters = []
             with open(self.clusters_file, "r") as f:
                 clusters = json.load(f)
-            test_with_maximal_matching(confusion_matrices, clusters, os.path.join(self.catabolites_of_dataset, self.transformation.name))
-
+            test_with_maximal_matching(confusion_matrices, clusters,
+                                       os.path.join(self.catabolites_of_dataset, self.transformation.name))
 
     def sentence_transform(self, sentences):
         if self.transformation == SentenceRepresentation.FullText:
@@ -251,7 +251,6 @@ class LaSSI():
         from LaSSI.files.FileDumpUtilities import target_file_dump
         n = len(sentences)
         self.logger("generating meuDB")
-        start_time = time.time()
         meu_db, meu_execution_time = target_file_dump(
             self.meuDB,
             lambda x: [MeuDB.from_dict(k) for k in json.load(x)],
@@ -280,17 +279,19 @@ class LaSSI():
         print(f"Generating rewritten graphs time: {rewritten_execution_time} seconds")
 
         self.logger("generating intermediate representation (before final logical form in eFOL)")
+        is_binary = False
         intermediate_representations, intermediate_execution_time = target_file_dump(
             self.internals,
-            obj_unmarshall,
+            obj_unmarshall if is_binary else lambda x: [InternalRepresentation.from_dict(k) for k in json.load(x)],
             lambda: SemanticGraphRewriting(self, meu_db, rewritten_graphs),
-            obj_pickle, False, self.should_benchmark, True
+            obj_pickle if is_binary else json_dumps, not is_binary, self.should_benchmark, is_binary
         )
         # rewrite_kernels(intermediate_representations[0].sentences)
         print(f"Generating intermediate representation time: {intermediate_execution_time} seconds")
-        self.write_variable_to_file(self.benchmarking_file, f"{self.get_execution_time_string(meu_execution_time)}, {gsm_execution_time[0]}, {rewritten_execution_time[0]}, {intermediate_execution_time[0]}\n")
+        self.write_variable_to_file(self.benchmarking_file,
+                                    f"{self.get_execution_time_string(meu_execution_time)}, {gsm_execution_time[0]}, {rewritten_execution_time[0]}, {intermediate_execution_time[0]}\n")
 
-        if self.transformation == SentenceRepresentation.Logical: #LogicalGraph
+        if self.transformation == SentenceRepresentation.Logical:  # LogicalGraph
             self.logger("[TODO]")
             # intermediate_representations = target_file_dump(self.logical_rewriting,
             #                                           json.load,
@@ -312,7 +313,8 @@ class LaSSI():
         end_time = time.time()
         loading_sentences_execution_time = end_time - start_time
         self.logger(f"Loading sentences time: {loading_sentences_execution_time} seconds")
-        self.write_variable_to_file(self.benchmarking_file, f"{self.dataset_name.split('/')[-1].split('.yaml')[0]}, {loading_sentences_execution_time}, ")
+        self.write_variable_to_file(self.benchmarking_file,
+                                    f"{self.dataset_name.split('/')[-1].split('.yaml')[0]}, {loading_sentences_execution_time}, ")
 
         result = self.sentence_transform(sentences)
         # self.post_hoc_explain(result)
