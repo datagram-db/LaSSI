@@ -1,0 +1,25 @@
+// Alice and Bob
+Alice plays football ⇒ play(Alice, football)
+Bob plays football ⇒ play(Bob, football)
+Alice and Bob play football ⇒ play(AND(Alice, Bob), football)
+Alice or Bob play football ⇒ play(OR(Bob, Alice), football)
+Alice doesn't play football ⇒ NOT(play(Alice, football))
+Bob doesn't play football ⇒ NOT(play(Bob, football))
+Dan plays football ⇒ play(Dan, football)
+Neither Alice nor Bob play football ⇒ play(NEITHER(Bob, Alice), football)
+
+// Newcastle
+There is traffic in the Newcastle city centre ⇒ be(traffic, ?1)[(SPACE:Newcastle[(extra:city centre), (type:stay in place), (det:the)])]
+Newcastle city centre is trafficked ⇒ traffic(?2[(subjpass:subjpass)], None)[(GPE:Newcastle[(extra:city centre)])]
+There is traffic but not in the Newcastle city centre ⇒ be(traffic, ?4)[(SPACE:AND(NOT(Newcastle[(extra:city centre), (type:stay in place), (det:the)])))]
+In Newcastle city center on saturdays, traffic is flowing ⇒ flow(traffic, None)[(TIME:saturdays[(type:defined)]), (SPACE:Newcastle[(type:stay in place), (extra:city center)])]
+It is busy in Newcastle ⇒ be(It, busy)[(SPACE:Newcastle[(type:stay in place)])]
+Saturdays have usually busy city centers ⇒ have(Saturdays, city centers[(JJ:busy[(advmod:usually)])])
+
+// Cat and Mouse
+The cat eats the mouse ⇒ eat(cat[(det:The)], mouse[(det:the)])
+The mouse is eaten by the cat ⇒ eat(cat[(subjpass:subjpass), (det:the), (5:by)], mouse[(det:The)])
+The mouse eats the cat ⇒ eat(mouse[(det:The)], cat[(det:the)])
+The cat is eaten by the mouse ⇒ eat(mouse[(subjpass:subjpass), (det:the), (5:by)], cat[(det:The)])
+The cat doesn't eat the mouse ⇒ NOT(eat(cat[(det:The)], mouse[(det:the)]))
+The mouse doesn't eat the cat ⇒ NOT(eat(mouse[(det:The)], cat[(det:the)]))

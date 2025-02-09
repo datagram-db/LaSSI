@@ -41,7 +41,9 @@ dependencies = [
     "numpy",
     "tqdm",
     "markov-clustering==0.0.6.dev0",
+    "scikit-learn==1.6.0",
     "networkx==3.4.1",
+    "plotnine",
     "sentence-transformers==2.6.0",
     "matplotlib"
 ]

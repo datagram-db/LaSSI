@@ -17,7 +17,21 @@ def create_existential_node():
 
 
 def create_props_for_singleton(properties):
-    return frozenset({k: tuple(v) if isinstance(v, list) else v for k, v in properties.items()}.items())
+    return frozenset({tuple(k) if isinstance(k, list) else k: tuple(v) if isinstance(v, list) else v for k, v in properties.items()}.items())
+
+
+def get_min_position(node):
+    if node is None:
+        return None
+
+    if isinstance(node, Singleton):
+        node_props = dict(node.properties)
+        if not 'pos' in node_props:
+            return -1
+        else:
+            return int(float(node_props['pos']))
+    else:
+        return min(filter(lambda y: y > -1, map(lambda x: get_min_position(x), node.entities)))
 
 
 class NodeFunctions:
@@ -46,7 +60,7 @@ class NodeFunctions:
             gsm_item = gsm_json[row]
             if len(gsm_item['phi']) > 0:
                 for edge in gsm_item['phi']:
-                    if (isinstance(node, Singleton) and edge['score']['child'] == node.id) or (
+                    if (isinstance(node, Singleton) and self.get_node_id(edge['score']['child']) == node.id) or (
                             not isinstance(node, Singleton) and edge['score']['child'] == node['id']):
                         if return_edge:
                             parents.append([edge['score']['parent'], edge['containment']])
@@ -96,16 +110,6 @@ class NodeFunctions:
 
     def is_node_but(self, gsm_item):
         return len(gsm_item['xi']) > 0 and 'but' in gsm_item['xi'][0].lower() and 'cc' in gsm_item['ell'][0].lower()
-
-    def get_min_position(self, node):
-        if isinstance(node, Singleton):
-            node_props = dict(node.properties)
-            if not 'pos' in node_props:
-                return -1
-            else:
-                return int(float(node_props['pos']))
-        else:
-            return min(filter(lambda y: y > -1, map(lambda x: self.get_min_position(x), node.entities)))
 
     def node_bfs(self, edges, root_node_id):
         nodes = defaultdict(set)

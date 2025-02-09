@@ -10,9 +10,9 @@ class InternalRepresentation:
     internal_graph: Graph
     sentences: List[Singleton] = dataclasses.field(default_factory=list)
 
-    # @classmethod
-    # def from_dict(cls, data):
-    #     return cls(
-    #         internal_graph=Graph.from_dict(data.get('internal_graph')),
-    #         sentences=[Singleton.from_dict(x) for x in data.get('sentences')]
-    #     )
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            internal_graph=Graph.from_dict(data.get('internal_graph')),
+            sentences=[Singleton.from_dict(x) for x in data.get('sentences')]
+        )

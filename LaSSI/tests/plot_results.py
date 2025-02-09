@@ -7,7 +7,7 @@ from plotnine import ggplot, aes, geom_line, labs, theme_minimal, theme, scale_y
 def main():
     pd.set_option('display.max_columns', None)
 
-    data = pd.read_csv('./jan10-benchmark.csv')
+    data = pd.read_csv('benchmarks/jan10-benchmark.csv')
     data = data.sort_values(by='Dataset')
     data = data.replace(0, np.nan) # For generating/loading meuDB
     averaged_data = data.groupby('Dataset', as_index=False).mean(numeric_only=True)

@@ -22,8 +22,8 @@ def match_whole_word(w):
 
 @lru_cache(maxsize = 128)
 def lemmatize_verb(edge_label_name):
-    if len(edge_label_name) == 0:
-        return ""
+    if len(edge_label_name) == 0 or '?' in edge_label_name:
+        return edge_label_name
     stNLP = Services.getInstance().getStanzaSTNLP()
     lemmatizer = Services.getInstance().getWTLemmatizer()
     try:

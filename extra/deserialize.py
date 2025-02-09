@@ -71,7 +71,7 @@ if __name__ == "__main__":
     ya = "/home/giacomo/projects/LaSSI/test_sentences/all_concept.yaml"
     cefd = CollectEvidenceFromDataset()
     cefd.from_dataset("test_sentences/all_concept.yaml")
-    cefd.from_dataset("test_sentences/orig/newcastle.yaml")
+    cefd.from_dataset("test_sentences/orig/all_newcastle.yaml")
     cefd.from_dataset("test_sentences/orig/alice_bob.yaml")
     cefd.from_dataset("test_sentences/to_be_implemented/resolving_variables.yaml")
     cefd.finalize()

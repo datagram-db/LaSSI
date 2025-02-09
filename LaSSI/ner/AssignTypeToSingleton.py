@@ -249,7 +249,13 @@ class AssignTypeToSingleton:
                     confidence=norm_confidence
                 )
             elif not self.is_simplistic_rewriting:
-                self.create_set_of_singletons(group_type, grouped_nodes, gsm_item, has_conj, has_multipleindobj, is_compound, has_compound_prt, norm_confidence, gsm_json, row)
+                # if group_type is not None:
+                #     for g_type in group_type:
+                #         self.create_set_of_singletons(g_type, grouped_nodes, gsm_item, has_conj, has_multipleindobj, is_compound, has_compound_prt, norm_confidence, gsm_json, row)
+                # else:
+                #     self.create_set_of_singletons(group_type, grouped_nodes, gsm_item, has_conj, has_multipleindobj, is_compound, has_compound_prt, norm_confidence, gsm_json, row)
+                self.create_set_of_singletons(group_type, grouped_nodes, gsm_item, has_conj, has_multipleindobj,
+                                              is_compound, has_compound_prt, norm_confidence, gsm_json, row)
 
         self.remove_duplicate_nodes()
 
@@ -267,11 +273,37 @@ class AssignTypeToSingleton:
                 cc_names.extend(cc_properties)
 
                 if len(cc_names) > 0:
-                    return ' '.join(cc_names)
+                    # TODO: Check if current node has another 'cc' edge, then add to cc_names
+                    #  Then duplicate and add both AND and OR to properties
+                    #  Might need improving...
+                    # for edge in nodes[id]['phi']:
+                    #     for inner_edge in nodes[edge['score']['child']]['phi']:
+                    #         if 'cc' in inner_edge['containment']:
+                    #             cc_names.append(nodes[inner_edge['score']['child']]['xi'][0])
+                    return ' '.join(cc_names) #cc_names
                 else:
                     return None
 
             conj = bfs(gsm_json, gsm_item['id'], f)
+        # group_type = []
+        # # TODO: If both AND/OR, only use OR (for time being)
+        # if len(conj) > 0:
+        #     for g_type in conj:
+        #         group_type.append(self.get_group_enum(g_type))
+        # else:
+        #     group_type = [Grouping.NONE]
+        # return group_type
+        if 'and' in conj or 'but' in conj:
+            group_type = Grouping.AND
+        elif ('nor' in conj) or ('neither' in conj):
+            group_type = Grouping.NEITHER
+        elif 'or' in conj:
+            group_type = Grouping.OR
+        else:
+            group_type = Grouping.NONE
+        return group_type
+
+    def get_group_enum(self, conj):
         if 'and' in conj or 'but' in conj:
             group_type = Grouping.AND
         elif ('nor' in conj) or ('neither' in conj):
@@ -559,21 +591,29 @@ class AssignTypeToSingleton:
     # Phase 3
     def singletonTypeResolution(self, item, gsm_json):
         if len(self.meu_entities[item]) > 0:
-            if item.type == 'verb':
+            best_item = None
+            if item.type in {"PRONOUN", "PRP", "PRP$", "WP", "WP$"}:
+                best_type = 'PRONOUN'
+                best_score = 1
+            elif item.type.startswith("JJ"):
+                best_type = 'JJ'
+                best_score = 1
+            elif item.type == 'verb':
                 best_type = 'verb'
                 best_score = 1
             else:
                 if item.type == '∃' or item.type.startswith("JJ") or item.type.startswith("IN") or item.type.startswith(
                         "NEG"):
                     best_score = item.confidence
-                    best_items = [item]
+                    best_item = item
                     best_type = item.type
                 else:
                     # TODO: Fix typing information (e.g. Golden Gate Bridge has GPE (0.8) and ENTITY (1.0)
                     best_score = max(map(lambda y: y.confidence, self.meu_entities[item]))
 
-                    if item.confidence >= best_score and item.type in {'verb', 'PERSON', 'DATE', 'GPE', 'LOC', 'ENTITY'}: # If the best_score is better than what we currently have for the Singleton
-                        best_type = item.type
+                    # If the best_score is better than what we currently have for the Singleton
+                    if item.confidence >= best_score and item.type.upper() in {'VERB', 'PERSON', 'DATE', 'GPE', 'LOC', 'ENTITY'}:
+                        best_type = item.type.lower() if item.type == 'VERB' else item.type
                     else:
                         # TODO: min and max might not be correct when coming from an inherit edge
                         best_items = [
@@ -626,7 +666,7 @@ class AssignTypeToSingleton:
             from LaSSI.structures.internal_graph.EntityRelationship import Singleton
             self.nodes[item.id] = Singleton(
                 id=item.id,
-                named_entity=item.named_entity,
+                named_entity=item.named_entity,  # TODO: Future work: best_item.monad if best_item is not None and not isinstance(best_item, Singleton) else item.named_entity TODO: Future work
                 properties=item.properties,
                 min=item.min,
                 max=item.max,

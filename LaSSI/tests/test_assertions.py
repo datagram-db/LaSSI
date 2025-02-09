@@ -7,10 +7,10 @@ from pathlib import Path
 
 
 class TestLaSSI(unittest.TestCase):
-    def test_string_reps(self):
+    def test_string_reps(self, force_dirs=False):
         assertions = {}
         rel_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(rel_dir, "assertions.txt")
+        file_path = os.path.join(rel_dir, "assertions/assertions_new.txt")
         with open(file_path, 'r') as f:
             for line in f:
                 if not line.startswith('//') and line.strip() != "":
@@ -25,13 +25,14 @@ class TestLaSSI(unittest.TestCase):
         found_assertions = []
         catabolites_dir = os.path.join(Path(rel_dir).parent.absolute().parent.absolute(), "catabolites")
         for subdir, dirs, files in os.walk(catabolites_dir):
-            for file in files:
-                if file == "string_rep.txt":
-                    filepath = os.path.join(subdir, file)
-                    with open(filepath, 'r') as f:
-                        for line in f:
-                            if not "//" in line and line.strip() != "":
-                                found_assertions.append(self.replace_existential(line.strip()).lower())
+            if subdir.split('/')[-1].startswith("part") or not force_dirs:
+                for file in files:
+                    if file == "string_rep.txt":
+                        filepath = os.path.join(subdir, file)
+                        with open(filepath, 'r') as f:
+                            for line in f:
+                                if not "//" in line and line.strip() != "":
+                                    found_assertions.append(self.replace_existential(line.strip()).lower())
 
         for assertion in found_assertions:
             # print(assertion)
