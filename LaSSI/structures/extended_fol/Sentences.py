@@ -175,12 +175,17 @@ class FVariable(Formula):
         s = self.name
         if s is None:
             s = "?"
+        else:
+            s = "\\textsf{" + s + "}"
         if self.specification is not None and len(self.specification) > 0:
             s += (" [of] "+ self.specification)
+        L = []
         if self.cop is not None:
-            s += (" JJ:" + str(self.cop))
-        if self.properties is not None:
-            s += json.dumps({k:[str(x) for x in v] for k,v in self.properties})
+            L.append("\\texttt{JJ}: " + str(self.cop))
+        for k, v in self.properties:
+            L.append("\\texttt{" + str(k) + "}: " + str(v))
+        if len(L)>0:
+            s += "_{" + ",\; ".join(L) + "}"
         return s
 
     def isOntoUnmatched(self):
@@ -371,10 +376,15 @@ class FUnaryPredicate(Formula):
         s = self.rel
         if s is None:
             s = "?"
+        else:
+            s = "\\textit{"+s+"}"
         if self.arg is not None:
             s += ("(" + str(self.arg) + ")")
-        if self.properties is not None:
-            s += json.dumps({k:[str(x) for x in v] for k,v in self.properties})
+        L = []
+        if len(self.properties)>0:
+            for k, v in self.properties:
+                L.append("\\texttt{" + str(k) + "}: " + str(v))
+            s += "_{" + ",\; ".join(L) + "}"
         return s
 
     def isOntoUnmatched(self):
@@ -498,6 +508,7 @@ class FBinaryPredicate(Formula):
         if s is None:
             s = "?("
         else:
+            s = "\\textit{"+s+"}"
             s += "("
         if self.src is not None:
             s += (str(self.src) + ",")
@@ -507,8 +518,11 @@ class FBinaryPredicate(Formula):
             s += (str(self.dst) + ")")
         else:
             s += "?)"
-        if self.properties is not None:
-            s += json.dumps({k:[str(x) for x in v] for k,v in self.properties})
+        if self.properties is not None and len(self.properties)>0:
+            L = []
+            for k, v in self.properties:
+                L.append("\\texttt{"+str(k)+"}: "+str(v))
+            s += "_{" + ",\; ".join(L) + "}"
         return s
 
     def isOntoUnmatched(self):
@@ -646,7 +660,7 @@ class FAnd(Formula):
     matched: bool = field(default_factory=lambda : False)
 
     def __str__(self):
-        return " /\\ ".join(map(str, self.args))
+        return "\\left(" + (" \\wedge ".join(map(str, self.args)))+ "\\right)"
 
     def isOntoUnmatched(self):
         return any(map(lambda x: x is not None and x.isOntoUnmatched(), self.args))
@@ -736,7 +750,7 @@ class FOr(Formula):
 
 
     def __str__(self):
-        return " \// ".join(map(str, self.args))
+        return "\\left("+( " \\vee ".join(map(str, self.args)))+"\\right)"
 
     def isOntoUnmatched(self):
         return any(map(lambda x: x is not None and x.isOntoUnmatched(), self.args))
@@ -825,7 +839,7 @@ class FNot(Formula):
     matched: bool = field(default_factory=lambda : False)
 
     def __str__(self):
-        return " ~ "+str(self.arg)
+        return " \\neg \\left("+str(self.arg)+"\\right)"
 
     def isOntoUnmatched(self):
         return self.arg is not None and self.arg.isOntoUnmatched()

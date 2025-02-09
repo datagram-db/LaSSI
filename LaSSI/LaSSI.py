@@ -299,6 +299,8 @@ class LaSSI():
                                                       lambda: LogicalRewriting(self, intermediate_representations),
                                                       json_dumps,
                                                       self.force)
+        for x in intermediate_representations:
+            print(str(x))
         return intermediate_representations
 
     def get_execution_time_string(self, execution_time):
