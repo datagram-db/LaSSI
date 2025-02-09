@@ -9,7 +9,10 @@ from typing import Tuple
 
 import pandas as pd
 
-from logical_repr.Sentences import formula_from_dict, FNot, FAnd, Formula, FOr, FBinaryPredicate, make_variable
+
+
+# from logical_repr.Sentences import formula_from_dict, FNot, FAnd, Formula, FOr, FBinaryPredicate, make_variable
+from LaSSI.structures.extended_fol.Sentences import Formula
 
 
 # from logical_repr.Sentences import formula_from_dict, FBinaryPredicate, FUnaryPredicate, FNot
@@ -40,6 +43,7 @@ def structure_dictionary(dd):
 
 
 if __name__ == "__main__":
+    from LaSSI.structures.extended_fol.Sentences import Formula, formula_from_dict, FBinaryPredicate, make_variable
     with open("/home/giacomo/Scaricati/newcastle_sentences.txt_logical_rewriting.json", "r") as f:
         list_json = json.load(f)
         list_json = formula_from_dict(list_json)

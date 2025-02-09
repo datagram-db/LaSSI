@@ -1,4 +1,4 @@
-from LaSSI.Parmenides.TBox.ExpandConstituents import CasusHappening, test_pairwise_sentence_similarity, isImplication
+# from LaSSI.Parmenides.TBox.ExpandConstituents import CasusHappening, test_pairwise_sentence_similarity, isImplication
 # from logical_repr.Sentences import FUnaryPredicate, FBinaryPredicate, FNot
 # from logical_repr.rewrite_kernels import make_not
 
@@ -39,18 +39,22 @@ class ModelSearch:
         foundImplication = False
         foundEquivalence = False
         for rhs in rhsSet:
+            from LaSSI.Parmenides.TBox.ExpandConstituents import test_pairwise_sentence_similarity
             val = test_pairwise_sentence_similarity(self.pairwise_similarity_cache, lhs, rhs, kb=self.kb, shift=False)
+            from LaSSI.Parmenides.TBox.ExpandConstituents import CasusHappening
             if (val == CasusHappening.EXCLUSIVES):
                 # val = test_pairwise_sentence_similarity(dict(), lhs, rhs, kb=self.kb, shift=False)
                 return val
             if (val == CasusHappening.EQUIVALENT): ## To check: if I found at least one equivalence after rewriting, then that's it.
                 return CasusHappening.EQUIVALENT
+            from LaSSI.Parmenides.TBox.ExpandConstituents import isImplication
             if isImplication(val):
                 # val = test_pairwise_sentence_similarity(dict(), lhs, rhs, kb=self.kb)
                 foundImplication = True
         return CasusHappening.GENERAL_IMPLICATION if foundImplication else CasusHappening.INDIFFERENT
 
-    def compare(self, objLHS:ModelSearchBasis, objRHS:ModelSearchBasis)->CasusHappening:
+    def compare(self, objLHS:ModelSearchBasis, objRHS:ModelSearchBasis)->'CasusHappening':
+        from LaSSI.Parmenides.TBox.ExpandConstituents import CasusHappening
         cp = (objLHS.original, objRHS.original)
         if cp in self.main_cache:
             return self.main_cache[cp]
