@@ -179,6 +179,9 @@ class FVariable(Formula):
             s = "\\textsf{" + s + "}"
         if self.specification is not None and len(self.specification) > 0:
             s += (" [of] "+ self.specification)
+            s = "\\left["+s+"\\right]_{\\texttt{"+str(self.id)+"}}"
+        else:
+            s = "{"+s+"}_{\\texttt{"+str(self.id)+"}}"
         L = []
         if self.cop is not None:
             L.append("\\texttt{JJ}: " + str(self.cop))
