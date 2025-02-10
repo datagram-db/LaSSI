@@ -68,17 +68,34 @@ class SetOfSingletons(NodeEntryPoint):  # Graph node representing conjunction/di
             for x in self.entities:
                 yield from x.extract_properties(p)
 
-    @staticmethod
-    def update_entities(node, new_entities):
+    def update_entities(self, new_entities):
         return SetOfSingletons(
-            id=node.id,
-            type=node.type,
+            id=self.id,
+            type=self.type,
             entities=tuple(new_entities),
-            min=node.min,
-            max=node.max,
-            confidence=node.confidence,
-            root=node.root
+            min=self.min,
+            max=self.max,
+            confidence=self.confidence,
+            root=self.root
         )
+
+    def strip_root_properties(self):
+        return SetOfSingletons(
+            id=self.id,
+            type=self.type,
+            entities=tuple(entity.strip_root_properties() for entity in self.entities),
+            min=self.min,
+            max=self.max,
+            confidence=self.confidence,
+            root=False
+        )
+
+    def get_props(self, properties=None):
+        if properties is None:
+            properties = dict()
+        for entity in self.entities:
+            properties |= entity.get_props(properties)
+        return properties
 
 
 def deserialize_NodeEntryPoint(data: dict) -> NodeEntryPoint:
@@ -164,117 +181,89 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
             if self.kernel is not None:
                 yield from self.kernel.extract_properties(p)
 
-    @staticmethod
-    def get_props(node, properties=None):
-        if properties is None:
-            properties = dict()
-        if node is None:
-            return None
+    def get_props(self, properties=None):
+        return dict(self.properties)
 
-        if isinstance(node, Singleton):
-            return dict(node.properties)
-        elif isinstance(node, SetOfSingletons):
-            for entity in node.entities:
-                properties |= Singleton.get_props(entity, properties)
-            return properties
-
-    @staticmethod
-    def update_node_props(node, node_props):
+    def update_node_props(self, node_props):
         from LaSSI.ner.node_functions import create_props_for_singleton
         return Singleton(
-            id=node.id,
-            named_entity=node.named_entity,
-            min=node.min,
-            max=node.max,
-            type=node.type,
-            confidence=node.confidence,
-            kernel=node.kernel,
+            id=self.id,
+            named_entity=self.named_entity,
+            min=self.min,
+            max=self.max,
+            type=self.type,
+            confidence=self.confidence,
+            kernel=self.kernel,
             properties=create_props_for_singleton(node_props),
         )
 
-    @staticmethod
-    def update_name(node, new_name):
+    def update_name(self, new_name):
         return Singleton(
-            id=node.id,
+            id=self.id,
             named_entity=new_name,
-            min=node.min,
-            max=node.max,
-            type=node.type,
-            confidence=node.confidence,
-            kernel=node.kernel,
-            properties=node.properties,
+            min=self.min,
+            max=self.max,
+            type=self.type,
+            confidence=self.confidence,
+            kernel=self.kernel,
+            properties=self.properties,
         )
 
-    @staticmethod
-    def update_kernel(node, new_node, kernel_part):
+    def update_kernel(self, new_node, kernel_part):
         return Singleton(
-            id=node.id,
+            id=self.id,
             named_entity='',
             type='SENTENCE',
-            min=node.min,
-            max=node.max,
+            min=self.min,
+            max=self.max,
             confidence=1,
             kernel=Relationship(
-                source=new_node if kernel_part == "source" else node.kernel.source,
-                target=new_node if kernel_part == "target" else node.kernel.target,
-                edgeLabel=new_node if kernel_part == "edgeLabel" else node.kernel.edgeLabel,
-                isNegated=node.kernel.isNegated,
+                source=new_node if kernel_part == "source" else self.kernel.source,
+                target=new_node if kernel_part == "target" else self.kernel.target,
+                edgeLabel=new_node if kernel_part == "edgeLabel" else self.kernel.edgeLabel,
+                isNegated=self.kernel.isNegated,
             ),
-            properties=node.properties,
+            properties=self.properties,
         )
 
-    @staticmethod
-    def remove_prop(node, prop_name):
-        node_props = dict(node.properties)
-        node_props.pop(prop_name)
-        return Singleton.update_node_props(node, node_props)
+    def remove_prop(self, prop_name):
+        node_props = dict(self.properties)
+        if prop_name in node_props:
+            node_props.pop(prop_name)
+        return self.update_node_props(node_props)
 
-    @staticmethod
-    def add_root_property(node):
-        if isinstance(node, SetOfSingletons):
+    def add_root_property(self):
+        if isinstance(self, SetOfSingletons):
             return SetOfSingletons(
-                id=node.id,
-                type=node.type,
-                entities=node.entities,
-                min=node.min,
-                max=node.max,
-                confidence=node.confidence,
+                id=self.id,
+                type=self.type,
+                entities=self.entities,
+                min=self.min,
+                max=self.max,
+                confidence=self.confidence,
                 root=True
             )
 
-        node_props = dict(node.properties)
+        node_props = dict(self.properties)
         node_props['kernel'] = 'root'
-        return Singleton.update_node_props(node, node_props)
+        return self.update_node_props(node_props)
 
-
-    @staticmethod
-    def strip_root_properties(node):
-        if isinstance(node, SetOfSingletons):
-            return SetOfSingletons(
-                id=node.id,
-                type=node.type,
-                entities=tuple(Singleton.strip_root_properties(entity) for entity in node.entities),
-                min=node.min,
-                max=node.max,
-                confidence=node.confidence,
-                root=False
-            )
-
-        sing_props = dict(node.properties)
+    def strip_root_properties(self):
+        sing_props = dict(self.properties)
         if 'kernel' in sing_props:
             sing_props.pop('kernel')
         if 'root' in sing_props:
             sing_props.pop('root')
 
         return Singleton(
-            id=node.id,
-            named_entity=node.named_entity,
+            id=self.id,
+            named_entity=self.named_entity,
             properties=frozenset(sing_props.items()),
-            min=node.min,
-            max=node.max,
-            type=node.type,
-            confidence=node.confidence,
-            kernel=node.kernel,
+            min=self.min,
+            max=self.max,
+            type=self.type,
+            confidence=self.confidence,
+            kernel=self.kernel,
         )
 
     @classmethod

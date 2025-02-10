@@ -79,6 +79,11 @@ class AssignTypeToSingleton:
         ids_to_remove = []
         for row in number_of_nodes:
             gsm_item = gsm_json[row]
+
+            # Remove unwanted subjpass value
+            if 'subjpass' in gsm_item['xi']:
+                gsm_item['xi'].remove('subjpass')
+
             edges_to_keep = []
             for edge in gsm_item['phi']:
                 if 'inherit_' in edge['containment']:
@@ -184,7 +189,7 @@ class AssignTypeToSingleton:
                         if isinstance(node, Singleton):
                             node_props = merge_properties(dict(node.properties), gsm_item['properties'], {'pos'})
                             # gsm_item['properties'] = node_props
-                            self.nodes[node_id] = Singleton.update_node_props(node, node_props)
+                            self.nodes[node_id] = node.update_node_props(node_props)
 
                         grouped_nodes.append(self.nodes[node_id])
                         norm_confidence *= node.confidence
