@@ -29,6 +29,7 @@ from LaSSI.phases.LogicalRewriting import LogicalRewriting
 from LaSSI.phases.ResolveBasicTypes import ExplainTextWithNER
 from LaSSI.phases.SemanticGraphRewriting import SemanticGraphRewriting
 from LaSSI.similarities.graph_similarity import SimilarityScore
+from LaSSI.structures.extended_fol.Sentences import formula_from_dict
 from LaSSI.structures.extended_fol.rewrite_kernels import rewrite_kernels
 from LaSSI.structures.extended_fol.sentence_expansion import SentenceExpansion
 from LaSSI.structures.internal_graph.Graph import Graph
@@ -292,12 +293,15 @@ class LaSSI():
                                     f"{self.get_execution_time_string(meu_execution_time)}, {gsm_execution_time[0]}, {rewritten_execution_time[0]}, {intermediate_execution_time[0]}\n")
 
         if self.transformation == SentenceRepresentation.Logical:  # LogicalGraph
-            self.logger("[TODO]")
-            # intermediate_representations = target_file_dump(self.logical_rewriting,
-            #                                           json.load,
-            #                                           lambda: LogicalRewriting(self, intermediate_representations),
-            #                                           json_dumps,
-            #                                           self.force)
+            # self.logger("[TODO]")
+            intermediate_representations = target_file_dump(self.logical_rewriting,
+                                                      lambda x: formula_from_dict(json.load(x)),
+                                                      lambda: LogicalRewriting(self, intermediate_representations),
+                                                      json_dumps,
+                                                      self.force)
+        for x in intermediate_representations:
+            print(str(x))
+        return intermediate_representations
 
     def get_execution_time_string(self, execution_time):
         if execution_time[1] == 'w':
@@ -317,7 +321,7 @@ class LaSSI():
                                     f"{self.dataset_name.split('/')[-1].split('.yaml')[0]}, {loading_sentences_execution_time}, ")
 
         result = self.sentence_transform(sentences)
-        # self.post_hoc_explain(result)
+        self.post_hoc_explain(result)
 
     def close(self):
         if isinstance(self.sentences, io.IOBase):

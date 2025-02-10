@@ -220,6 +220,8 @@ def src_make_prop(src, rel, negated, score, properties, dst):
                 return make_or(map(lambda x: src_make_prop(x, rel, negated, score, properties, dst), src.entities))
             elif src.type == Grouping.NOT:
                 return make_not(src_make_prop(list(src.entities)[0], rel, negated, score, properties, dst))
+            elif src.type == Grouping.NEITHER:
+                return make_not(make_and(map(lambda x: src_make_prop(x, rel, negated, score, properties, dst), src.entities)))
             else:
                 n = src.type.name
                 raise RuntimeError(f"Unknown source type: {n}")

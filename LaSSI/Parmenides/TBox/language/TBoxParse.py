@@ -2,10 +2,15 @@ import json
 
 from antlr4 import *
 
-from Parmenides.TBox.SentenceMatch import RWVariable
-from Parmenides.TBox.language.parmenides_tboxParser import parmenides_tboxParser
-from Parmenides.TBox.language.parmenides_tboxVisitor import parmenides_tboxVisitor
-from logical_repr.Sentences import Formula
+from LaSSI.Parmenides.TBox.language.parmenides_tboxParser import parmenides_tboxParser
+from LaSSI.Parmenides.TBox.language.parmenides_tboxVisitor import parmenides_tboxVisitor
+from LaSSI.structures.extended_fol.Sentences import *
+
+
+# from Parmenides.TBox.SentenceMatch import RWVariable
+# from Parmenides.TBox.language.parmenides_tboxParser import parmenides_tboxParser
+# from Parmenides.TBox.language.parmenides_tboxVisitor import parmenides_tboxVisitor
+# from logical_repr.Sentences import Formula
 
 def unfold_string(d):
     if hasattr(d, "text"):
@@ -52,7 +57,7 @@ class TBoxVisitor(parmenides_tboxVisitor):
             return super().visit(tree)
 
     def visitSentence_match(self, ctx: parmenides_tboxParser.Sentence_matchContext):
-        from Parmenides.TBox.SimpleDataMatch import SentenceMatch
+        # from Parmenides.TBox.SimpleDataMatch import SentenceMatch
         if ctx is None:
             return None
         relname = unfold_string(ctx.relname)
@@ -63,10 +68,11 @@ class TBoxVisitor(parmenides_tboxVisitor):
         fields = tuple(fields)
         asname = unfold_string(ctx.as_name)
         parents = int(ctx.parents.text)
+        from LaSSI.Parmenides.TBox.SimpleDataMatch import SentenceMatch
         return SentenceMatch(relname, n, fields, asname, parents)
 
     def visitField_match(self, ctx: parmenides_tboxParser.Field_matchContext):
-        from Parmenides.TBox.SimpleDataMatch import FieldMatch
+        # from Parmenides.TBox.SimpleDataMatch import FieldMatch
         n = int(ctx.n.text)
         path = tuple([])
         attr = None
@@ -82,6 +88,7 @@ class TBoxVisitor(parmenides_tboxVisitor):
         if ctx.asname is not None:
             as_name = unfold_string(ctx.asname)
 
+        from LaSSI.Parmenides.TBox.SimpleDataMatch import FieldMatch
         return FieldMatch("MATCH", n, path, attr, with_value, as_name)
 
     def visitData_match_path(self, ctx: parmenides_tboxParser.Data_match_pathContext):
@@ -119,6 +126,7 @@ class TBoxVisitor(parmenides_tboxVisitor):
     def visitRw_variable(self, ctx: parmenides_tboxParser.Rw_variableContext):
         if ctx is None:
             return None
+        from LaSSI.Parmenides.TBox.SentenceMatch import RWVariable
         return RWVariable(unfold_string(ctx.STRING()))
 
     def visitVariable(self, ctx: parmenides_tboxParser.VariableContext):
@@ -128,8 +136,7 @@ class TBoxVisitor(parmenides_tboxVisitor):
         type_ = unfold_string(ctx.type_)
         specification = unfold_string(ctx.specification)
         cop = self.visit(ctx.formula())
-        from logical_repr.Sentences import FVariable
-        return FVariable(name, type_, specification, cop)
+        return FVariable(name, type_, specification, cop, id=-1)
 
     def visitUnary_predicate(self, ctx: parmenides_tboxParser.Unary_predicateContext):
         if ctx is None:
@@ -138,8 +145,8 @@ class TBoxVisitor(parmenides_tboxVisitor):
         src = self.visit(ctx.arg)
         score = float(ctx.score.text)
         properties = frozenset(dict([self.visit(x) for x in ctx.key_values()]).items())
-        from logical_repr.Sentences import FBinaryPredicate
-        from logical_repr.Sentences import FUnaryPredicate
+        # from logical_repr.Sentences import FBinaryPredicate
+        # from logical_repr.Sentences import FUnaryPredicate
         return FUnaryPredicate(rel, src, score, properties)
     def visitBinary_predicate(self, ctx: parmenides_tboxParser.Binary_predicateContext):
         if ctx is None:
@@ -149,31 +156,31 @@ class TBoxVisitor(parmenides_tboxVisitor):
         dst = self.visit(ctx.dst)
         score = float(unfold_string(ctx.score))
         properties = frozenset(dict([self.visit(x) for x in ctx.key_values()]).items())
-        from logical_repr.Sentences import FBinaryPredicate
+        # from logical_repr.Sentences import FBinaryPredicate
         return FBinaryPredicate(rel, src, dst, score, properties)
 
     def visitAnd(self, ctx: parmenides_tboxParser.AndContext):
-        from logical_repr.Sentences import FAnd
+        # from logical_repr.Sentences import FAnd
         return FAnd(args=tuple([self.visit(x) for x in ctx.formula()]))
 
     def visitOr(self, ctx: parmenides_tboxParser.OrContext):
-        from logical_repr.Sentences import FOr
+        # from logical_repr.Sentences import FOr
         return FOr(args=tuple([self.visit(x) for x in ctx.formula()]))
 
     def visitNot(self, ctx: parmenides_tboxParser.NotContext):
-        from logical_repr.Sentences import FNot
+        # from logical_repr.Sentences import FNot
         return FNot(self.visit(ctx.formula()))
 
     def visitRemove(self, ctx: parmenides_tboxParser.RemoveContext):
-        from logical_repr.Sentences import RemovePropertiesFromResult
+        # from logical_repr.Sentences import RemovePropertiesFromResult
         return RemovePropertiesFromResult(unfold_string(ctx.STRING()))
 
     def visitAdd(self, ctx: parmenides_tboxParser.AddContext):
-        from logical_repr.Sentences import AddPropertyFromResult
+        # from logical_repr.Sentences import AddPropertyFromResult
         return AddPropertyFromResult(ofField=unfold_string(ctx.STRING()),toAddInFields=self.visit(ctx.formula()))
 
     def visitAll_properties(self, ctx: parmenides_tboxParser.All_propertiesContext):
-        from logical_repr.Sentences import InheritProperties
+        # from logical_repr.Sentences import InheritProperties
         return InheritProperties()
 
     def visitEdge_match(self, ctx: parmenides_tboxParser.Edge_matchContext):
@@ -205,7 +212,8 @@ class TBoxVisitor(parmenides_tboxVisitor):
         return None
 
 def parse_query(s):
-    from Parmenides.TBox.language.parmenides_tboxLexer import parmenides_tboxLexer
+    # from Parmenides.TBox.language.parmenides_tboxLexer import parmenides_tboxLexer
+    from LaSSI.Parmenides.TBox.language.parmenides_tboxLexer import parmenides_tboxLexer
     lexer = parmenides_tboxLexer(InputStream(s))
     stream = CommonTokenStream(lexer)
     parser = parmenides_tboxParser(stream)

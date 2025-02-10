@@ -30,6 +30,7 @@ dependencies = [
     "pytz==2023.3.post1",
     "plotille==5.0.0",
     "urllib3==2.2.2",
+    "antlr4-python3-runtime==4.13.1",
     "StanfordNLPExtractor @ git+https://github.com/datagram-db/stanfordnlp_dg_server.git",
     "PyDatagramDB @ git+https://github.com/datagram-db/datagram-db.git#egg=PyDatagramDB&subdirectory=DatagramDB",
     "rdflib==7.0.0",
