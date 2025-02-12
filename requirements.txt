@@ -1,4 +1,5 @@
 sentence-transformers
 numpy
-python-rocksdb
+Cython
+sqlitedict
 pandas
