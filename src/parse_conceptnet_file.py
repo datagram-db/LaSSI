@@ -104,7 +104,6 @@ def declunk_edge_file(files, headers=None, lang=None):
 
                 maxVertId = max(maxVertId, int(r.start_id))
 
-
 def numberbatch_parsing(file):
     import pandas
     f = pandas.read_hdf(file, 'mat', encoding='utf-8')
@@ -113,6 +112,18 @@ def numberbatch_parsing(file):
         if concept[2] == "en":
             key = concept[3].replace("_", " ")
             yield [key]
+
+
+def get_triplets(file, lang=None):
+    with open(file) as tsv:
+        for line in csv.reader(tsv, dialect="excel-tab"):
+            r = Relation(line)
+
+            if lang is not None and ((r.langStart != lang) or (r.langEnd != lang)): continue
+
+            yield (r.surfaceStart, r.rel, r.surfaceEnd)
+
+
 
 # if __name__ == '__main__':
 #     file = '/media/giacomo/Biggus/conceptnet/data/psql/edges.csv'
