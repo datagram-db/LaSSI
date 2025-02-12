@@ -1,23 +1,8 @@
 from sqlitedict import SqliteDict
 
-"""
-  nodes = adj_db.getNodes()
 
-  initializing clusters for each node, that just includes said node
-  for n in nodes:
-      id = new_id()
-      cluster_members_db[id] = [n]
-      cluster_mapping_db[n] = id
-
-  it's gonna be like:
-  for i in nodes:
-  for j in nodes:
-  for k in nodes:
-  if i == j and j == k:
-  do cluster thing
-  """
 def build_closures():
-    adjacency_db = SqliteDict('adjacency_list.db')
+    adjacency_db = SqliteDict("adjacency_list.db")
 
     for i in adjacency_db.keys():
         for j in adjacency_db.keys():
@@ -43,8 +28,8 @@ def build_closures():
 
 
 def build_clusters():
-    cluster_db = SqliteDict('clusters.db')
-    adjacency_db = SqliteDict('adjacency_list.db')
+    cluster_db = SqliteDict("clusters.db")
+    adjacency_db = SqliteDict("adjacency_list.db")
 
     for key_node, adjacency_list in adjacency_db.items():
         if cluster_db.get(key_node): continue
@@ -61,6 +46,6 @@ def build_clusters():
 
 
 def get_node(node):
-    with SqliteDict('clusters.db') as cluster_db:
+    with SqliteDict("clusters.db") as cluster_db:
         cluster = cluster_db.get(node)
         return cluster[0] if cluster else node

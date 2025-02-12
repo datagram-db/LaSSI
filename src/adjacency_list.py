@@ -4,7 +4,7 @@ import csv
 # db = rocksdb.DB("adjacency_list.db", rocksdb.Options(create_if_missing=True)) # node key and corresponding url node value
 
 def process_conceptnet_csv(csv_file):
-    db = SqliteDict('adjacency_list.db')
+    db = SqliteDict("adjacency_list.db")
 
     with open(csv_file, "r") as f:
         reader = csv.reader(f)
