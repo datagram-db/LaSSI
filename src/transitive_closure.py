@@ -58,3 +58,9 @@ def build_clusters():
     cluster_db.commit()
     cluster_db.close()
     adjacency_db.close()
+
+
+def get_node(node):
+    with SqliteDict('clusters.db') as cluster_db:
+        cluster = cluster_db.get(node)
+        return cluster[0] if cluster else node
