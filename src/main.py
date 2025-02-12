@@ -1,5 +1,5 @@
-from src.ontology_generator import generate
-from src.config import config
+from ontology_generator import generate
+from config import config
 import argparse
 
 if __name__ == "__main__":
