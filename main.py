@@ -1,12 +1,13 @@
 from src.ontology_generator import generate
+from src.config import config
 import argparse
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    # parser = argparse.ArgumentParser()
+    #
+    # parser.add_argument("-c", "--conceptnet", type=str, required=True, help="Path to coneptnet csv file")
+    # parser.add_argument("-j", "--wiktionary", type=str, required=True, help="Path to wiktionary json file")
+    #
+    # args = parser.parse_args()
 
-    # Adding required arguments for paths
-    parser.add_argument("-c", "--conceptnet", type=str, required=True, help="Path to coneptnet csv file")
-    parser.add_argument("-j", "--wiktionary", type=str, required=True, help="Path to wiktionary json file")
-
-    args = parser.parse_args()
-    generate(args.conceptnet, args.wiktionary)
+    generate(config["conceptnet_csv"], config["wiktionary_json"], 3000)
