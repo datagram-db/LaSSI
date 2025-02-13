@@ -38,10 +38,10 @@ class ModelSearch:
     def searchInSet(self, lhs, rhsSet):
         foundImplication = False
         foundEquivalence = False
+        from LaSSI.Parmenides.TBox.ExpandConstituents import CasusHappening
         for rhs in rhsSet:
             from LaSSI.Parmenides.TBox.ExpandConstituents import test_pairwise_sentence_similarity
             val = test_pairwise_sentence_similarity(self.pairwise_similarity_cache, lhs, rhs, kb=self.kb, shift=False)
-            from LaSSI.Parmenides.TBox.ExpandConstituents import CasusHappening
             if (val == CasusHappening.EXCLUSIVES):
                 # val = test_pairwise_sentence_similarity(dict(), lhs, rhs, kb=self.kb, shift=False)
                 return val

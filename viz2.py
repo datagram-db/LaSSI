@@ -92,7 +92,7 @@ def create_dash_app(requests_pathname_prefix: str = None):
 
     server = flask.Flask(__name__)
     full_path = os.path.join(os.getcwd(), "catabolites", requests_pathname_prefix)
-    app = dash.Dash(__name__, server=server, requests_pathname_prefix=f"/{requests_pathname_prefix}/", external_stylesheets=[dbc.themes.BOOTSTRAP,dashvis.stylesheets.VIS_NETWORK_STYLESHEET])
+    app = dash.Dash(__name__, server=server, requests_pathname_prefix=f"/{requests_pathname_prefix}/", external_stylesheets=[dbc.themes.BOOTSTRAP])
     if not os.path.exists(full_path) or not os.path.isdir(full_path):
         return app
 

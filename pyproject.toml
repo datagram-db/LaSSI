@@ -46,7 +46,12 @@ dependencies = [
     "networkx==3.4.1",
     "plotnine",
     "sentence-transformers==2.6.0",
-    "matplotlib"
+    "matplotlib",
+    "dash",
+    "dash_table",
+    "dashviz",
+    "dash_bootstrap_components",
+    "flask"
 ]
 
 #[tool.scikit-build]

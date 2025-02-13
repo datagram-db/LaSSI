@@ -91,11 +91,19 @@ class SetOfSingletons(NodeEntryPoint):  # Graph node representing conjunction/di
         )
 
     def get_props(self, properties=None):
+        from LaSSI.ner.MergeSetOfSingletons import merge_properties
         if properties is None:
             properties = dict()
         for entity in self.entities:
-            properties |= entity.get_props(properties)
+            properties = merge_properties(properties, entity.get_props())
         return properties
+
+    def get_name(self):
+        # sorted_entities = sorted(self.entities, key=lambda x: float(dict(x.properties)['pos']))
+        sorted_entity_names = list(
+            map(lambda x: x.named_entity if hasattr(x, 'named_entity') else x.get_name(), self.entities))
+        return f" {self.type}".join(sorted_entity_names)
+
 
 
 def deserialize_NodeEntryPoint(data: dict) -> NodeEntryPoint:
@@ -161,6 +169,9 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
     type: str
     confidence: float
     kernel: Relationship = None
+
+    def get_name(self):
+        return self.named_entity
 
     def extract_properties(self, p):
         if ((self.properties is None) or len(self.properties) == 0) and self.kernel is None:
