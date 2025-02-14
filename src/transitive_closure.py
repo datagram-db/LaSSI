@@ -42,26 +42,40 @@ def DSU(adjacency_db):
 def floyd_warshall(adjacency_db):
     count = 0
     for i in adjacency_db.keys():
+        adjacency_list = adjacency_db[i]
         count += 1
+        j_idx = 0
         # print(count)
         if count % 1000 == 0: print(count)
-        for j in adjacency_db.keys():
-
-            if j not in adjacency_db[i]: continue
+        #for j in adjacency_db.keys():
+        #for j in adjacency_list:
+        while j_idx < len(adjacency_list):
+            j = adjacency_list[j_idx]
+            # if j not in adjacency_db[i]: continue
 
             # at this point, i -> j
 
-            for k in adjacency_db.keys():
-
-                if k not in adjacency_db[j]: continue
-                if i == k: continue # this prevents self loops (build_clusters accomplishes this)
+            adjacency_list_j = adjacency_db[j]
+            k_idx = 0
+            # for k in adjacency_db.keys():
+            while k_idx < len(adjacency_list_j):
+                k = adjacency_list_j[k_idx]
+                # if k not in adjacency_list_j: continue
+                if i == k:
+                    k_idx += 1
+                    continue # this prevents self loops (build_clusters accomplishes this)
 
                 # at this point, j -> k, hence i -> j -> k
 
-                if k in adjacency_db[i]: continue  ## not completely sure if this is necessary, it's to guard against duplicates
-                adjacency_list = adjacency_db[i]
+                if k in adjacency_list:
+                    k_idx += 1
+                    continue  ## not completely sure if this is necessary, it's to guard against duplicates
+
                 adjacency_list.append(k)
-                adjacency_db[i] = adjacency_list  # i -> k
+                k_idx += 1
+            j_idx += 1
+            adjacency_db[j] = adjacency_list_j
+        adjacency_db[i] = adjacency_list  # i -> k
                 # a later iteration will make this i <-> k (bijective)
 
 
