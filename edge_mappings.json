@@ -12,7 +12,6 @@
     "Entails": {"rel": "Entails", "relNegated": false},
     "EtymologicallyDerivedFrom": {"rel": "EtymologicallyDerivedFrom", "relNegated": false},
     "EtymologicallyRelatedTo": {"rel": "EtymologicallyRelatedTo", "relNegated": false},
-    "ExternalURL": {"rel": "ExternalURL", "relNegated": false},
     "FormOf": {"rel": "form_of", "relNegated": false},
     "HasA": {"rel": "HasA", "relNegated": false},
     "HasContext": {"rel": "HasContext", "relNegated": false},
