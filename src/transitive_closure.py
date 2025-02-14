@@ -1,11 +1,49 @@
 from sqlitedict import SqliteDict
 
 
+def find(parent, node):
+    if parent[node] != node:
+        parent[node] = find(parent, parent[node])
+    return parent[node]
+
+
+def union(parent, node1, node2):
+    root1 = find(parent, node1)
+    root2 = find(parent, node2)
+
+    # if roots r same then they were already merged
+    if root1 != root2:
+        parent[root2] = root1  # parenting one to the other, it doesnt matter which
+
+
+def DSU(adjacency_db):
+
+    parent = {node: node for node in adjacency_db.keys()}  # each node is its own parent
+
+    for node in adjacency_db.keys():
+        for neighbor in adjacency_db[node]:
+            union(parent, node, neighbor)
+
+    clusters = {}  # root -> set of connected nodes
+    for node in adjacency_db.keys():
+        root = find(parent, node)
+        if root not in clusters:
+            clusters[root] = set()
+        clusters[root].add(node)   # the same root node can be added several times so Set type is useful
+
+    for root, cluster in clusters.items():
+        cluster_list = list(cluster)
+
+        for node in cluster:
+            adjacency_db[node] = [neighbor for neighbor in cluster_list if neighbor != node]  # if check excludes self loop
+
+
+
 def floyd_warshall(adjacency_db):
     count = 0
     for i in adjacency_db.keys():
         count += 1
-        print(count)
+        # print(count)
         if count % 1000 == 0: print(count)
         for j in adjacency_db.keys():
 
@@ -25,7 +63,7 @@ def floyd_warshall(adjacency_db):
                 adjacency_list.append(k)
                 adjacency_db[i] = adjacency_list  # i -> k
                 # a later iteration will make this i <-> k (bijective)
-    return adjacency_db
+
 
 
 def build_closures():
