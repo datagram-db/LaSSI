@@ -7,7 +7,9 @@ __maintainer__ = "Giacomo Bergami"
 __email__ = "bergamigiacomo@gmail.com"
 __status__ = "Production"
 
+import copy
 from collections import defaultdict
+from copy import deepcopy
 
 from LaSSI.ner.node_functions import create_props_for_singleton
 
@@ -19,7 +21,7 @@ from LaSSI.structures.extended_fol.Sentences import FNot, FOr, FAnd, FUnaryPredi
 
 bogus_dst = FVariable(name="there", type="non_verb", specification=None, cop=None, id=-1)
 bogus_src = {"it"}
-discard_properties = {"end", "lemma", "begin", "kernel", "expl", "pos"}
+discard_properties = {"end", "lemma", "begin", "kernel", "expl", "pos", "root", "common", "number", "adv"}
 relative_pronouns = {"which","that", "who", "whom" }
 interrogative_pronouns = {"what", "which", "who", "whom", "whose"}
 demonstrative_pronouns = {"this", "these", "that", "those"}
@@ -36,21 +38,28 @@ def make_cop(entity) -> FVariable:
     elif isinstance(entity, str):
         return FVariable(name=entity, type="JJ", specification=None, cop=None, id=-1)
     else:
-        make_arg(entity[0])  # TODO: Will we ever have more than one cop for a given entity?
+        return make_arg(entity[0])  # TODO: Will we ever have more than one cop for a given entity?
 
 
 def make_arg(entity):
     if entity is None:
         return None
-    elif isinstance(entity, FVariable) or isinstance(entity, FBinaryPredicate) or isinstance(entity, FUnaryPredicate):
+    elif isinstance(entity, FVariable) or isinstance(entity, FBinaryPredicate) or isinstance(entity, FUnaryPredicate) or isinstance(entity, FNot) or isinstance(entity, FAnd) or isinstance(entity, FOr):
         return entity
     elif hasattr(entity, "kernel") and entity.kernel is not None:
         return rewrite_kernels(entity)
     props = entity if isinstance(entity, dict) else entity.get_props()
-    specifiaction = make_arg(props.pop("extra")[0]) if "extra" in props and props["extra"] is not None and ((not isinstance(props["extra"], tuple)) or len(props["extra"])==1) else None
+    specifiaction = None
+    if "extra" in props and props["extra"] is not None and (
+                (not isinstance(props["extra"], tuple)) or len(props["extra"]) == 1):
+        specifiaction = make_arg(props.pop("extra")[0])
     coplist = []
-    cop = make_cop(props["cop"]) if "cop" in props else None
+    cop =  None
+    if "cop" in props:
+        cop = make_cop(props.pop("cop"))
     if cop is None:
+        if "JJ" in props:
+            cop = make_cop(props.pop("JJ"))
         for k in props:
             if k.endswith("mod"):
                 coplist.append(make_cop(props[k]))
@@ -58,15 +67,15 @@ def make_arg(entity):
         cop = coplist[0]
     elif len(coplist) > 1:
         cop = tuple(coplist)
-    named_entity = props["named_entity"] if isinstance(entity, dict) else entity.get_name()  # TODO: Is this okay for getting the name of SetOfSingletons?
-    type = props["type"] if isinstance(entity, dict) else entity.type
+    named_entity = props.pop("named_entity", None) if isinstance(entity, dict) else entity.get_name()  # TODO: Is this okay for getting the name of SetOfSingletons?
+    type = props.pop("type", None) if isinstance(entity, dict) else entity.type
     if type != "GPE":
         named_entity = named_entity.lower()
-    props = dict()
-    for k, v in create_props_for_singleton(entity.get_props()):
-        if k not in discard_properties:
-            props[k] = v
-    return FVariable(name=named_entity, type=type, specification=specifiaction, cop=cop, id=entity.id, properties=frozenset(props.items()))
+    props2 = dict()
+    for k, v in props.items():
+        if k not in discard_properties and k not in {} and ((not isinstance(v, str)) or len(v)==0):
+            props2[k] = make_arg(v) if isinstance(v, Singleton) else v
+    return FVariable(name=named_entity, type=type, specification=specifiaction, cop=cop, id=entity.id, properties=frozenset(props2.items()))
 
 
 def make_and(entities):
@@ -170,10 +179,40 @@ def make_prop(src, rel, negated, score, properties, dst):
             if negated:
                 return make_not(make_prop(src, rel, False, score, properties, dst))
             else:
+                result = None
                 p = dict()
+                foundSingleton = Grouping.NONE
+                argument = None
+                forKey = None
                 for k, v in properties.items():
                     if k not in discard_properties:
-                        p[k] = v
+                        if isinstance(v, list) or isinstance(v, tuple):
+                            j = []
+                            for x in v:
+                                if (foundSingleton == Grouping.NONE) and isinstance(x, SetOfSingletons) and (
+                                        x.type != Grouping.NOT):
+                                    assert len(x.entities) == 1
+                                    foundSingleton = x.type
+                                    argument = x.entities[0]
+                                    forKey = k
+                                elif isinstance(x, str) or isinstance(x, Formula):
+                                    j.append(x)
+                                elif isinstance(x, Singleton):
+                                    j.append(make_arg(x))
+                                elif isinstance(x, SetOfSingletons):
+                                    if x.type == Grouping.NOT:
+                                        if isinstance(x.entities[0], Singleton):
+                                            j.append(make_not(make_arg(x.entities[0])))
+                                        else:
+                                            raise RuntimeError(f"Unknown argument type: {x}")
+                                    else:
+                                        raise RuntimeError(f"Unknown argument type: {x}")
+                                else:
+                                    raise RuntimeError(f"Unknown argument type: {x}")
+                            if len(j) > 0:
+                                p[k] = tuple(j)
+                        else:
+                            p[k] = v
                 src = make_arg(src)
                 p["src"] = []
                 p["dst"] = []
@@ -187,13 +226,26 @@ def make_prop(src, rel, negated, score, properties, dst):
                 del prop["dst"]
                 if src.name.lower() in bogus_src and rel.lower() == "be":
                     if src.cop is None:
-                        return make_unary(rel, dst, score, prop)
+                        result = make_unary(rel, dst, score, prop)
                     else:
                         src = src.cop
-                if dst == bogus_dst:
-                    return make_unary(rel, src, score, prop)
+                if result is None:
+                    if dst == bogus_dst:
+                        result = make_unary(rel, src, score, prop)
+                    else:
+                        result = make_binary(rel, src, dst, score, prop)
+                if foundSingleton == Grouping.NONE:
+                    return result
                 else:
-                    return make_binary(rel, src, dst, score, prop)
+                    dcp = copy.deepcopy(prop)
+                    dcp[forKey] = (argument,)
+                    if foundSingleton == Grouping.AND:
+                        return make_and([result, make_prop(src, rel, negated, score, dcp, dst)])
+                    elif foundSingleton == Grouping.OR:
+                        return make_or([result, make_prop(src, rel, negated, score, dcp, dst)])
+                    else:
+                        n = dst.type.name
+                        raise RuntimeError(f"Unknown source type: {n}")
     else:
         if negated:
             return make_not(make_prop(src, rel, False, score, properties, None))

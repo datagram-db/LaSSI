@@ -205,7 +205,7 @@ class FVariable(Formula):
             name = "\\textsf{" + name + "}"
 
         if self.specification is not None:
-            name += (" [of] " + str(self.specification))
+            name += (" [\\textup{of}] " + str(self.specification))
             name = "\\left[" + name + "\\right]^{\\texttt{" + str(self.id) + "}}"
         else:
             name = "{" + name + "}^{\\texttt{" + str(self.id) + "}}"
