@@ -5,7 +5,7 @@ from LaSSI.LaSSI import LaSSI
 
 if __name__ == '__main__':
     dataset_name = "test_sentences/orig/all_newcastle.yaml"
-    fuzzyDBs = "connection.yaml"
+    fuzzyDBs = "connection_giacomo.yaml"
 
     if len(sys.argv) > 1:
         dataset_name = sys.argv[1]

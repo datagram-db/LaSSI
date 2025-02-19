@@ -47,7 +47,7 @@ def make_arg(entity):
     elif hasattr(entity, "kernel") and entity.kernel is not None:
         return rewrite_kernels(entity)
     props = entity if isinstance(entity, dict) else entity.get_props()
-    specification = props["extra"] if "extra" in props else None
+    specifiaction = make_arg(props.pop("extra")[0]) if "extra" in props and props["extra"] is not None and ((not isinstance(props["extra"], tuple)) or len(props["extra"])==1) else None
     coplist = []
     cop = make_cop(props["cop"]) if "cop" in props else None
     if cop is None:
@@ -66,7 +66,7 @@ def make_arg(entity):
     for k, v in create_props_for_singleton(entity.get_props()):
         if k not in discard_properties:
             props[k] = v
-    return FVariable(name=named_entity, type=type, specification=specification, cop=cop, id=entity.id, properties=frozenset(props.items()))
+    return FVariable(name=named_entity, type=type, specification=specifiaction, cop=cop, id=entity.id, properties=frozenset(props.items()))
 
 
 def make_and(entities):

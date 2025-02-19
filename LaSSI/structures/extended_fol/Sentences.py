@@ -168,6 +168,23 @@ def isStringUnresolved(s):
     else:
         return False
 
+def print_proprieties(proprieties, cop=None):
+    if isinstance(proprieties, dict) or isinstance(proprieties, defaultdict):
+        proprieties = proprieties.items()
+    L = []
+    for k, v in proprieties:
+        k = k.replace("_", "\\_").replace(" ", "\; ")
+        if isinstance(v, list) or isinstance(v, tuple):
+            for x in v:
+                L.append("\\texttt{" + str(k) + "}: " + str(x) if not isinstance(x, str) else x.replace("_", "\\_"))
+        else:
+            L.append("\\texttt{" + str(k) + "}: " + str(v) if not isinstance(v, str) else v.replace("_", "\\_"))
+    if cop is not None:
+        L.append("\\texttt{JJ}: " + str(cop))
+    if len(L) > 0:
+        return "_{" + ",\; ".join(L) + "}"
+    else:
+        return ""
 
 @dataclass(order=True, frozen=True, eq=True)
 class FVariable(Formula):
@@ -181,24 +198,25 @@ class FVariable(Formula):
     matched: bool = field(default_factory=lambda: False)
 
     def __str__(self):
-        s = self.name
-        if s is None:
-            s = "?"
+        name = self.name
+        if name is None:
+            name = "?"
         else:
-            s = "\\textsf{" + s + "}"
-        if self.specification is not None and len(self.specification) > 0:
-            s += (" [of] " + str(self.specification))
-            s = "\\left[" + s + "\\right]^{\\texttt{" + str(self.id) + "}}"
+            name = "\\textsf{" + name + "}"
+
+        if self.specification is not None:
+            name += (" [of] " + str(self.specification))
+            name = "\\left[" + name + "\\right]^{\\texttt{" + str(self.id) + "}}"
         else:
-            s = "{" + s + "}^{\\texttt{" + str(self.id) + "}}"
-        L = []
-        if self.cop is not None:
-            L.append("\\texttt{JJ}: " + str(self.cop))
-        for k, v in self.properties:
-            L.append("\\texttt{" + str(k) + "}: " + str(v))
-        if len(L) > 0:
-            s += "_{" + ",\; ".join(L) + "}"
-        return s
+            name = "{" + name + "}^{\\texttt{" + str(self.id) + "}}"
+        # L = []
+        # if self.cop is not None:
+        #     L.append("\\texttt{JJ}: " + str(self.cop))
+        # for k, v in self.properties:
+        #     L.append("\\texttt{" + str(k) + "}: " + str(v))
+        # if len(L) > 0:
+        #     s += "_{" + ",\; ".join(L) + "}"
+        return name + print_proprieties(self.properties, self.cop)
 
     def isOntoUnmatched(self):
         if isStringUnresolved(self.name): return True
@@ -399,19 +417,19 @@ class FUnaryPredicate(Formula):
     matched: bool = field(default_factory=lambda: False)
 
     def __str__(self):
-        s = self.rel
-        if s is None:
-            s = "?"
+        name = self.rel
+        if name is None:
+            name = "?"
         else:
-            s = "\\textit{" + s + "}"
-        if self.arg is not None:
-            s += ("(" + str(self.arg) + ")")
-        L = []
-        if len(self.properties) > 0:
-            for k, v in self.properties:
-                L.append("\\texttt{" + str(k) + "}: " + str(v))
-            s += "_{" + ",\; ".join(L) + "}"
-        return s
+            name = "\\textit{" + name + "}"
+        # if self.arg is not None:
+        #     s +=
+        # L = []
+        # if len(self.properties) > 0:
+        #     for k, v in self.properties:
+        #         L.append("\\texttt{" + str(k) + "}: " + str(v))
+        #     s += "_{" + ",\; ".join(L) + "}"
+        return name + print_proprieties(self.properties) + (("(" + str(self.arg) + ")") if self.arg is not None else "(?)")
 
     def isOntoUnmatched(self):
         if isStringUnresolved(self.rel): return True
@@ -537,12 +555,12 @@ class FBinaryPredicate(Formula):
     matched: bool = field(default_factory=lambda: False)
 
     def __str__(self):
-        s = self.rel
-        if s is None:
-            s = "?("
+        name = self.rel
+        if name is None:
+            name = "?"
         else:
-            s = "\\textit{" + s + "}"
-            s += "("
+            name = "\\textit{" + name + "}"
+        s = "("
         if self.src is not None:
             s += (str(self.src) + ",")
         else:
@@ -551,12 +569,7 @@ class FBinaryPredicate(Formula):
             s += (str(self.dst) + ")")
         else:
             s += "?)"
-        if self.properties is not None and len(self.properties) > 0:
-            L = []
-            for k, v in self.properties:
-                L.append("\\texttt{" + str(k) + "}: " + str(v))
-            s += "_{" + ",\; ".join(L) + "}"
-        return s
+        return name + print_proprieties(self.properties) +s
 
     def isOntoUnmatched(self):
         if isStringUnresolved(self.rel): return True
@@ -973,7 +986,7 @@ def formula_from_dict(f: Union[dict, str]):
         name = str(f["name"]) if "name" in f and f["name"] is not None else None
         type = str(f["type"]) if "name" in f and f["type"] is not None else None
         id = int(f["id"]) if "id" in f and f["id"] is not None else -1
-        specification = str(f["specification"]) if "specification" in f and f["specification"] is not None else None
+        specification = formula_from_dict(f["specification"]) if "specification" in f and f["specification"] is not None else None
         cop = formula_from_dict(f["cop"]) if "cop" in f else None
         return FVariable(name=name, type=type, specification=specification, cop=cop, id=id)
     if meta == "FUnaryPredicate":
