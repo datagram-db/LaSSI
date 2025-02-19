@@ -61,7 +61,7 @@ def create_existential(edges, nodes):
                     # If node has an extra, make as target
                     new_target = node_props['extra'][0]
                     node_props.pop('extra')
-                    node = Singleton.update_node_props(node, node_props)
+                    node = node.update_node_props(node_props)
 
                 edges.append(Relationship(
                     source=create_existential_node(),
@@ -556,7 +556,7 @@ def assign_kernel(edges, kernel, negations, nodes, root_sentence_id, found_propo
 
             # Check if "action" property is now redundant
             if isinstance(edge_source, Singleton) and 'action' in dict(edge_source.properties) and lemmatize_verb(dict(edge_source.properties)['action']) == lemmatize_verb(edge_label.named_entity):
-                edge_source = Singleton.remove_prop(edge_source, 'action')
+                edge_source = edge_source.remove_prop('action')
 
             if edge.isNegated:
                 for name in negations:
@@ -619,14 +619,14 @@ def assign_kernel(edges, kernel, negations, nodes, root_sentence_id, found_propo
 
     # Check if source or target have "case" property, if so remove it (to be added to properties of the kernel later)
     # TODO: Check within SetOfSingletons, if any elements have a case, then add to properties...
-    if case_in_props(Singleton.get_props(kernel.source)):
+    if case_in_props(kernel.source.get_props()):
         kernel = Relationship(
             source=create_existential_node(),
             target=kernel.target,
             edgeLabel=kernel.edgeLabel,
             isNegated=kernel.isNegated
         )
-    if case_in_props(Singleton.get_props(kernel.target)):
+    if kernel.target is not None and case_in_props(kernel.target.get_props()):
         if isinstance(kernel.target, SetOfSingletons):
             chosen_target = None
             for node in kernel.target.entities:
@@ -637,7 +637,7 @@ def assign_kernel(edges, kernel, negations, nodes, root_sentence_id, found_propo
             for node in kernel.target.entities:
                 if node != chosen_target:
                     chosen_new_entities.append(node)
-            nodes[kernel.target.id] = SetOfSingletons.update_entities(kernel.target, chosen_new_entities)
+            nodes[kernel.target.id] = kernel.target.update_entities(chosen_new_entities)
 
             # new_kernels = [
             #     Singleton(
@@ -797,17 +797,20 @@ def is_kernel_in_props(node, check_jj=True):
 def find_action_ed_node_in_kernel(kernel):
     if isinstance(kernel, Singleton):
         if kernel.kernel is not None:
-            props = Singleton.get_props(kernel.kernel.source)
-            if kernel.kernel.source is not None and ('actioned' in props or 'action' in props):
-                return kernel.kernel.source
+            if kernel.kernel.source is not None:
+                props = kernel.kernel.source.get_props()
+                if 'actioned' in props or 'action' in props:
+                    return kernel.kernel.source
 
-            props = Singleton.get_props(kernel.kernel.target)
-            if kernel.kernel.target is not None and ('actioned' in props or 'action' in props):
-                return kernel.kernel.target
+            if kernel.kernel.target is not None:
+                props = kernel.kernel.target.get_props()
+                if 'actioned' in props or 'action' in props:
+                    return kernel.kernel.target
 
-            props = Singleton.get_props(kernel.kernel.edgeLabel)
-            if kernel.kernel.edgeLabel is not None and ('actioned' in props or 'action' in props):
-                return kernel.kernel.edgeLabel
+            if kernel.kernel.edgeLabel is not None:
+                props = kernel.kernel.edgeLabel.get_props()
+                if 'actioned' in props or 'action' in props:
+                    return kernel.kernel.edgeLabel
         elif kernel is not None:
             if 'actioned' in dict(kernel.properties) or 'action' in dict(kernel.properties):
                 return kernel
@@ -822,13 +825,13 @@ def rewrite_action_ed_node(node, action_ed_node, negations):
         action_ed_node_props['actioned']) if actioned else lemmatize_verb(action_ed_node_props['action'])
 
     action_ed_node_props.pop('actioned' if actioned else 'action')
-    action_ed_node = Singleton.update_node_props(action_ed_node, action_ed_node_props)
+    action_ed_node = action_ed_node.update_node_props(action_ed_node_props)
 
     node_props = dict(node.properties)
     node_actioned = 'actioned' in node_props
     if 'actioned' in node_props or 'action' in node_props:
         node_props.pop('actioned' if node_actioned else 'action')
-        node = Singleton.update_node_props(node, node_props)
+        node = node.update_node_props(node_props)
     # if node.id != action_ed_node.id:
     #     node_props = dict(node.properties)
     #     node_props.pop('actioned' if actioned else 'action')

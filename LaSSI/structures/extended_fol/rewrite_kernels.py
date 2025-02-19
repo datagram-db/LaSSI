@@ -9,6 +9,8 @@ __status__ = "Production"
 
 from collections import defaultdict
 
+from LaSSI.ner.node_functions import create_props_for_singleton
+
 # from scipy._lib.array_api_compat.array_api_compat import numpy
 
 from LaSSI.structures.internal_graph.EntityRelationship import NodeEntryPoint, Singleton, SetOfSingletons, Grouping
@@ -32,19 +34,19 @@ def make_cop(entity) -> FVariable:
     if entity is None:
         return None
     elif isinstance(entity, str):
-        return FVariable(name=entity, type="JJ", specification=None, cop=None)
+        return FVariable(name=entity, type="JJ", specification=None, cop=None, id=-1)
     else:
-        return make_arg(entity)
+        make_arg(entity[0])  # TODO: Will we ever have more than one cop for a given entity?
 
 
 def make_arg(entity):
     if entity is None:
         return None
-    elif isinstance(entity, FVariable) or isinstance(entity, FBinaryPredicate):
+    elif isinstance(entity, FVariable) or isinstance(entity, FBinaryPredicate) or isinstance(entity, FUnaryPredicate):
         return entity
     elif hasattr(entity, "kernel") and entity.kernel is not None:
         return rewrite_kernels(entity)
-    props = entity if isinstance(entity, dict) else dict(entity.properties)
+    props = entity if isinstance(entity, dict) else entity.get_props()
     specification = props["extra"] if "extra" in props else None
     coplist = []
     cop = make_cop(props["cop"]) if "cop" in props else None
@@ -56,12 +58,12 @@ def make_arg(entity):
         cop = coplist[0]
     elif len(coplist) > 1:
         cop = tuple(coplist)
-    named_entity = props["named_entity"] if isinstance(entity, dict) else entity.named_entity
+    named_entity = props["named_entity"] if isinstance(entity, dict) else entity.get_name()  # TODO: Is this okay for getting the name of SetOfSingletons?
     type = props["type"] if isinstance(entity, dict) else entity.type
     if type != "GPE":
         named_entity = named_entity.lower()
     props = dict()
-    for k, v in entity.properties:
+    for k, v in create_props_for_singleton(entity.get_props()):
         if k not in discard_properties:
             props[k] = v
     return FVariable(name=named_entity, type=type, specification=specification, cop=cop, id=entity.id, properties=frozenset(props.items()))
@@ -102,7 +104,7 @@ def make_unary(rel, dst, score, prop):
 
 
 def make_binary(rel, src, dst, score, prop):
-    if (rel == "be" and (dst is None or dst.type == "existential")) or dst is None:
+    if (rel == "be" and (dst is None or (not isinstance(dst, FBinaryPredicate) and not isinstance(dst, FUnaryPredicate) and dst.type == "existential"))) or dst is None:
         return make_unary(rel, src, score, prop)
     if rel == "have":  # TODO: generalise
         if src is not None and (
@@ -234,10 +236,10 @@ def src_make_prop(src, rel, negated, score, properties, dst):
 def rewrite_kernels(obj: Singleton) -> Formula:
     main_pop = obj.kernel
     properties = obj.properties
-    rel = main_pop.edgeLabel.named_entity
+    rel = main_pop.edgeLabel.named_entity if main_pop.edgeLabel is not None else "None"  # TODO: Do we want string "None" or None? (e.g. when we have no verb?)
     negated = main_pop.isNegated
 
-    score = main_pop.edgeLabel.confidence
+    score = main_pop.edgeLabel.confidence if main_pop.edgeLabel is not None else 1
     if main_pop.source is not None:
         score *= main_pop.source.confidence
     if main_pop.target is not None:

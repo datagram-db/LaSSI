@@ -54,7 +54,8 @@ class CreateFinalKernel:
                     if (
                             (not is_label_verb(first_word) and re.search(r"\b" + p + r"\b",
                                                                          edge.edgeLabel.named_entity) and p != edge.edgeLabel.named_entity and not case_in_props(
-                                dict(edge.target.properties)))
+                                dict(edge.target.properties))
+                            )
                             or
                             (edge.edgeLabel.named_entity.endswith(
                                 'ing') and not self.node_functions.check_node_coordinations_for_auxiliary(edge,
@@ -63,7 +64,7 @@ class CreateFinalKernel:
                         found_prototypical_prepositions = True
 
                         # Add root property to target
-                        self.nodes[edge.target.id] = Singleton.add_root_property(edge.target)
+                        self.nodes[edge.target.id] = edge.target.add_root_property()
                         new_edge = Relationship(
                             source=edge.source,
                             target=self.nodes[edge.target.id],
@@ -79,7 +80,7 @@ class CreateFinalKernel:
                 if not found_prototypical_prepositions and is_label_verb(
                         edge.edgeLabel.named_entity) and is_kernel_in_props(
                     edge.source) and edge.target.type != 'existential':
-                    self.nodes[edge.target.id] = Singleton.strip_root_properties(edge.target)
+                    self.nodes[edge.target.id] = edge.target.strip_root_properties()
                     new_edge = Relationship(
                         source=edge.source,
                         target=self.nodes[edge.target.id],
@@ -166,7 +167,7 @@ class CreateFinalKernel:
                     self.nodes[node_id] = kernel
 
                 # Remove 'root' property from nodes
-                self.nodes = {k: Singleton.strip_root_properties(v) if v.id in descendant_node_ids else v for k, v in
+                self.nodes = {k: v.strip_root_properties() if v.id in descendant_node_ids else v for k, v in
                               self.nodes.items()}
 
                 # Re-instantiate new node properties across all relationships and new 'kernel' node
@@ -216,16 +217,16 @@ class CreateFinalKernel:
         source_props = dict(kernel.kernel.source.properties) if isinstance(kernel.kernel.source, Singleton) else None
         if source_props is not None and 'adv' in source_props and source_props['adv']:
             new_edge_label_name = f"{kernel.kernel.edgeLabel.named_entity} {source_props['adv']}"
-            edge_label = Singleton.update_name(kernel.kernel.edgeLabel, new_edge_label_name)
-            edge_source = Singleton.remove_prop(kernel.kernel.source, 'adv')
+            edge_label = kernel.kernel.edgeLabel.update_name(new_edge_label_name)
+            edge_source = kernel.kernel.source.remove_prop('adv')
 
-            kernel = Singleton.update_kernel(kernel, edge_source, "source")
-            kernel = Singleton.update_kernel(kernel, edge_label, "edgeLabel")
+            kernel = kernel.update_kernel(edge_source, "source")
+            kernel = kernel.update_kernel(edge_label, "edgeLabel")
         else:
             if kernel.kernel.source.type == "SENTENCE":
-                kernel = Singleton.update_kernel(kernel, self.check_for_adv(kernel.kernel.source), "source")
+                kernel = kernel.update_kernel(self.check_for_adv(kernel.kernel.source), "source")
             elif kernel.kernel.target is not None and kernel.kernel.target.type == "SENTENCE":
-                kernel = Singleton.update_kernel(kernel, self.check_for_adv(kernel.kernel.target), "target")
+                kernel = kernel.update_kernel(self.check_for_adv(kernel.kernel.target), "target")
 
             properties_to_keep = defaultdict(list)
             for key in dict(kernel.properties):
@@ -239,7 +240,7 @@ class CreateFinalKernel:
                         else:
                             properties_to_keep[key].append(node)
 
-            kernel = Singleton.update_node_props(kernel, properties_to_keep)
+            kernel = kernel.update_node_props(properties_to_keep)
 
         return kernel
 
@@ -283,7 +284,7 @@ class CreateFinalKernel:
                                     # TODO: Might need to be recursive?
                                     entity, key_to_use = self.rewrite_node_logically(kernel, entity, defaultdict(list), False, True)
                                     rewritten_entities.append(entity)
-                                prop_node = SetOfSingletons.update_entities(prop_node, rewritten_entities)
+                                prop_node = prop_node.update_entities(rewritten_entities)
 
                                 if key_to_use is not None:
                                     # Create new SetOfSingletons encompassing previous key
@@ -295,7 +296,7 @@ class CreateFinalKernel:
                                         max=max(rewritten_entities, key=lambda x: x.max).max,
                                         confidence=1
                                     ))
-                                    Singleton.update_node_props(kernel, properties_to_add)
+                                    kernel.update_node_props(properties_to_add)
                                 else:
                                     properties_to_add[key] = properties_key_
                 else:
@@ -307,11 +308,11 @@ class CreateFinalKernel:
 
         # Rewrite source and target properties
         if hasattr(kernel, "kernel") and kernel.kernel is not None:
-            kernel = Singleton.update_kernel(kernel, self.rewrite_properties_logically(kernel.kernel.source), 'source') if kernel.kernel.source is not None else kernel
-            kernel = Singleton.update_kernel(kernel, self.rewrite_properties_logically(kernel.kernel.target), 'target') if kernel.kernel.target is not None else kernel
+            kernel = kernel.update_kernel(self.rewrite_properties_logically(kernel.kernel.source), 'source') if kernel.kernel.source is not None else kernel
+            kernel = kernel.update_kernel(self.rewrite_properties_logically(kernel.kernel.target), 'target') if kernel.kernel.target is not None else kernel
 
         if len(properties_to_add) > 0 or force_update:
-            return Singleton.update_node_props(kernel, properties_to_add)
+            return kernel.update_node_props(properties_to_add)
         else:
             return kernel
 
@@ -356,12 +357,12 @@ class CreateFinalKernel:
                                         'extra' in node_props) else [node_to_add]
                         elif logical_type is not None:
                             node_props["type"] = logical_type  # TODO: node_props[key] and properties[key] would be duplicated, so use "type" instead?
-                        prop_node = Singleton.update_node_props(prop_node, node_props)
+                        prop_node = prop_node.update_node_props(node_props)
                     properties[type_key].append(prop_node if number_value is None or (number_value is not None and not hasattr(selected_function, "hasNumber")) else number_value)  # Check if the rewriting function hasNumber, and append the number instead of the entire node
                 elif selected_function.attachTo == "Kernel":
                     if logical_type is not None:
                         node_props["type"] = logical_type
-                        prop_node = Singleton.update_node_props(prop_node, node_props)
+                        prop_node = prop_node.update_node_props(node_props)
                     properties[type_key].append(prop_node)
 
         if return_key:
@@ -384,13 +385,13 @@ class CreateFinalKernel:
                 if isinstance(prop_node, Singleton):
                     # TODO: Do we consider edgeLabel too?
                     if kernel.kernel.source.id == prop_node.id:
-                        kernel = Singleton.update_kernel(kernel, prop_node, "source")
+                        kernel = kernel.update_kernel(prop_node, "source")
                         keys_to_remove.append(key)
                     elif kernel.kernel.target is not None and kernel.kernel.target.id == prop_node.id:
                         if key == 'INSTRUMENT':
-                            kernel = Singleton.update_kernel(kernel, None, "target")
+                            kernel = kernel.update_kernel(None, "target")
                         else:
-                            kernel = Singleton.update_kernel(kernel, prop_node, "target")
+                            kernel = kernel.update_kernel(prop_node, "target")
                             keys_to_remove.append(key)
         for remove_key in keys_to_remove:
             force_update = True
@@ -501,7 +502,7 @@ class CreateFinalKernel:
 
         if new_kernel is not None:
             if len(properties_to_keep) > 0:
-                return Singleton.update_node_props(new_kernel, properties_to_keep)
+                return new_kernel.update_node_props(properties_to_keep)
             else:
                 return new_kernel
         else:
@@ -521,8 +522,8 @@ class CreateFinalKernel:
                         new_kernel_properties = defaultdict(list)
                         new_kernel_properties[kernel.kernel.target.type].append(kernel.kernel.target)
                         new_kernel_properties = merge_properties(dict(kernel.properties), new_kernel_properties)
-                        kernel = Singleton.update_node_props(kernel, new_kernel_properties)
-                        kernel = Singleton.update_kernel(kernel, properties_key[0], "target")
+                        kernel = kernel.update_node_props(new_kernel_properties)
+                        kernel = kernel.update_kernel(properties_key[0], "target")
                         break
 
         # Check kernel positions
@@ -563,13 +564,13 @@ class CreateFinalKernel:
                 node_props = merge_properties(dict(kernel.kernel.target.properties),
                                               {kernel.kernel.source.type: kernel.kernel.source})
                 root_id = kernel.kernel.target.id
-                self.nodes[root_id] = Singleton.update_node_props(kernel.kernel.target, node_props)
+                self.nodes[root_id] = kernel.kernel.target.update_node_props(node_props)
                 create_existential(new_edges, {0: self.nodes[kernel.kernel.target.id]})
             elif kernel.kernel.target.type.startswith('JJ') and kernel.kernel.source.type == 'ENTITY':
                 node_props = merge_properties(dict(kernel.kernel.source.properties),
                                               {kernel.kernel.target.type: kernel.kernel.target})
                 root_id = kernel.kernel.source.id
-                self.nodes[root_id] = Singleton.update_node_props(kernel.kernel.source, node_props)
+                self.nodes[root_id] = kernel.kernel.source.update_node_props(node_props)
                 create_existential(new_edges, {0: self.nodes[kernel.kernel.target.id]})
 
             kernel, edge_to_loop, acl_relcl_map = create_sentence_obj(
@@ -641,7 +642,7 @@ class CreateFinalKernel:
                                         not re.search(r"\b" + value + r"\b", kernel.kernel.edgeLabel.named_entity)
                                 ) or not isinstance(value, str) or kernel.kernel.edgeLabel is None):
                                     inner_properties_to_keep[inner_key] = value
-                            properties_to_keep[key].append(Singleton.update_node_props(node, inner_properties_to_keep))
+                            properties_to_keep[key].append(node.update_node_props(inner_properties_to_keep))
                         else:
                             properties_to_keep[key].append(node)
 

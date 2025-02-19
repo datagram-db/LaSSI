@@ -17,7 +17,7 @@ Alice is playing but not in Newcastle ⇒ play(Alice, NOT(Newcastle[(6:in)]))
 There is traffic in the Newcastle city centre ⇒ be(traffic, ?1)[(SPACE:Newcastle[(extra:city centre), (type:stay in place), (det:the)])]
 In the Newcastle city centre there is traffic ⇒ be(traffic, ?5)[(SPACE:Newcastle[(extra:city centre), (type:stay in place), (det:the)])]
 There is traffic but not in the Newcastle city centre ⇒ be(traffic, ?4)[(SPACE:AND(NOT(Newcastle[(extra:city centre), (type:stay in place), (det:the)])))]
-Newcastle city centre is trafficked ⇒ traffic(?2[(subjpass:subjpass)], None)[(GPE:Newcastle[(extra:city centre)])]
+Newcastle city centre is trafficked ⇒ traffic(?2, None)[(GPE:Newcastle[(extra:city centre)])]
 It is busy in Newcastle ⇒ be(It, busy)[(SPACE:Newcastle[(type:stay in place)])]
 Saturdays have usually busy city centers ⇒ have(Saturdays, city centers[(JJ:busy[(advmod:usually)])])
 In Newcastle city center on saturdays, traffic is flowing ⇒ flow(traffic, None)[(TIME:saturdays[(type:defined)]), (SPACE:Newcastle[(type:stay in place), (extra:city center)])]
@@ -27,19 +27,19 @@ Newcastle city centre has traffic ⇒ have(Newcastle[(extra:city centre)], traff
 Newcastle city center does not have traffic ⇒ NOT(have(Newcastle[(extra:city center)], traffic))
 Newcastle has traffic but not in the city centre ⇒ have(Newcastle, traffic)[(SPACE:AND(NOT(city centre[(type:stay in place), (det:the)])))]
 Newcastle city center does not have traffic but Newcastle has traffic ⇒ be(Newcastle, ?7)[(AND:[Newcastle, NOT(have)])]
-The busy Newcastle city centre is closed for traffic ⇒ close(?9, Newcastle[(extra:city centre), (det:The), (amod:busy)])[(AIM_OBJECTIVE:traffic[(subjpass:subjpass), (8:for)])]
+The busy Newcastle city centre is closed for traffic ⇒ close(?9, Newcastle[(extra:city centre), (det:The), (amod:busy)])[(AIM_OBJECTIVE:traffic[(8:for)])]
 
 
 // Cat and Mouse
 The cat eats the mouse ⇒ eat(cat[(det:The)], mouse[(det:the)])
-The mouse is eaten by the cat ⇒ eat(cat[(subjpass:subjpass), (det:the), (5:by)], mouse[(det:The)])
+The mouse is eaten by the cat ⇒ eat(cat[(det:the), (5:by)], mouse[(det:The)])
 The mouse eats the cat ⇒ eat(mouse[(det:The)], cat[(det:the)])
-The cat is eaten by the mouse ⇒ eat(mouse[(subjpass:subjpass), (det:the), (5:by)], cat[(det:The)])
+The cat is eaten by the mouse ⇒ eat(mouse[(det:the), (5:by)], cat[(det:The)])
 The cat doesn't eat the mouse ⇒ NOT(eat(cat[(det:The)], mouse[(det:the)]))
 The mouse doesn't eat the cat ⇒ NOT(eat(mouse[(det:The)], cat[(det:the)]))
 
 The cat eats ⇒ eat(cat[(det:The)], ?1)
-The cat is eaten ⇒ eat(?2[(subjpass:subjpass)], cat[(det:The)])
+The cat is eaten ⇒ eat(?2, cat[(det:The)])
 The cat snores ⇒ snore(cat[(det:The)], None)
 
 
@@ -200,7 +200,7 @@ a family room in most homes ⇒ be(family room[(det:a)], ?3)[(SPACE:homes[(amod:
 washing ones hair ⇒ wash(?5, ones)[(ENTITY:hair)]
 four light years from the Earth ⇒ be(years[(amod:light), (nummod:four)], ?6)[(PROVENANCE:Earth[(det:the), (4:from)])]
 you get your turn ⇒ get(you, turn[(nmod_poss:your)])
-a service plan will be selected ⇒ select(?7[(subjpass:subjpass)], service plan[(det:a)])
+a service plan will be selected ⇒ select(?7, service plan[(det:a)])
 close the curtains ⇒ be(curtains[(det:the), (advmod:close)], ?9)
 Lizards, snakes, turtles and dinosaurs ⇒ be(AND(Lizards[(punct:,)], snakes[(punct:,)], turtles, dinosaurs), ?10)
 The capital city of Ohio ⇒ be(capital city[(extra:Ohio[(4:of)]), (det:The)], ?11)
