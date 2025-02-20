@@ -92,7 +92,7 @@ def make_not(param):
 
 def make_unary(rel, dst, score, prop):
     if rel == "be":  # TODO: generalise
-        if dst is not None and dst.cop is not None:  # TODO: generalise
+        if dst is not None and dst.cop is not None and (prune_from_cop(dst).type != "JJ"):  # TODO: generalise
             return make_binary("have", prune_from_cop(dst), dst.cop, score, prop)
         if dst is not None and (
                 dst.type == "DATE" or dst.type == "GPE" or dst.type == "LOC") and dst.cop is not None:  # TODO: generalise
