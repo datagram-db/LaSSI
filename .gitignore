@@ -7,3 +7,4 @@
 *.pyc
 /connection_giacomo.yaml
 _trial_temp/
+/catabolites_viz/

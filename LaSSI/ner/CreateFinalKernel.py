@@ -2,6 +2,7 @@ import itertools
 import re
 import string
 from collections import defaultdict
+from types import SimpleNamespace
 
 import numpy
 
@@ -12,7 +13,7 @@ from LaSSI.ner.node_functions import create_props_for_singleton, get_min_positio
 from LaSSI.ner.string_functions import is_label_verb, check_semi_modal
 from LaSSI.structures.internal_graph.EntityRelationship import Singleton, SetOfSingletons, Relationship, Grouping
 from LaSSI.structures.kernels.Sentence import is_kernel_in_props, create_edge_kernel, create_existential, \
-    is_node_in_kernel_nodes, create_sentence_obj, case_in_props, find_action_ed_node_in_kernel, \
+    is_node_in_kernel_nodes, create_sentence, case_in_props, find_action_ed_node_in_kernel, \
     rewrite_action_ed_node, get_prepositions
 
 
@@ -27,21 +28,180 @@ class CreateFinalKernel:
         self.node_functions = node_functions
 
     def constructSentence(self) -> Singleton:
-        from LaSSI.structures.kernels.Sentence import create_sentence_obj
+        from LaSSI.structures.kernels.Sentence import create_sentence
 
-        found_proposition_labels = {}
+        # Phase 1
+        new_edges, true_targets, found_preposition_labels  = self.get_kernel_edges()  # Get list of edges to be used for kernel
+
+        # Phase 2
+        filtered_top_node_ids = self.get_topological_root_node_ids(new_edges, true_targets)
+
+        # Phase 3
+        used_edges = set()
+        acl_relcl_map = dict()
+        position_pairs = self.get_position_pairs()
+        for node_id in filtered_top_node_ids:
+            loop_settings = SimpleNamespace(shouldLoop=True, edgeForKernel=None, previousKernel=None)
+            while loop_settings.shouldLoop:
+                descendant_node_ids = self.node_functions.node_bfs(new_edges, node_id)
+
+                # Ensure the "descendant nodes" are in the edge, and not in used_edges (previous loop), unless we have preposition labels
+                filtered_edges = [
+                    x for x in new_edges if
+                    # Edge source and target are in descendent nodes OR target has preposition label
+                    (
+                        (x.source.id in descendant_node_ids and x.target.id in descendant_node_ids) or
+                        (x.target.id in found_preposition_labels)
+                    )
+                    # Edge source and target are NOT in used edges from previous loop OR they both are and we have preposition labels
+                    and
+                    (
+                        (x.source.id, x.target.id) not in used_edges or
+                        ((x.source.id, x.target.id) in used_edges and len(found_preposition_labels) > 0)
+                    )
+                    # Edge target is not equal to current root node in loop and target is not a verb
+                    and not (x.target.id == node_id and x.target.type == 'verb')
+                ]
+
+                # If we have an edge from the previous iteration use this as our edges
+                if loop_settings.edgeForKernel is not None:
+                    filtered_edges = [loop_settings.edgeForKernel]
+
+                used_edges = set(map(lambda y: (y.source.id, y.target.id), filtered_edges))
+                descendant_nodes = {key: x for key, x in self.nodes.items() if x.id in descendant_node_ids}
+
+                # Phase 3.1
+                kernel, loop_settings, acl_relcl_map = create_sentence(
+                    filtered_edges, descendant_nodes, self.negations, node_id, found_preposition_labels,
+                    self.node_functions, loop_settings, acl_relcl_map
+                )
+                kernel = self.kernel_post_processing(kernel, position_pairs)
+
+                # Only check for empty kernel if more than one root node, as if there is only 1 root node we need something, even if it is empty...
+                if len(filtered_top_node_ids) > 1:
+                    kernel = self.check_if_empty_kernel(kernel)  # Check we do not have be(?, ?) as a kernel
+                    if kernel is not None: # (not empty)
+                        self.nodes[node_id] = kernel
+                else:
+                    self.nodes[node_id] = kernel
+
+                # Remove 'root' property from nodes, so we do not reuse same node again as it has been accounted for
+                self.nodes = {k: v.strip_root_properties() if v.id in descendant_node_ids else v for k, v in
+                              self.nodes.items()}
+
+                # Re-instantiate new node properties across all relationships and new 'kernel' node
+                new_edges = [Relationship.from_nodes(r, self.nodes) for r in new_edges]
+
+                # If this current "kernel" is none, then remove so the kernel used is the last occurring correct one
+                #  (only if we have at least one other kernel available)
+                if (
+                        ((isinstance(kernel, Singleton) and kernel.kernel is None) or (kernel is None)) and
+                        len(filtered_top_node_ids) > 1 and
+                        node_id == filtered_top_node_ids[-1]
+                ):
+                    filtered_top_node_ids.pop()
+
+        # Return the last node ('highest' topological kernel)
+        final_kernel = self.nodes[filtered_top_node_ids[-1]]
+
+        # Replace acl_relcl occurrences
+        final_kernel = self.acl_replacement(final_kernel, acl_relcl_map)
+
+        # If "final kernel" does not have a kernel
+        final_kernel = self.check_for_action_ed_node(acl_relcl_map, final_kernel, loop_settings, position_pairs)
+
+        final_kernel = self.remove_duplicate_properties(final_kernel)
+        final_kernel = self.rewrite_properties_logically(final_kernel)
+        final_kernel = self.check_for_adv(final_kernel)
+
+        print(f"{final_kernel.to_string()}\n")
+        return final_kernel
+
+    def check_for_action_ed_node(self, acl_relcl_map, final_kernel, loop_settings, position_pairs):
+        action_ed_node = find_action_ed_node_in_kernel(final_kernel)
+        # If no kernel at all OR we have a kernel with edge label "be" or equal to a found action(ed) node
+        if (
+                not hasattr(final_kernel, 'kernel') or
+                final_kernel.kernel is None or
+                (
+                    action_ed_node and
+                    (
+                        final_kernel.kernel.edgeLabel.named_entity == 'be' or
+                        final_kernel.kernel.edgeLabel == action_ed_node
+                    )
+                )
+        ):
+            # If a Singleton of type verb, make this an edge with no source or target
+            if final_kernel.type == 'verb':
+                final_kernel = create_edge_kernel(final_kernel)
+                final_kernel = self.kernel_post_processing(final_kernel, position_pairs)
+            else:
+                edges = []
+                nodes = {final_kernel.id: final_kernel}
+                #
+                if not hasattr(final_kernel, 'properties') or not action_ed_node:
+                    create_existential(edges, nodes)
+                    final_kernel, loop_settings, acl_relcl_map = (
+                        create_sentence(
+                            edges, nodes, self.negations, final_kernel.id, {},
+                            self.node_functions, loop_settings, acl_relcl_map
+                        ))
+                    final_kernel = self.kernel_post_processing(final_kernel, position_pairs)
+                else:
+                    final_kernel = rewrite_action_ed_node(final_kernel, action_ed_node, self.negations)
+                    final_kernel = self.kernel_post_processing(final_kernel, position_pairs)
+        return final_kernel
+
+    def get_topological_root_node_ids(self, edges, true_targets):
+        filtered_nodes = set()
+        filtered_top_node_ids = set()
+        # Loop over every source and target for every edge
+        for edge_node in itertools.chain.from_iterable(map(lambda x: [x.source, x.target], edges)):
+            # Check if edge node is not None, in true targets, and is a root
+            if (
+                    edge_node is not None and
+                    edge_node.id not in true_targets and
+                    is_kernel_in_props(edge_node)
+                    # or
+                    # (isinstance(edge_node, Singleton) and edge_node.type == 'existential')
+            ):
+                filtered_nodes.add(edge_node.id)
+
+                # Remove SetOfSingleton children from filtered nodes
+                if isinstance(edge_node, SetOfSingletons):
+                    for entity in edge_node.entities:
+                        filtered_nodes = filtered_nodes - {entity.id}
+
+            if edge_node is None or edge_node.id in filtered_top_node_ids:
+                continue
+            filtered_top_node_ids.add(edge_node.id)
+
+        # Filter node IDs in topological order based on self.nodes order
+        filtered_top_node_ids = [x.id for x in self.nodes.values() if x.id in filtered_nodes]
+        if len(filtered_top_node_ids) == 0:
+            # Get either the only node that remains, or all nodes that contain a root
+            filtered_top_node_ids = \
+                [list(self.nodes)[-1]] if len(self.nodes) == 1 else \
+                    [
+                        self.node_functions.get_node_id(self.nodes[x].id) for x in self.nodes if
+                        is_kernel_in_props(self.nodes[x], False)
+                    ]
+            # Remove duplicate IDs
+            filtered_top_node_ids = list(map(int, numpy.unique(filtered_top_node_ids)))
+        return filtered_top_node_ids
+
+    def get_kernel_edges(self):
+        found_preposition_labels = {}
         true_targets = set()
         new_edges = []
-        position_pairs = self.get_position_pairs()
-        acl_relcl_map = dict()
 
         if len(self.edges) > 0:
+            # A single word that precedes a noun phrase complement and expresses spatial relations (*in* the house)
             prototypical_prepositions = Services.getInstance().getParmenides().getPrototypicalPrepositions()
-
-            edge_labels = defaultdict(set)
+            edge_labels = defaultdict(set)  # (source ID, target ID) : edge label name
             for edge in self.edges:
                 edge_labels[(edge.source.id, edge.target.id)].add(edge.edgeLabel.named_entity)
-            edge_labels = {key: "dep" in value and len(value) > 1 for key, value in edge_labels.items()}
+            edge_labels = {key: "dep" in value and len(value) > 1 for key, value in edge_labels.items()}  # (source ID, target ID): True/False
 
             for edge in self.edges:
                 if edge.edgeLabel.named_entity == 'dep' and edge_labels[(edge.source.id, edge.target.id)]:
@@ -50,168 +210,53 @@ class CreateFinalKernel:
                 found_prototypical_prepositions = False
                 first_word = edge.edgeLabel.named_entity.split()[0]
                 for p in prototypical_prepositions:
-                    # Check if prototypical preposition is in edge label but NOT just the edge label (i.e. "to" in "to steal" = TRUE, "like" in "like" = FALSE) AND whether the first word is NOT a verb
+                    # Check if prototypical preposition is in edge label BUT NOT just the edge label (i.e. "to" in "to steal" = TRUE, "like" in "like" = FALSE)
+                    # AND whether the first word is NOT a verb
                     if (
-                            (not is_label_verb(first_word) and re.search(r"\b" + p + r"\b",
-                                                                         edge.edgeLabel.named_entity) and p != edge.edgeLabel.named_entity and not case_in_props(
-                                dict(edge.target.properties))
+                            (
+                                not is_label_verb(first_word) and
+                                re.search(r"\b" + p + r"\b",
+                                          edge.edgeLabel.named_entity) and  # Checks the word is contained alone and not within another word
+                                p != edge.edgeLabel.named_entity and not  # Check the preposition is a preposition and not a singular word
+                                case_in_props(dict(edge.target.properties))
                             )
                             or
-                            (edge.edgeLabel.named_entity.endswith(
-                                'ing') and not self.node_functions.check_node_coordinations_for_auxiliary(edge,
-                                                                                                          self.edges) and edge.source.type != "existential")
+                            (
+                                edge.edgeLabel.named_entity.endswith('ing') and not
+                                self.node_functions.check_node_coordinations_for_auxiliary(edge, self.edges) and
+                                edge.source.type != "existential"
+                            )
                     ):
                         found_prototypical_prepositions = True
 
                         # Add root property to target
                         self.nodes[edge.target.id] = edge.target.add_root_property()
-                        new_edge = Relationship(
-                            source=edge.source,
-                            target=self.nodes[edge.target.id],
-                            edgeLabel=edge.edgeLabel,
-                            isNegated=edge.isNegated
-                        )
+                        new_edge = edge.update_vertex(self.nodes[edge.target.id], 'target')
 
-                        # re.sub(r"\b"+p+r"\b", "", edge.edgeLabel.named_entity).strip()
-                        found_proposition_labels[edge.target.id] = edge.edgeLabel.named_entity
+                        found_preposition_labels[edge.target.id] = edge.edgeLabel.named_entity
                         break
 
                 # If the edge is a verb and source is a 'root', remove 'root' from the target node of the edge
-                if not found_prototypical_prepositions and is_label_verb(
-                        edge.edgeLabel.named_entity) and is_kernel_in_props(
-                    edge.source) and edge.target.type != 'existential':
+                if (
+                        not found_prototypical_prepositions and
+                        is_label_verb(edge.edgeLabel.named_entity) and
+                        is_kernel_in_props(edge.source) and
+                        edge.target.type != 'existential'
+                ):
                     self.nodes[edge.target.id] = edge.target.strip_root_properties()
-                    new_edge = Relationship(
-                        source=edge.source,
-                        target=self.nodes[edge.target.id],
-                        edgeLabel=edge.edgeLabel,
-                        isNegated=edge.isNegated
-                    )
+                    new_edge = edge.update_vertex(self.nodes[edge.target.id], 'target')
 
+                # If edge has had 'root' added or removed
                 if new_edge is None:
-                    new_edge = edge
+                    new_edges.append(edge)
                     if not is_kernel_in_props(edge.target):
                         true_targets.add(edge.target.id)
-                new_edges.append(new_edge)
-                new_edges = [Relationship.from_nodes(r, self.nodes) for r in new_edges]
-
-        filtered_nodes = set()
-        filtered_top_node_ids = set()
-        remove_set = set()
-        # new_edges = list(set(new_edges)) # Remove duplicate edges
-
-        # Loop over every source and target for every edge
-        for edge_node in itertools.chain.from_iterable(map(lambda x: [x.source, x.target], new_edges)):
-            # Check if edge node is not None, in true targets, is a root or existential
-            if ((edge_node is not None and edge_node.id not in true_targets) and
-                    (is_kernel_in_props(edge_node))
-                    # or
-                    # (isinstance(edge_node, Singleton) and edge_node.type == 'existential')
-            ):
-                filtered_nodes.add(edge_node.id)
-                if isinstance(edge_node, SetOfSingletons):
-                    for entity in edge_node.entities:
-                        remove_set.add(entity.id)
-
-            if edge_node is None or edge_node.id in filtered_top_node_ids:
-                continue
-            filtered_top_node_ids.add(edge_node.id)
-
-        # IDs of root nodes in topological order
-        filtered_nodes = filtered_nodes - remove_set
-        filtered_top_node_ids = [x.id for x in self.nodes.values() if
-                                 x.id in filtered_nodes]  # Filter node IDs in topological order based on self.nodes order
-
-        if len(filtered_top_node_ids) == 0:
-            filtered_top_node_ids = [list(self.nodes)[-1]] if len(self.nodes) == 1 else [
-                self.node_functions.get_node_id(self.nodes[x].id) for x in self.nodes if
-                is_kernel_in_props(self.nodes[x], False)]  # Get last node
-            filtered_top_node_ids = list(map(int, numpy.unique(filtered_top_node_ids)))
-
-        used_edges = set()
-        for node_id in filtered_top_node_ids:
-            edge_to_loop = [True, None]  # Represents: [should_loop?, edge_to_use_for_kernel, returned_kernel_from_last_loop]
-            while edge_to_loop[0]:
-                descendant_node_ids = self.node_functions.node_bfs(new_edges, node_id)
-
-                # Ensure the d_nodes are in the edge, and not in used_edges, unless we have proposition labels
-                filtered_edges = [
-                    x for x in new_edges if
-                    ((x.source.id in descendant_node_ids and x.target.id in descendant_node_ids) or (
-                            x.target.id in found_proposition_labels))
-                    and
-                    ((x.source.id, x.target.id) not in used_edges or (
-                            (x.source.id, x.target.id) in used_edges and len(found_proposition_labels) > 0))
-                    and
-                    (not (x.target.id == node_id and x.target.type == 'verb'))
-                ]
-
-                # If we have an edge from the previous iteration use this as our edges
-                if edge_to_loop[1] is not None:
-                    filtered_edges = [edge_to_loop[1]]
-
-                used_edges = set(map(lambda y: (y.source.id, y.target.id), filtered_edges))
-                descendant_nodes = {key: x for key, x in self.nodes.items() if x.id in descendant_node_ids}
-                kernel, edge_to_loop, acl_relcl_map = create_sentence_obj(
-                    filtered_edges, descendant_nodes, self.negations, node_id, found_proposition_labels,
-                    self.node_functions, edge_to_loop, acl_relcl_map
-                )
-                kernel = self.kernel_post_processing(kernel, position_pairs)
-
-                # Only check for empty kernel if more than one root node, as if there is only 1 root node we need something, even if it is empty...
-                if len(filtered_top_node_ids) > 1:
-                    kernel = self.check_if_empty_kernel(kernel)  # Check we do not have be(?, ?) as a kernel
-                    if kernel is not None:
-                        self.nodes[node_id] = kernel
                 else:
-                    self.nodes[node_id] = kernel
+                    new_edges.append(new_edge)
 
-                # Remove 'root' property from nodes
-                self.nodes = {k: v.strip_root_properties() if v.id in descendant_node_ids else v for k, v in
-                              self.nodes.items()}
-
-                # Re-instantiate new node properties across all relationships and new 'kernel' node
+                # Update edges with nodes with 'root' updated
                 new_edges = [Relationship.from_nodes(r, self.nodes) for r in new_edges]
-
-                # If this current "kernel" we return is none, then pop so we use the previous kernel, if we have more than one root node
-                if ((isinstance(kernel, Singleton) and kernel.kernel is None) or (kernel is None)) and len(
-                        filtered_top_node_ids) > 1 and node_id == filtered_top_node_ids[-1]:
-                    filtered_top_node_ids.pop()
-
-        # Return the last node ('highest' kernel)
-        final_kernel = self.nodes[filtered_top_node_ids[-1]]
-
-        # Replace acl_relcl occurrences
-        final_kernel = self.acl_replacement(final_kernel, acl_relcl_map)
-
-        # If "final kernel" does not have a kernel
-        action_ed_node = find_action_ed_node_in_kernel(final_kernel)
-        if not hasattr(final_kernel, 'kernel') or final_kernel.kernel is None or (
-                action_ed_node and (
-                final_kernel.kernel.edgeLabel.named_entity == 'be' or final_kernel.kernel.edgeLabel == action_ed_node)):
-            if final_kernel.type == 'verb':
-                # If a Singleton of type verb, make this an edge with no source or target
-                final_kernel = create_edge_kernel(final_kernel)
-                final_kernel = self.kernel_post_processing(final_kernel, position_pairs)
-            else:
-                edges = []
-                nodes = {final_kernel.id: final_kernel}
-                if not hasattr(final_kernel, 'properties') or not action_ed_node:
-                    create_existential(edges, nodes)
-                    final_kernel, edge_to_loop, acl_relcl_map = create_sentence_obj(
-                        edges, nodes, self.negations, final_kernel.id, {}, self.node_functions, edge_to_loop, acl_relcl_map
-                    )
-                    final_kernel = self.kernel_post_processing(final_kernel, position_pairs)
-                else:
-                    final_kernel = rewrite_action_ed_node(final_kernel, action_ed_node, self.negations)
-                    final_kernel = self.kernel_post_processing(final_kernel, position_pairs)
-
-        final_kernel = self.remove_duplicate_properties(final_kernel)
-        final_kernel = self.rewrite_properties_logically(final_kernel)
-        final_kernel = self.check_for_adv(final_kernel)
-
-        print(f"{final_kernel.to_string()}\n")
-        return final_kernel
+        return new_edges, true_targets, found_preposition_labels
 
     def check_for_adv(self, kernel):
         source_props = dict(kernel.kernel.source.properties) if isinstance(kernel.kernel.source, Singleton) else None
@@ -267,7 +312,7 @@ class CreateFinalKernel:
                                     if prop_node.kernel.edgeLabel.named_entity in {"nmod", "nmod_poss"}:
                                         properties_to_add = self.rewrite_node_logically(
                                             kernel, prop_node, properties_to_add, True)
-                                        kernel, properties_to_add, force_update = self.check_interjection_of_property(kernel, properties_to_add) # TODO: Do we want to do this?
+                                        kernel, properties_to_add, force_update = self.check_property_replacement(kernel, properties_to_add) # TODO: Do we want to do this?
                                     elif prop_node.type == "SENTENCE":
                                         prop_node = self.rewrite_properties_logically(prop_node)
                                         properties_to_add[key].append(prop_node)
@@ -298,7 +343,8 @@ class CreateFinalKernel:
                                     ))
                                     kernel.update_node_props(properties_to_add)
                                 else:
-                                    properties_to_add[key] = properties_key_
+                                    # properties_to_add[key] = properties_key_
+                                    properties_to_add[key].append(prop_node)
                 else:
                     properties_to_add[key] = properties_key_
 
@@ -377,7 +423,7 @@ class CreateFinalKernel:
                     properties[type_key] = [initial_node]
             return properties
 
-    def check_interjection_of_property(self, kernel, properties):
+    def check_property_replacement(self, kernel, properties):
         keys_to_remove = []
         force_update = False
         for key in properties:
@@ -526,15 +572,21 @@ class CreateFinalKernel:
                         kernel = kernel.update_kernel(properties_key[0], "target")
                         break
 
-        # Check kernel positions
         properties_to_keep = dict(kernel.properties)
         new_target = kernel.kernel.target
-        if kernel.id in position_pairs and kernel.kernel.edgeLabel is not None and check_semi_modal(
-                kernel.kernel.edgeLabel.named_entity):
+
+        # Check kernel positions, if kernel is in position pairs AND the edge is SEMI MODAL
+        #  (e.g. scissors need sharpening: need(scissors, None)[SENTENCE:sharpening(?, None)] => need(scissors, sharpening(?, None)))
+        if (
+                kernel.id in position_pairs and
+                kernel.kernel.edgeLabel is not None and
+                check_semi_modal(kernel.kernel.edgeLabel.named_entity)
+        ):
             position_value = position_pairs[kernel.id]
             if 'SENTENCE' in dict(kernel.properties):
                 properties_to_keep['SENTENCE'] = []
                 for sentence_elm in list(dict(kernel.properties)['SENTENCE']):
+                    # If a property should be considered as the target based on position of property
                     if int(float(dict(sentence_elm.kernel.edgeLabel.properties)['pos'])) == position_value:
                         new_target = sentence_elm
                     else:
@@ -555,27 +607,39 @@ class CreateFinalKernel:
                 ),
                 properties=create_props_for_singleton(properties_to_keep),
             )
-        elif kernel.kernel.edgeLabel is None and kernel.kernel.source is not None and kernel.kernel.target is not None and (
-                (kernel.kernel.source.type.startswith('JJ') and kernel.kernel.target.type == 'ENTITY') or (
-                kernel.kernel.source.type.startswith('JJ') and kernel.kernel.target.type == 'ENTITY')):
+        # If we do NOT have an edge label, and source OR target are adjectives (e.g. None(clear, vision) => be(vision[clear]), ?))
+        elif (
+                kernel.kernel.edgeLabel is None and
+                kernel.kernel.source is not None and
+                kernel.kernel.target is not None and
+                (
+                    (kernel.kernel.source.type.startswith('JJ') and kernel.kernel.target.type == 'ENTITY') or
+                    (kernel.kernel.target.type.startswith('JJ') and kernel.kernel.source.type == 'ENTITY')
+                )
+        ):
             new_edges = []
             root_id = None
+            # Update source/target with adjective as properties
             if kernel.kernel.source.type.startswith('JJ') and kernel.kernel.target.type == 'ENTITY':
-                node_props = merge_properties(dict(kernel.kernel.target.properties),
-                                              {kernel.kernel.source.type: kernel.kernel.source})
+                node_props = merge_properties(
+                    dict(kernel.kernel.target.properties),
+                    {kernel.kernel.source.type: kernel.kernel.source}
+                )
                 root_id = kernel.kernel.target.id
                 self.nodes[root_id] = kernel.kernel.target.update_node_props(node_props)
                 create_existential(new_edges, {0: self.nodes[kernel.kernel.target.id]})
             elif kernel.kernel.target.type.startswith('JJ') and kernel.kernel.source.type == 'ENTITY':
-                node_props = merge_properties(dict(kernel.kernel.source.properties),
-                                              {kernel.kernel.target.type: kernel.kernel.target})
+                node_props = merge_properties(
+                    dict(kernel.kernel.source.properties),
+                    {kernel.kernel.target.type: kernel.kernel.target}
+                )
                 root_id = kernel.kernel.source.id
                 self.nodes[root_id] = kernel.kernel.source.update_node_props(node_props)
                 create_existential(new_edges, {0: self.nodes[kernel.kernel.target.id]})
 
-            kernel, edge_to_loop, acl_relcl_map = create_sentence_obj(
+            kernel, edge_to_loop, acl_relcl_map = create_sentence(
                 new_edges, self.nodes, self.negations, root_id, {}, self.node_functions,
-                [False, None], {}
+                SimpleNamespace(shouldLoop=False, edgeForKernel=None, previousKernel=None), {}
             )
             kernel = self.kernel_post_processing(kernel, position_pairs)
         return kernel

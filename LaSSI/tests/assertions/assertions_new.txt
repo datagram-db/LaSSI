@@ -17,7 +17,7 @@ Alice is playing but not in Newcastle ⇒ play(Alice, NOT(Newcastle[(6:in)]))
 There is traffic in the Newcastle city centre ⇒ be(traffic, ?1)[(SPACE:Newcastle[(extra:city centre), (type:stay in place), (det:the)])]
 In the Newcastle city centre there is traffic ⇒ be(traffic, ?5)[(SPACE:Newcastle[(extra:city centre), (type:stay in place), (det:the)])]
 There is traffic but not in the Newcastle city centre ⇒ be(traffic, ?4)[(SPACE:AND(NOT(Newcastle[(extra:city centre), (type:stay in place), (det:the)])))]
-Newcastle city centre is trafficked ⇒ traffic(?2, None)[(GPE:Newcastle[(extra:city centre)])]
+Newcastle city centre is trafficked ⇒ traffic(?4, Newcastle[(extra:city centre)])
 It is busy in Newcastle ⇒ be(It, busy)[(SPACE:Newcastle[(type:stay in place)])]
 Saturdays have usually busy city centers ⇒ have(Saturdays, city centers[(JJ:busy[(advmod:usually)])])
 In Newcastle city center on saturdays, traffic is flowing ⇒ flow(traffic, None)[(TIME:saturdays[(type:defined)]), (SPACE:Newcastle[(type:stay in place), (extra:city center)])]

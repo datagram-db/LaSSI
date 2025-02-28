@@ -5308,6 +5308,12 @@ parmenides:tow a parmenides:TransitiveVerb ;
 parmenides:track a parmenides:AbstractEntity ;
     rdfs:label "track"^^xsd:string .
 
+parmenides:traffic a parmenides:TransitiveVerb ;
+    rdfs:label "traffic"^^xsd:string .
+
+parmenides:traffick a parmenides:TransitiveVerb ;
+    rdfs:label "traffick"^^xsd:string .
+
 parmenides:traipse a parmenides:MovementVerb ;
     rdfs:label "traipse"^^xsd:string .
 

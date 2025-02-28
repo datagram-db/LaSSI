@@ -158,6 +158,22 @@ class Relationship:  # Representation of an edge
                    isNegated=bool(c.get('Singleton', False))
                    )
 
+    def update_vertex(self, node, vertex_type):
+        if vertex_type == 'source':
+            return Relationship(
+                source=node,
+                target=self.target,
+                edgeLabel=self.edgeLabel,
+                isNegated=self.isNegated
+            )
+        elif vertex_type == 'target':
+            return Relationship(
+                source=self.source,
+                target=node,
+                edgeLabel=self.edgeLabel,
+                isNegated=self.isNegated
+            )
+
 
 @dataclass(order=True, frozen=True, eq=True)
 class Singleton(NodeEntryPoint):  # Graph node representing just one entity
