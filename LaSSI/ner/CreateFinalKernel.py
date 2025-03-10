@@ -207,7 +207,7 @@ class CreateFinalKernel:
                 if edge.edgeLabel.named_entity == 'dep' and edge_labels[(edge.source.id, edge.target.id)]:
                     continue
                 new_edge = None
-                found_prototypical_prepositions = False
+                found_subsentence = False
                 first_word = edge.edgeLabel.named_entity.split()[0]
                 for p in prototypical_prepositions:
                     # Check if prototypical preposition is in edge label BUT NOT just the edge label (i.e. "to" in "to steal" = TRUE, "like" in "like" = FALSE)
@@ -215,19 +215,18 @@ class CreateFinalKernel:
                     if (
                             (
                                 not is_label_verb(first_word) and
-                                re.search(r"\b" + p + r"\b",
-                                          edge.edgeLabel.named_entity) and  # Checks the word is contained alone and not within another word
-                                p != edge.edgeLabel.named_entity and not  # Check the preposition is a preposition and not a singular word
-                                case_in_props(dict(edge.target.properties))
+                                re.search(r"\b" + p + r"\b", edge.edgeLabel.named_entity) and  # Checks the word is contained alone and not within another word
+                                p != edge.edgeLabel.named_entity and  # Check the preposition is a preposition and not a singular word
+                                not case_in_props(dict(edge.target.properties))
                             )
                             or
                             (
-                                edge.edgeLabel.named_entity.endswith('ing') and not
-                                self.node_functions.check_node_coordinations_for_auxiliary(edge, self.edges) and
+                                edge.edgeLabel.named_entity.endswith('ing') and
+                                not self.node_functions.check_node_coordinations_for_auxiliary(edge, self.edges) and
                                 edge.source.type != "existential"
                             )
                     ):
-                        found_prototypical_prepositions = True
+                        found_subsentence = True
 
                         # Add root property to target
                         self.nodes[edge.target.id] = edge.target.add_root_property()
@@ -238,7 +237,7 @@ class CreateFinalKernel:
 
                 # If the edge is a verb and source is a 'root', remove 'root' from the target node of the edge
                 if (
-                        not found_prototypical_prepositions and
+                        not found_subsentence and
                         is_label_verb(edge.edgeLabel.named_entity) and
                         is_kernel_in_props(edge.source) and
                         edge.target.type != 'existential'

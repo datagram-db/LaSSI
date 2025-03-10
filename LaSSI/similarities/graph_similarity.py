@@ -136,6 +136,8 @@ class SimilarityScore:  # Defining the graph similarity score
             elif rhs.type == Grouping.NOT:
                 assert len(rhs.entities) == 1
                 return 1 - self.entity_distance(lhs, rhs.entities[0])
+            elif rhs.type == Grouping.NEITHER:
+                return 0
             else:
                 raise ValueError(str(rhs.type) + " is not supported")
         elif isinstance(rhs, Singleton):
@@ -146,6 +148,8 @@ class SimilarityScore:  # Defining the graph similarity score
             elif lhs.type == Grouping.NOT:
                 assert len(lhs.entities) == 1
                 return 1 - self.entity_distance(lhs.entities[0], rhs)
+            elif lhs.type == Grouping.NEITHER:
+                return 1 - self.entity_distance(min(lhs.entities, key=lambda z: self.entity_distance(z, rhs)), rhs)
             else:
                 raise ValueError(str(rhs.type) + " is not supported")
         else:
@@ -197,6 +201,14 @@ class SimilarityScore:  # Defining the graph similarity score
                     return self.entity_distance(lhs.entities[0], rhs.entities[0])
                 else:
                     return 1.0
+            elif lhs.type == Grouping.NEITHER:
+                if rhs.type == Grouping.NEITHER:
+                    if len(S2) == len(S1_inv):
+                        return float(total_cost) / float(len(matches))
+                    else:
+                        return 1.0  # If some of elements could not be derived from the left, the left does not entail the right
+                else:
+                    return 1.0  # Contradiction
 
     @functools.lru_cache
     def edge_distance(self, x: Relationship, y: Relationship):

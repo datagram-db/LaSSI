@@ -435,8 +435,10 @@ def add_to_properties(kernel, node, source_or_target, kernel_nodes, properties, 
         lemma_node_edge_label_name = None
 
     # Check for a SetOfSingletons, or if the node name or action label is not equal to the kernel edge label
-    if (isinstance(node, SetOfSingletons)) or (
-            node is not None and lemma_node_edge_label_name != lemma_kernel_edge_label_name):
+    if (
+        (isinstance(node, SetOfSingletons)) or
+        (node is not None and lemma_node_edge_label_name != lemma_kernel_edge_label_name)
+    ):
         if type_key is None:
             if source_or_target == 'edgeLabel':
                 type_key = node.kernel.edgeLabel.named_entity
@@ -448,10 +450,15 @@ def add_to_properties(kernel, node, source_or_target, kernel_nodes, properties, 
         if 'NEG' not in type_key and 'NOT' not in type_key and 'existential' not in type_key:
             if (
                     (node.type == Grouping.MULTIINDIRECT) or
-                    (isinstance(node, Singleton) and (node.named_entity == "but" or node.named_entity == "and")) or
-                    (isinstance(node,
-                                SetOfSingletons) and node.type == Grouping.AND and 'NEG' in node_functions.get_node_type(
-                        node.entities[0]) and len(node.entities) == 1)
+                    (
+                            isinstance(node, Singleton) and
+                            (node.named_entity == "but" or node.named_entity == "and")
+                    ) or
+                    (
+                            isinstance(node,SetOfSingletons) and
+                            node.type == Grouping.AND and 'NEG' in node_functions.get_node_type(node.entities[0]) and
+                            len(node.entities) == 1
+                    )
             ):
                 return kernel, properties, kernel_nodes
             elif not is_node_in_kernel_nodes(node, kernel_nodes) and node not in properties[type_key]:

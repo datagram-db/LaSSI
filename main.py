@@ -4,7 +4,7 @@ from LaSSI.Configuration import SentenceRepresentation
 from LaSSI.LaSSI import LaSSI
 
 if __name__ == '__main__':
-    dataset_name = "test_sentences/orig/all_newcastle.yaml"
+    dataset_name = "test_sentences/all_concept.yaml"
     fuzzyDBs = "connection.yaml"
 
     if len(sys.argv) > 1:
@@ -12,6 +12,6 @@ if __name__ == '__main__':
     if len(sys.argv) > 2:
         fuzzyDBs = sys.argv[2]
 
-    pipeline = LaSSI(dataset_name, fuzzyDBs) #, SentenceRepresentation.FullText)
+    pipeline = LaSSI(dataset_name, fuzzyDBs)#, SentenceRepresentation.LogicalGraph)
     pipeline.run()
     pipeline.close()

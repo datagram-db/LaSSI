@@ -75,12 +75,12 @@ This is a fabulous Golden Gate Bridge picture ⇒ be(This[(det:det)], picture[(a
 waste your time ⇒ waste(?1, time[(nmod_poss:your)])
 coming to false conclusions ⇒ come(?3, None)[(OFTERM:conclusions[(amod:false), (2:to)])]
 bolt from blue ⇒ be(bolt, ?29[(PROVENANCE:blue[(2:from)])])
-things to be neat and orderly ⇒ be(things, AND(neat[(mark:to)], orderly))
+things to be neat and orderly ⇒ be(things, AND(neat[(mark:to)], orderly))  // Should this "mark" be present?
 characters in movies ⇒ be(characters, ?6)[(SPACE:movies[(type:stay in place)])]
 you like quilts ⇒ like(you, quilts)
 buy dinner ⇒ buy(?7, dinner)
 the hot water to run out ⇒ be(water[(amod:hot), (det:the)], ?10)[(SENTENCE:run out[(mark:to)](?9, None))]
-you become fatigued ⇒ become(you[(cop:fatigued)], None)
+you become fatigued ⇒ become(you[(cop:fatigued)], None)  // Should this copula be changed to target?
 attempt to steal someone's husband ⇒ attempt(?12, None)[(SENTENCE:to steal(?11, husband[(extra:someone[(5:'s)])]))]
 
 // Part 2
@@ -88,7 +88,7 @@ plan your week ⇒ plan(?1, week[(nmod_poss:your)])
 privately administered region ⇒ administer(?3, region[(ENTITY:privately)])
 accumulate fuel in a central location ⇒ accumulate(?4, fuel)[(SPACE:location[(amod:central), (type:stay in place), (det:a)])]
 going off reservation ⇒ go off(?6, None)[(ENTITY:reservation)]
-you become more wise ⇒ become(you[(cop:wise[(advmod:more)])], None)
+you become more wise ⇒ become(you[(cop:wise[(advmod:more)])], None)  // Copula target?
 going across the street ⇒ go(?8, None)[(SPACE:street[(det:the), (type:motion through place)])]
 eat a healthy salad ⇒ eat(?10, salad[(amod:healthy), (det:a)])
 propulsion of aircraft ⇒ be(propulsion[(extra:aircraft[(2:of)])], ?12)

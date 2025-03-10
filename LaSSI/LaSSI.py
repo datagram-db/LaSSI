@@ -231,7 +231,7 @@ class LaSSI():
     def post_hoc_explain(self, lists):
         from LaSSI.files.FileDumpUtilities import target_file_dump
         self.logger("computing similarities")
-        confusion_matrices = target_file_dump(self.confusion_matrices + self.transformation.name + f"_{self.legacy_conf.HuggingFace.split('/')[-1]}.json" if self.transformation == SentenceRepresentation.FullText else ".json",
+        confusion_matrices = target_file_dump(self.confusion_matrices + self.transformation.name + (f"_{self.legacy_conf.HuggingFace.split('/')[-1]}.json" if self.transformation == SentenceRepresentation.FullText else ".json"),
                                               json.load,
                                               lambda: CalculateMatrix(self, lists),
                                               json_dumps,
