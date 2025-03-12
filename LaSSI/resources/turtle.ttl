@@ -5311,6 +5311,9 @@ parmenides:track a parmenides:AbstractEntity ;
 parmenides:traffic a parmenides:TransitiveVerb ;
     rdfs:label "traffic"^^xsd:string .
 
+parmenides:traffick a parmenides:TransitiveVerb ;
+    rdfs:label "traffick"^^xsd:string .
+
 parmenides:traipse a parmenides:MovementVerb ;
     rdfs:label "traipse"^^xsd:string .
 

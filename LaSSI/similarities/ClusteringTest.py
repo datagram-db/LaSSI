@@ -7,8 +7,9 @@ __maintainer__ = "Giacomo Bergami"
 __email__ = "bergamigiacomo@gmail.com"
 __status__ = "Production"
 
+import json
+import os
 import numpy
-from matplotlib import pylab
 from sklearn.cluster import AgglomerativeClustering
 from scipy.sparse import csr_matrix
 import markov_clustering as mc
@@ -16,24 +17,30 @@ import networkx as nx
 import matplotlib
 import matplotlib.pyplot
 
+
 def graph_plot(matrix, clusters, filename="graph.png"):
     fig = matplotlib.pyplot.figure()
     ## Color blind palette: https://github.com/mpetroff/accessible-color-cycles
-    palette = ["#3f90da", "#ffa90e", "#bd1f01", "#94a4a2", "#832db6", "#a96b59", "#e76300", "#b9ac70", "#717581", "#92dadd"]
+    palette = ["#3f90da", "#ffa90e", "#bd1f01", "#94a4a2", "#832db6", "#a96b59", "#e76300", "#b9ac70", "#717581",
+               "#92dadd"]
     assert len(clusters) <= len(palette)
     graph = nx.Graph(matrix)
     cluster_map = {node: i for i, cluster in enumerate(clusters) for node in cluster}
     edges, weights = zip(*nx.get_edge_attributes(graph, 'weight').items())
     colors = [palette[cluster_map[i]] for i in range(len(graph.nodes()))]
-    positions = nx.spring_layout(graph, seed=31) ## ensuring the same layout for the same graph!
-    nx.draw_networkx(graph, node_color=colors, pos=positions, with_labels=True,  edgelist=edges, edge_color=weights, edge_cmap=matplotlib.cm.YlGnBu, ax=fig.add_subplot())
+    positions = nx.spring_layout(graph, seed=31)  ## ensuring the same layout for the same graph!
+    nx.draw_networkx(
+        graph, node_color=colors, pos=positions, with_labels=True, edgelist=edges, edge_color=weights,
+        edge_cmap=matplotlib.cm.YlGnBu, ax=fig.add_subplot(), font_size=24, node_size=750, width=2
+    )
     if filename is not None:
         # Save plot to file
         matplotlib.use("Agg")
-        fig.savefig(filename)
+        fig.savefig(filename, dpi=200, bbox_inches='tight')
     else:
         # Display interactive viewer
         matplotlib.pyplot.show()
+
 
 def _plot_dendrogram(model, **kwargs):
     # Authors: Mathew Kallada
@@ -56,11 +63,12 @@ def _plot_dendrogram(model, **kwargs):
     # Since we don't have this information, we can use a uniform one for plotting
     distance = np.arange(children.shape[0])
     # The number of observations contained in each cluster level
-    no_of_observations = np.arange(2, children.shape[0]+2)
+    no_of_observations = np.arange(2, children.shape[0] + 2)
     # Create linkage matrix and then plot the dendrogram
     linkage_matrix = np.column_stack([children, distance, no_of_observations]).astype(float)
     # Plot the corresponding dendrogram
     return dendrogram(linkage_matrix, **kwargs)
+
 
 def plot_dendogram(model, D, filename="dendrogram.png"):
     # fig = matplotlib.pyplot.figure()
@@ -68,12 +76,14 @@ def plot_dendogram(model, D, filename="dendrogram.png"):
     # Compute and plot first dendrogram.
     # condensedD = squareform(D)
     import scipy.cluster.hierarchy as sch
-    fig = matplotlib.pyplot.figure(figsize=(8, 8))
+    fig = matplotlib.pyplot.figure(figsize=(10, 10))
     ax1 = fig.add_axes([0.09, 0.1, 0.2, 0.6])
     # Y = sch.linkage(condensedD, method='centroid')
     Z1 = _plot_dendrogram(model, orientation='left')
     ax1.set_xticks([])
     ax1.set_yticks([])
+    ax1.set_xticklabels([], minor=False, fontsize=20)
+    ax1.set_yticklabels([], minor=False, fontsize=20)
 
     # Compute and plot second dendrogram.
     ax2 = fig.add_axes([0.3, 0.71, 0.6, 0.2])
@@ -81,6 +91,8 @@ def plot_dendogram(model, D, filename="dendrogram.png"):
     Z2 = _plot_dendrogram(model)
     ax2.set_xticks([])
     ax2.set_yticks([])
+    ax2.set_xticklabels([], minor=False, fontsize=20)
+    ax2.set_yticklabels([], minor=False, fontsize=20)
 
     # Plot distance matrix.
     axmatrix = fig.add_axes([0.3, 0.1, 0.6, 0.6])
@@ -97,16 +109,17 @@ def plot_dendogram(model, D, filename="dendrogram.png"):
     #
     # # Plot colorbar.
     axcolor = fig.add_axes([0.91, 0.1, 0.02, 0.6])
-    matplotlib.pyplot.colorbar(im, cax=axcolor)
+    cbar = matplotlib.pyplot.colorbar(im, cax=axcolor)
+    cbar.ax.tick_params(labelsize=20)
     axmatrix.set_xticks(range(len(idx1)))
-    axmatrix.set_xticklabels(idx1, minor=False)
+    axmatrix.set_xticklabels(idx1, minor=False, fontsize=20)
     # axmatrix.xaxis.set_label_position('bottom')
     # axmatrix.xaxis.tick_bottom()
     #
     # pylab.xticks(rotation=-90, fontsize=8)
     #
     axmatrix.set_yticks(range(len(idx2)))
-    axmatrix.set_yticklabels(idx2, minor=False)
+    axmatrix.set_yticklabels(idx2, minor=False, fontsize=20)
     # axmatrix.yaxis.set_label_position('right')
     # axmatrix.yaxis.tick_right()
 
@@ -116,18 +129,20 @@ def plot_dendogram(model, D, filename="dendrogram.png"):
     if filename is not None:
         # Save plot to file
         matplotlib.use("Agg")
-        fig.savefig(filename)
+        fig.savefig(filename, dpi=200, bbox_inches='tight')
+        matplotlib.pyplot.close()
     else:
         # Display interactive viewer
         matplotlib.pyplot.show()
 
-def as_distance_matrix(similarity_matrix):
-    return [[1.0-value for value in row] for row in similarity_matrix]
 
+def as_distance_matrix(similarity_matrix):
+    return [[1.0 - value for value in row] for row in similarity_matrix]
 
 
 def maximal_matching(M):
-        return csr_matrix(M)
+    return csr_matrix(M)
+
 
 def agglomerative_clustering(similarity_matrix, n_expected_clusters):
     distances = as_distance_matrix(similarity_matrix)
@@ -142,6 +157,7 @@ def agglomerative_clustering(similarity_matrix, n_expected_clusters):
 
     return cluster_assignment, model, numpy.array(similarity_matrix)
 
+
 # K-Means clustering could not be used, as it is impossible to determine the centroids out from the distance matrix
 
 def matrix_init_normalize(matrix, normalization):
@@ -155,11 +171,12 @@ def matrix_init_normalize(matrix, normalization):
         return csr_matrix(I - sqrt * matrix * sqrt)
     elif normalization == "random_walk_normalized":
         d = laplacian_diag(matrix)
-        matrix = numpy.reciprocal(d,where= d!=0) * matrix
+        matrix = numpy.reciprocal(d, where=d != 0) * matrix
         I = numpy.identity(matrix.shape[0])
         return csr_matrix(I - matrix)
     else:
         return csr_matrix(matrix)
+
 
 def mcl_clustering_matches(similarity_matrix, expected_clusters):
     normalization = ["simple_laplacian", "sym_normalized_laplacian", "random_walk_normalized", "none"]
@@ -191,8 +208,9 @@ def mcl_clustering_matches(similarity_matrix, expected_clusters):
     return [set(x) for x in clusters], matrix, candidate_result, best_inflation, best_norm
 
 
-def set_matching_distance(X : set, Y : set):
+def set_matching_distance(X: set, Y: set):
     return (len(X.difference(Y)) + len(Y.difference(X))) / (len(X.union(Y)))
+
 
 def best_clustering_match(minedClusters, expectedClusters):
     ## Assumptions: all the clusters are targeting non-overlaps, as sentence equivalence is transitive. thus, all the equivalent sentences shall belong to the same clsuter.
@@ -218,43 +236,79 @@ def best_clustering_match(minedClusters, expectedClusters):
     # assert unmatched_clusters >= 0
     return (total_alignment_score + unmatched_clusters) / len(expectedClusters)
 
+
 def dimsum(matrix, row=True):
     return matrix.sum(axis=1 if row else 0)
+
 
 def laplacian_diag(matrix):
     import numpy
     return numpy.squeeze(numpy.asarray(dimsum(matrix, row=True)))
     # return numpy.diag(dimsum(matrix, row=True))
 
+
 def matrix_exp2(matrix):
     import numpy
     return numpy.multiply(matrix, matrix)
 
 
-def test_with_maximal_matching(similarity_matrix, expected_clusters, experiment_name):
+def test_with_maximal_matching(expected_clusters, experiment_name, transformer, similarity_matrix=None):
+    if similarity_matrix is None:
+        similarity_matrix = read_json_array(
+            f"catabolites/{experiment_name}/confusion_matrices_{transformer}.json")
+
+    if not os.path.exists(experiment_name):
+        os.makedirs(experiment_name)
+
     print("Agglomerative clustering")
     n_expected_clusters = len(expected_clusters)
     agg_cluster_assignment, agg_model, distances = agglomerative_clustering(similarity_matrix, n_expected_clusters)
-    plot_dendogram(agg_model, distances, f"{experiment_name}_dend.png")
+    plot_dendogram(agg_model, distances, f"{experiment_name}/{transformer}_dend.png")
 
     print("Markov clustering")
-    mkv_cluster_assignment, matrix, mkv_clusters, best_inflation, best_norm = mcl_clustering_matches(similarity_matrix, expected_clusters)
-    graph_plot(matrix, mkv_clusters, f"{experiment_name}_mkv.png")
+    mkv_cluster_assignment, matrix, mkv_clusters, best_inflation, best_norm = mcl_clustering_matches(similarity_matrix,
+                                                                                                     expected_clusters)
+    graph_plot(matrix, mkv_clusters, f"{experiment_name}/{transformer}_mkv.png")
 
     agg_score = best_clustering_match(agg_cluster_assignment, expected_clusters)
-    agg_similarity = 1-agg_score
+    agg_similarity = 1 - agg_score
     print(f"Best Clustering Match (Agglomerative Clustering): {agg_similarity}. {agg_cluster_assignment}")
 
     mkv_score = best_clustering_match(mkv_cluster_assignment, expected_clusters)
-    mkv_similarity = 1-mkv_score
+    mkv_similarity = 1 - mkv_score
     print(f"Best Clustering Match (Markov Clustering): {mkv_similarity}. {mkv_cluster_assignment}")
 
 
+def read_json_array(filepath):
+    try:
+        root_dir = os.path.dirname(os.path.dirname(os.getcwd()))
+        full_filepath = os.path.join(root_dir, filepath)
+
+        with open(full_filepath, 'r') as f:
+            data = json.load(f)
+            return data
+    except FileNotFoundError:
+        print(f"Error: File not found at {filepath}")
+        return None
+    except json.JSONDecodeError:
+        print(f"Error: Invalid JSON format in {filepath}")
+        return None
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return None
+
+
 if __name__ == '__main__':
-    similarities = [[1.0, 0, 0.5, 0.9], [0.3, 1.0, 0.0, 0.7], [0.0, 0.2, 1.0, 0.0], [0.7, 0.0, 0.0, 1.0]]
-    expected = [[0,3], [2], [1]]
-    test_with_maximal_matching(similarities, expected, "test")
+    tests = [
+        [[[0], [1], [2], [3], [4], [5], [6], [7]], "alice_bob"],
+        [[[0, 1], [2, 3], [4], [5]], "cat_mouse"]
+        # [[[0, 1, 3, 9], [4], [5], [6, 7, 8], [10], [2, 11, 12], [13]], "all_newcastle"]
+    ]
+    transformers = ["SimpleGraph", "LogicalGraph", "Logical", "FullText_all-MiniLM-L6-v2", "FullText_all-MiniLM-L12-v2", "FullText_all-mpnet-base-v2", "FullText_all-roberta-large-v1"]
 
-
-
-
+    for test in tests:
+        print(test[1])
+        for transformer in transformers:
+            print(transformer)
+            test_with_maximal_matching(test[0], test[1], transformer)
+            print("\n")

@@ -80,6 +80,13 @@ class AssignTypeToSingleton:
         for row in number_of_nodes:
             gsm_item = gsm_json[row]
 
+            # Skip empty nodes that provide no additional information
+            if (
+                    len(gsm_item["phi"]) == 0 and
+                    len(self.node_functions.get_node_parents(gsm_item, gsm_json)) == 0
+            ):
+               self.node_functions.remove_gsm_item_by_id(gsm_item['id'], gsm_json, ids_to_remove)
+
             # Remove unwanted subjpass value
             if 'subjpass' in gsm_item['xi']:
                 gsm_item['xi'].remove('subjpass')

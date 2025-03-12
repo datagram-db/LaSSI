@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True, eq=True, order=True)
 class LegacySemanticConfiguration:
-    HuggingFace:str = 'sentence-transformers/all-MiniLM-L6-v2'
+    HuggingFace:str = 'sentence-transformers/all-MiniLM-L6-v2'  # all-MiniLM-L6-v2 / all-MiniLM-L12-v2 / all-mpnet-base-v2 / all-roberta-large-v1
     string_similarity:str = 'Prevailing'
     string_similarity_prevailing:str = 'HuggingFace'
     verb_similarity:str = 'Prevailing'
