@@ -50,9 +50,8 @@ def make_arg(entity):
         return rewrite_kernels(entity)
     props = entity if isinstance(entity, dict) else entity.get_props()
     specifiaction = None
-    if "extra" in props and props["extra"] is not None and (
-                (not isinstance(props["extra"], tuple)) or len(props["extra"]) == 1):
-        specifiaction = make_arg(props.pop("extra")[0])
+    if ("extra" in props) and (props["extra"] is not None) and ((not isinstance(props["extra"], tuple)) or len(props["extra"]) == 1):
+        specifiaction = make_arg(props.pop("extra")[0]).name
     coplist = []
     cop =  None
     if "cop" in props:
