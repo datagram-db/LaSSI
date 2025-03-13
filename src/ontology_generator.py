@@ -19,6 +19,7 @@ def from_db(db_name):
 
 def to_db(db_name, dict):
     db = SqliteDict(db_name)
+    db.clear()
     for key, value in dict.items():
         db[key] = value
     db.commit()
