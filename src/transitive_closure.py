@@ -79,21 +79,16 @@ def floyd_warshall(adjacency_db):
                 # a later iteration will make this i <-> k (bijective)
 
 
-
-def build_closures():
-    adjacency_db = SqliteDict("adjacency_list.db")
+def build_closures(adjacency_db):
 
     print("expanding adjacencny list with transitive closure")
     floyd_warshall(adjacency_db)
 
-    adjacency_db.commit()
-    adjacency_db.close()
+    if type(adjacency_db) == SqliteDict:
+        adjacency_db.commit()
 
 
-def build_clusters():
-    cluster_db = SqliteDict("clusters.db")
-    adjacency_db = SqliteDict("adjacency_list.db")
-
+def build_clusters(adjacency_db, cluster_db):
     print("building clusters")
     count = 0
     for key_node, adjacency_list in adjacency_db.items():
@@ -108,12 +103,10 @@ def build_clusters():
         for node in cluster:
             cluster_db[node] = cluster
 
-    cluster_db.commit()
-    cluster_db.close()
-    adjacency_db.close()
+    if type(cluster_db) == SqliteDict:
+        cluster_db.commit()
 
 
-def get_node(node):
-    with SqliteDict("clusters.db") as cluster_db:
-        cluster = cluster_db.get(node)
-        return cluster[0] if cluster else node
+def get_node(cluster_db, node):
+    cluster = cluster_db.get(node)
+    return cluster[0] if cluster else node
