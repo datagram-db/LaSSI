@@ -56,5 +56,6 @@
     "isa": {"rel": "isa", "relNegated": false},
     "related_to": {"rel": "related_to", "relNegated": false},
     "instance_of": {"rel": "instance_of", "relNegated": false},
-    "inflection": {"red": "form_of", "relNegated":  false}
+    "inflection": {"rel": "form_of", "relNegated":  false},
+    "SubwordOf": {"rel": "SubwordOf", "relNegated": false}
 }
