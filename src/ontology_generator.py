@@ -9,7 +9,7 @@ from sqlitedict import SqliteDict
 import csv
 
 
-def generate(conceptnet_path, wiktionary_path, test_limit: -1):
+def generate(conceptnet_path, wiktionary_path, test_limit=-1):
 
     print("hi")
     adjacency, clusters = {}, {}
@@ -20,7 +20,7 @@ def generate(conceptnet_path, wiktionary_path, test_limit: -1):
     transitive_closure.build_closures(adjacency)
     transitive_closure.build_clusters(adjacency, clusters)
 
-    with open(config["result_file"], "w") as tsv:
+    with open(config["result_file"], "w", encoding="utf-8") as tsv:
         wr = csv.writer(tsv, delimiter="\t")
         wr.writerow(["source", "relation", "target"])
 
@@ -35,13 +35,14 @@ def generate(conceptnet_path, wiktionary_path, test_limit: -1):
             if count % 1000 == 0: print(count)
             if count == test_limit: break
 
-        wik_json = json.load(wiktionary_path)
-        for triplet in wiktionary_json_extract.extract_information(wik_json, language_code="en"):
-            (source, edge_label, target) = triplet
-            source = transitive_closure.get_node(clusters, source.split("#")[0])
-            target = transitive_closure.get_node(clusters, target.split("#")[0])
+        with open(wiktionary_path, 'r', encoding='utf-8') as file:
+            wik_json = json.load(file)
+            for triplet in wiktionary_json_extract.extract_information(wik_json, language_code="en"):
+                (source, edge_label, target) = triplet
+                source = transitive_closure.get_node(clusters, source.split("#")[0])
+                target = transitive_closure.get_node(clusters, target.split("#")[0])
 
-            wr.writerow((source, edge_mapping.get_edge(edge_label), target))
+                wr.writerow((source, edge_mapping.get_edge(edge_label), target))
 
     if type(adjacency) == SqliteDict:
         adjacency.close()
