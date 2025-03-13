@@ -1,6 +1,9 @@
+import json
 import numpy as np
 from sentence_transformers import SentenceTransformer, util
 
+with open("../edge_mappings.json", "r") as f:
+    mappings = json.load(f)
 
 class HuggingFace:
     def __init__(self, model=None):
@@ -86,27 +89,27 @@ class ConceptNet5RelationType():
 conceptnet_edges = list(vars(ConceptNet5RelationType).keys())[1:-3]
 # print(conceptnet_edges)
 
-edges_to_remove = {}
-edge_changes = {}
-for extract_field_edge in extract_fields_edges:
-    print(extract_field_edge)
-    for conceptnet_edge in conceptnet_edges:
-        similarity = h(extract_field_edge, conceptnet_edge)
-        if similarity < 0.5: continue
-
-        if conceptnet_edge in edges_to_remove:
-            edges_to_remove[conceptnet_edge] += 1
-        else:
-            edges_to_remove[conceptnet_edge] = 1
-            edge_changes[conceptnet_edge] = extract_field_edge
-
-print(edges_to_remove)  ### it prints {'FormOf': 1, 'PartOf': 1, 'IsA': 2, 'RelatedTo': 1}
-
-
-def get_edge(current_edge):
-    if current_edge in extract_fields_edges:
-        return current_edge
-    return edge_changes.get(current_edge, current_edge)
+# edges_to_remove = {}
+# edge_changes = {}
+# for extract_field_edge in extract_fields_edges:
+#     print(extract_field_edge)
+#     for conceptnet_edge in conceptnet_edges:
+#         similarity = h(extract_field_edge, conceptnet_edge)
+#         if similarity < 0.5: continue
+#
+#         if conceptnet_edge in edges_to_remove:
+#             edges_to_remove[conceptnet_edge] += 1
+#         else:
+#             edges_to_remove[conceptnet_edge] = 1
+#             edge_changes[conceptnet_edge] = extract_field_edge
+#
+# print(edges_to_remove)  ### it prints {'FormOf': 1, 'PartOf': 1, 'IsA': 2, 'RelatedTo': 1}
+#
+#
+def get_edge(edge_label):
+    # if current_edge in extract_fields_edges:
+    #     return current_edge
+    return mappings.get(edge_label)
 
 
 
