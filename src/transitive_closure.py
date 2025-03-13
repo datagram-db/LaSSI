@@ -46,7 +46,7 @@ def floyd_warshall(adjacency_db):
         count += 1
         j_idx = 0
         # print(count)
-        if count % 1000 == 0: print(count)
+        if count % 10000 == 0: print(count)
         #for j in adjacency_db.keys():
         #for j in adjacency_list:
         while j_idx < len(adjacency_list):
@@ -95,7 +95,7 @@ def build_clusters(adjacency_db, cluster_db):
         if cluster_db.get(key_node): continue
 
         count += 1
-        if count % 1000 == 0: print(count)
+        if count % 10000 == 0: print(count)
 
         adjacency_list.append(key_node)
         cluster = sorted(adjacency_list)

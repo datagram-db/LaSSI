@@ -39,7 +39,7 @@ def process_conceptnet_csv(csv_file, db):
 
             count += 1
             rels.append(r)
-            if count % 1000 == 0:
+            if count % 10000 == 0:
                 print(count)
                 # print(r.rel)
                 # #print(r.langStart)
