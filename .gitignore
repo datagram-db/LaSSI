@@ -1,3 +1,5 @@
 .idea/
 venv/
 __pycache__/
+src/adjacency_list.db
+src/clusters.db
