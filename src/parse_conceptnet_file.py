@@ -9,6 +9,31 @@ textlang = dict()
 used_rel = dict()
 
 
+class CompactRelation:
+    lang:str
+    surfaceStart:str
+    surfaceEnd:str
+    rel:str
+
+    def __init__(self, line: List[str], headers: List[str] = None):
+        if headers is None:
+            headers = ["id", "uri", "relation_id", "start_id", "end_id", "weight", "data"]
+        d = dict(zip(headers, line))
+        try:
+            d["data"] = json.loads(d["data"])
+        except:
+            d["data"] = json.loads(d["data"].replace('\\\\"', '\\"'))
+
+        self.rel = d["data"]["rel"].replace("/r/", "").replace("dbpedia/", "")
+        self.lang = d["data"]["start"].replace("_", " ").split('/')[2]
+        self.surfaceStart = d["data"]["surfaceStart"]
+        self.surfaceEnd = d["data"]["end"].split("/")[-1]
+
+        if self.surfaceStart is None:
+            self.surfaceStart = d["data"]["start"].replace("_", " ").split('/')[3]
+        if self.surfaceEnd is None:
+            raise Exception("just wanna show u that some can be none")
+
 
 class Relation:
     relation_id:str
@@ -115,7 +140,7 @@ def numberbatch_parsing(file):
 
 
 def get_triplets(file, lang=None):
-    with open(file) as tsv:
+    with open(file, encoding="utf-8") as tsv:
         for line in csv.reader(tsv, dialect="excel-tab"):
             r = Relation(line)
 
