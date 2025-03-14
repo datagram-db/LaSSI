@@ -42,7 +42,14 @@ def generate(conceptnet_path, wiktionary_path, load_from_db=False, test_limit=-1
         to_db("clusters.db", clusters)
 
 
-    with open(config["result_file"], "w", encoding="utf-8") as tsv:
+    def triplet_check(source, edge_label, target):
+        return (not (source.startswith("Q") and source[1:].isdigit()) and
+                not (target.startswith("Q") and target[1:].isdigit()))
+
+    def modify_triplet(source, edge_label, target):
+        return source.lower().replace(" ", "_"), edge_label, target.lower().replace(" ", "_")
+
+    with open(config["result_file"], "w", encoding="utf-8", newline="") as tsv:
         wr = csv.writer(tsv, delimiter="\t")
         wr.writerow(["source", "relation", "target"])
 
@@ -51,6 +58,9 @@ def generate(conceptnet_path, wiktionary_path, load_from_db=False, test_limit=-1
         count = 0
         for triplet in parse_conceptnet_file.get_triplets(conceptnet_path, lang="en"):
             (source, edge_label, target) = triplet
+            if not triplet_check(source, edge_label, target): continue
+            source, edge_label, target = modify_triplet(source, edge_label, target)
+
             #wr.writerow((transitive_closure.get_node(source), edge_mapping.get_edge(relation), transitive_closure.get_node(target)))
             wr.writerow((transitive_closure.get_node(clusters, source), edge_mapping.get_edge(edge_label),
                          transitive_closure.get_node(clusters, target)))
@@ -81,6 +91,7 @@ def generate(conceptnet_path, wiktionary_path, load_from_db=False, test_limit=-1
 
                     wr.writerow((source, edge_mapping.get_edge(edge_label), target))
 
+    edge_mapping.show_non_mapped_labels()
     # if type(adjacency) == SqliteDict:
     #     adjacency.close()
     #
