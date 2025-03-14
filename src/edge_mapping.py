@@ -106,10 +106,21 @@ conceptnet_edges = list(vars(ConceptNet5RelationType).keys())[1:-3]
 # print(edges_to_remove)  ### it prints {'FormOf': 1, 'PartOf': 1, 'IsA': 2, 'RelatedTo': 1}
 #
 #
+
+labels_without_mapping = set()
+
 def get_edge(edge_label):
     # if current_edge in extract_fields_edges:
     #     return current_edge
-    return mappings.get(edge_label)
+    label = mappings.get(edge_label)
+    if not label: labels_without_mapping.add(edge_label)
+    return label
 
+def show_non_mapped_labels():
+    print("Labels that havent been mapped:")
+    print(len(labels_without_mapping))
+    for l in labels_without_mapping:
+        print(l)
+    # so on the first run it showed SubwordOf, with_pos, with_sense, inflection
 
 
