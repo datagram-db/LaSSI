@@ -157,7 +157,7 @@ class CreateFinalKernel:
         filtered_top_node_ids = set()
         # Loop over every source and target for every edge
         for edge_node in itertools.chain.from_iterable(map(lambda x: [x.source, x.target], edges)):
-            # Check if edge node is not None, in true targets, and is a root
+            # Check if edge node is NOT None, NOT in true targets, and IS a root
             if (
                     edge_node is not None and
                     edge_node.id not in true_targets and

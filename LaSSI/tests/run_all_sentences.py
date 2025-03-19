@@ -33,7 +33,7 @@ def get_and_run_all_sentences(folders):
             try:
                 with open(os.devnull, 'w') as devnull:
                     sys.stdout = devnull
-                    pipeline = LaSSI(yaml_file, "/home/fox/PycharmProjects/LaSSI-python/connection.yaml")
+                    pipeline = LaSSI(yaml_file, "/home/campus.ncl.ac.uk/b9063849/PycharmProjects/LaSSI/connection.yaml")
                     pipeline.run()
                     pipeline.close()
                 sys.stdout = sys.__stdout__
