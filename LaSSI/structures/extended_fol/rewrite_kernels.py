@@ -346,10 +346,12 @@ class RewriteKernels:
                     else:
                         if idx in negated_args:
                             neg_arg = v[idx].arg
-                            d[k] = (FNot(FVariable(neg_arg.name, neg_arg.type, neg_arg.specification, v[opp], neg_arg.id,
-                                              neg_arg.properties)),)
+                            assert (neg_arg.specification is None) or len(neg_arg.specification) == 0
+                            d[k] = (FNot(FVariable(neg_arg.name, neg_arg.type, v[opp].name if not opp in negated_args else v[opp].arg.name, neg_arg.cop, neg_arg.id,
+                                              neg_arg.properties, spec_negation=opp in negated_args)),)
                         else:
-                            d[k] = (FVariable(v[idx].name, v[idx].type, v[idx].specification,  v[opp], v[idx].id, v[idx].properties), )
+                            assert (v[idx].specification is None) or len(v[idx].specification) == 0
+                            d[k] = (FVariable(v[idx].name, v[idx].type, v[opp].name if not opp in negated_args else v[opp].arg.name, v[idx].cop,  v[idx].id, v[idx].properties, spec_negation=opp in negated_args), )
         return frozenset(d.items())
 
     def rewrite_kernels(self, obj=None) -> Formula:
