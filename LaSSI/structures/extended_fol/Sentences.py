@@ -195,6 +195,7 @@ class FVariable(Formula):
     id: int
     properties: frozenset = field(default_factory=lambda: frozenset())
     meta: str = field(default_factory=lambda: "FVariable")
+    spec_negation:bool = False
     matched: bool = field(default_factory=lambda: False)
 
     def __str__(self):
@@ -203,9 +204,9 @@ class FVariable(Formula):
             name = "?"
         else:
             name = "\\textsf{" + name + "}"
-
         if self.specification is not None:
-            name += (" [\\textup{of}] " + str(self.specification))
+            negation = "~ " if self.spec_negation else ""
+            name += (" [\\textup{of}] " + negation + str(self.specification))
             name = "\\left[" + name + "\\right]^{\\texttt{" + str(self.id) + "}}"
         else:
             name = "{" + name + "}^{\\texttt{" + str(self.id) + "}}"
@@ -960,6 +961,65 @@ class FNot(Formula):
 
     def strippedByType(self):
         return FNot(arg=self.arg.strippedByType())
+
+
+def type_atom(f:Formula):
+    if isinstance(f, FNot) or type(f).__name__ == "FNot":
+        yield from  type_atom(f.arg)
+    elif isinstance(f, FAnd) or type(f).__name__ == "FAnd":
+        for x in f.args:
+            yield from id_formula(x)
+    elif isinstance(f, FOr) or type(f).__name__ == "FOr":
+        for x in f.args:
+            yield from id_formula(x)
+    elif isinstance(f, FVariable) or type(f).__name__ == "FVariable":
+        yield f.type if f.type is not None else "ENTITY"
+    else:
+        raise RuntimeError("ERROR: wrongly expected type")
+
+def id_formula(f:Formula):
+    if isinstance(f, FNot) or type(f).__name__ == "FNot":
+        yield from id_formula(f.arg)
+    elif isinstance(f, FAnd) or type(f).__name__ == "FAnd":
+        for x in f.args:
+            yield from id_formula(x)
+    elif isinstance(f, FOr) or type(f).__name__ == "FOr":
+        for x in f.args:
+            yield from id_formula(x)
+    elif isinstance(f, FVariable) or type(f).__name__ == "FVariable":
+        if f.cop is not None:
+            yield from id_formula(f.cop)
+        for k, v in f.properties:
+            if isinstance(v, tuple):
+                for x in v:
+                    yield from id_formula(x)
+            else:
+                yield from id_formula(v)
+        if f.id is not None and (f.id>=0):
+            yield f.id
+    elif isinstance(f, FUnaryPredicate) or type(f).__name__ == "FUnaryPredicate":
+        if f.arg is not None:
+            yield from id_formula(f.arg)
+        for k, v in f.properties:
+            if isinstance(v, tuple):
+                for x in v:
+                    yield from id_formula(x)
+            else:
+                yield from id_formula(v)
+    elif isinstance(f, FBinaryPredicate) or type(f).__name__ == "FBinaryPredicate":
+        if f.src is not None:
+            yield from id_formula(f.src)
+        if f.dst is not None:
+            yield from id_formula(f.dst)
+        for k, v in f.properties:
+            if isinstance(v, tuple):
+                for x in v:
+                    yield from id_formula(x)
+            else:
+                yield from id_formula(v)
+    else:
+        yield from []
+
 
 
 def formula_from_dict(f: Union[dict, str]):

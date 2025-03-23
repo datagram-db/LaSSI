@@ -9,7 +9,7 @@ class Services:
     __instance = None
 
     @staticmethod
-    def getInstance(logger=None):
+    def getInstance(logger=None)->'Services':
         """ Static access method. """
         if Services.__instance == None:
             Services(logger)

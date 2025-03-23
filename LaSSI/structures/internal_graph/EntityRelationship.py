@@ -10,7 +10,7 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
-from typing import List
+from typing import List, DefaultDict
 
 
 class Grouping(Enum):
@@ -60,6 +60,27 @@ class SetOfSingletons(NodeEntryPoint):  # Graph node representing conjunction/di
     max: int
     confidence: float
     root: bool = False
+
+    def min_f(self):
+        return min(int(self.min), min([x.min_f() for x in self.entities if x is not None]))
+
+    def max_f(self):
+        return max(int(self.max), max([x.max_f() for x in self.entities if x is not None]))
+
+    def pos_f(self):
+        return min(int(self.max), max([x.pos_f() for x in self.entities if x is not None]))
+
+    def update_map(self, dmin, dmax, dpos):
+        if self.entities is not None:
+            for x in self.entities:
+                dmin, dmax, dpos = x.update_map(dmin, dmax, dpos)
+        m = self.min_f()
+        M = self.max_f()
+        p = self.pos_f()
+        dmin[self.id] = min(dmin[self.id], m)
+        dpos[self.id] = min(dpos[self.id], p)
+        dmax[self.id] = max(dmax[self.id], M)
+        return dmin, dmax, dpos
 
     def extract_properties(self, p):
         if (self.entities is None) or len(self.entities) == 0:
@@ -137,6 +158,25 @@ class Relationship:  # Representation of an edge
     edgeLabel: 'Singleton'  # Edge label, also represented as an entity with properties
     isNegated: bool = False  # Whether the edge expresses a negated action
 
+
+    def min_f(self):
+        return min([x.min_f() for x in [self.source, self.target, self.edgeLabel] if x is not None])
+
+    def pos_f(self):
+        return min([x.pos_f() for x in [self.source, self.target, self.edgeLabel] if x is not None])
+
+    def max_f(self):
+        return min([x.max_f() for x in [self.source, self.target, self.edgeLabel] if x is not None])
+
+    def update_map(self, dmin, dmax, dpos):
+        if self.source is not None:
+            dmin, dmax, dpos = self.source.update_map(dmin, dmax, dpos)
+        if self.target is not None:
+            dmin, dmax, dpos = self.target.update_map(dmin, dmax, dpos)
+        if self.edgeLabel is not None:
+            dmin, dmax, dpos = self.edgeLabel.update_map(dmin, dmax, dpos)
+        return dmin, dmax, dpos
+
     def extract_properties(self, p):
         if (self.source is None) and (self.target is None):
             yield from []
@@ -185,6 +225,46 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
     type: str
     confidence: float
     kernel: Relationship = None
+
+    def min_f(self):
+        return self.min
+
+    def pos_f(self):
+        if self.properties is None:
+            return 0
+        else:
+            for k, v in self.properties:
+                if k == "pos":
+                    return int(float(v))
+            return 0
+
+    def max_f(self):
+        return self.max
+
+    def update_map(self, dmin, dmax, dpos):
+        if self.kernel is not None:
+            dmin, dmax, dpos = self.kernel.update_map(dmin, dmax, dpos)
+        mins = [int(self.min),dmin[self.id]]
+        maxs = [int(self.max),dmax[self.id]]
+        dposes = [self.pos_f(),dpos[self.id]]
+        if self.properties is not None:
+            for k, v in self.properties:
+                if k =="begin":
+                    mins.append(int(float(v)))
+                elif k ==  "end":
+                    maxs.append(int(float(v)))
+                elif k ==  "pos":
+                    dposes.append(int(float(v)))
+                elif isinstance(v, tuple):
+                   for x in v:
+                       if isinstance(x, Singleton) or isinstance(x, Relationship) or isinstance(x, SetOfSingletons):
+                            dmin, dmax, dpos = x.update_map(dmin, dmax, dpos)
+                elif isinstance(v, Singleton) or isinstance(v, Relationship) or isinstance(v, SetOfSingletons):
+                    dmin, dmax, dpos = v.update_map(dmin, dmax, dpos)
+        dmin[self.id] = min(mins)
+        dpos[self.id] = min(dposes)
+        dmax[self.id] = max(maxs)
+        return dmin, dmax, dpos
 
     def get_name(self):
         return self.named_entity

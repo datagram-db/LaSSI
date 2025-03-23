@@ -30,7 +30,6 @@ from LaSSI.phases.ResolveBasicTypes import ExplainTextWithNER
 from LaSSI.phases.SemanticGraphRewriting import SemanticGraphRewriting
 from LaSSI.similarities.graph_similarity import SimilarityScore
 from LaSSI.structures.extended_fol.Sentences import formula_from_dict
-from LaSSI.structures.extended_fol.rewrite_kernels import rewrite_kernels
 from LaSSI.structures.extended_fol.sentence_expansion import SentenceExpansion
 from LaSSI.structures.internal_graph.Graph import Graph
 from LaSSI.structures.internal_graph.InternalData import InternalRepresentation
@@ -115,6 +114,7 @@ class LaSSI():
         self.datagramdb_output = os.path.join(self.catabolites, "datagramdb_output.json")
         self.query_file = pkg_resources.resource_filename("LaSSI.resources", "gsm_query.txt")
         self.sc = None
+        self.meu_dbs = None
 
     def create_catabolites_dir(self, dataset_name):
         # if "/" in dataset_name:
@@ -172,9 +172,9 @@ class LaSSI():
         except Exception as e:
             print(f"An error occurred: {e}")
 
-    def _internal_graph(self, meu_dbs, gsm_list):
+    def _internal_graph(self, gsm_list):
         internal_representations = []
-        for graph, meu_db in zip(gsm_list, meu_dbs):
+        for graph, meu_db in zip(gsm_list, self.meu_dbs):
             from LaSSI.structures.provenance.GraphProvenance import GraphProvenance
             g = GraphProvenance(graph, meu_db, self.transformation == SentenceRepresentation.SimpleGraph)
             self.logger(f"{meu_db.first_sentence}")
@@ -194,7 +194,8 @@ class LaSSI():
         # for intermediate_representation in intermediate_representations:
         #     for sentence in intermediate_representation.sentences:
         #     logical_representations.append(rewrite_kernels(intermediate_representation))
-        return [rewrite_kernels(x) for x in intermediate_representations]
+        from LaSSI.structures.extended_fol.rewrite_kernels import rewrite_kernels
+        return [rewrite_kernels(x, self.meu_dbs[idx]) for idx, x in enumerate(intermediate_representations)]
 
     def graph_with_logic_similarity(self, x: Graph, y: Graph) -> float:
         if self.sc is None:
@@ -252,7 +253,7 @@ class LaSSI():
         from LaSSI.files.FileDumpUtilities import target_file_dump
         n = len(sentences)
         self.logger("generating meuDB")
-        meu_db, meu_execution_time = target_file_dump(
+        self.meu_dbs, meu_execution_time = target_file_dump(
             self.meuDB,
             lambda x: [MeuDB.from_dict(k) for k in json.load(x)],
             lambda: ExplainTextWithNER(self, sentences),
@@ -284,7 +285,7 @@ class LaSSI():
         intermediate_representations, intermediate_execution_time = target_file_dump(
             self.internals,
             obj_unmarshall if is_binary else lambda x: [InternalRepresentation.from_dict(k) for k in json.load(x)],
-            lambda: SemanticGraphRewriting(self, meu_db, rewritten_graphs),
+            lambda: SemanticGraphRewriting(self, rewritten_graphs),
             obj_pickle if is_binary else json_dumps, not is_binary, self.should_benchmark, is_binary
         )
         # rewrite_kernels(intermediate_representations[0].sentences)
