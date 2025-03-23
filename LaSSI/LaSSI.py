@@ -133,14 +133,14 @@ class LaSSI():
         if os.path.exists(self.string_rep_dir):
             os.remove(self.string_rep_dir)
         if not os.path.exists(self.benchmarking_file):
-            self.write_variable_to_file(self.benchmarking_file, "Dataset, Loading sentences, Generating meuDB, "
-                                                                "Loading meuDB, Generating gsmDB, Generating "
-                                                                "rewritten graphs, Generating intermediate "
+            self.write_variable_to_file(self.benchmarking_file, "Dataset,Loading sentences,Generating meuDB,"
+                                                                "Loading meuDB,Generating gsmDB,Generating "
+                                                                "rewritten graphs,Generating intermediate "
                                                                 "representation\n")
         else:
             # If last line is not finished, add new line to ensure next benchmark is written to file correctly
             with open(self.benchmarking_file, 'r') as file:
-                if file.readlines()[-1].rstrip('\n').endswith(', '):
+                if file.readlines()[-1].rstrip('\n').endswith(','):
                     self.write_variable_to_file(self.benchmarking_file, "\n")
 
     def apply_graph_grammars(self, n):
@@ -291,7 +291,7 @@ class LaSSI():
         # rewrite_kernels(intermediate_representations[0].sentences)
         print(f"Generating intermediate representation time: {intermediate_execution_time} seconds")
         self.write_variable_to_file(self.benchmarking_file,
-                                    f"{self.get_execution_time_string(meu_execution_time)}, {gsm_execution_time[0]}, {rewritten_execution_time[0]}, {intermediate_execution_time[0]}\n")
+                                    f"{self.get_execution_time_string(meu_execution_time)},{gsm_execution_time[0]},{rewritten_execution_time[0]},{intermediate_execution_time[0]}\n")
 
         if self.transformation == SentenceRepresentation.Logical:  # LogicalGraph
             # self.logger("[TODO]")
@@ -305,10 +305,11 @@ class LaSSI():
         return intermediate_representations
 
     def get_execution_time_string(self, execution_time):
-        if execution_time[1] == 'w':
-            return f"{execution_time[0]}, 0"
-        elif execution_time[1] == 'r':
-            return f"0, {execution_time[0]}"
+        if 'w' == execution_time[1]:
+            return f"{execution_time[0]},0"
+        elif 'r' == execution_time[1]:
+            return f"0,{execution_time[0]}"
+        return None
 
     def run(self):
         from LaSSI.phases.SentenceLoader import SentenceLoader
@@ -319,10 +320,10 @@ class LaSSI():
         loading_sentences_execution_time = end_time - start_time
         self.logger(f"Loading sentences time: {loading_sentences_execution_time} seconds")
         self.write_variable_to_file(self.benchmarking_file,
-                                    f"{self.dataset_name.split('/')[-1].split('.yaml')[0]}, {loading_sentences_execution_time}, ")
+                                    f"{self.dataset_name.split('/')[-1].split('.yaml')[0]},{loading_sentences_execution_time},")
 
         result = self.sentence_transform(sentences)
-        self.post_hoc_explain(result)
+        # self.post_hoc_explain(result)
 
     def close(self):
         if isinstance(self.sentences, io.IOBase):

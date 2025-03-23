@@ -1,38 +1,75 @@
 import numpy as np
 import pandas as pd
 from plotnine import ggplot, aes, geom_line, labs, theme_minimal, theme, scale_y_log10, scale_color_brewer, \
-    element_rect, ylim, coord_cartesian, scale_x_continuous, geom_point
+    element_rect, ylim, coord_cartesian, scale_x_continuous, geom_point, element_text, geom_hline, \
+    scale_linetype_manual, element_blank, geom_rect, geom_path, scale_x_discrete
+import matplotlib.font_manager as fm
 
 
 def main():
+    font = fm.FontProperties(fname='./fonts/Satoshi-Medium.ttf', size=8)
+    bold_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=8)
+    title_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=10)
+
     pd.set_option('display.max_columns', None)
 
-    data = pd.read_csv('benchmarks/jan10-benchmark.csv')
+    data = pd.read_csv('benchmarks/mar18-benchmark.csv')  # FYI: mar18 is used in MDPI25 paper
     data = data.sort_values(by='Dataset')
-    data = data.replace(0, np.nan) # For generating/loading meuDB
+    data = data.replace(0, np.nan)  # For generating/loading meuDB where values are 0
     averaged_data = data.groupby('Dataset', as_index=False).mean(numeric_only=True)
 
+    # Create a new DataFrame for the GPT-3 data
+    gpt3_data = pd.DataFrame({
+        'Dataset': averaged_data['Dataset'].unique(),
+        'GPT-3 training time': [34 * 24 * 60 * 60] * len(averaged_data['Dataset'].unique()) # 34 days to seconds
+    })
+
+    # Merge the GPT-3 data with the averaged data
+    averaged_data = pd.merge(averaged_data, gpt3_data, on='Dataset', how='left')
+
     melted_data = averaged_data.melt(id_vars=['Dataset'], var_name='Phase', value_name='Time')
-    melted_data['Phase'] = pd.Categorical(melted_data['Phase'], categories=list(data.columns[1:]), ordered=True)
-    print(list(data.columns[1:]))
+    melted_data['Dataset'] = pd.to_numeric(melted_data['Dataset'])  # Essential for highlighting last dataset on graph
+    # melted_data['Dataset'] = pd.Categorical(melted_data['Dataset'], categories=sorted(data['Dataset'].unique()),
+    #                                         ordered=True)
+    melted_data['Phase'] = pd.Categorical(melted_data['Phase'], categories=list(averaged_data.columns[1:]), ordered=True)
+
+    original_labels = list(averaged_data.columns[1:])
+    line_types = ['solid'] * (len(original_labels) -1) + ['dashed'] # all solid except last which is dashed
+    line_type_dict = dict(zip(original_labels, line_types))
+
+    # Highlight last dataset
+    last_dataset_label = sorted(data['Dataset'].unique())[-1]
+    last_dataset_data = melted_data[pd.to_numeric(melted_data['Dataset']) == last_dataset_label]
+    y_min = last_dataset_data['Time'].min()
+    y_max = last_dataset_data[(last_dataset_data['Phase'] != "GPT-3 training time")]['Time'].max()
 
     plot = (
-        ggplot(melted_data, aes(x='Dataset', y='Time', color='Phase')) +
-        geom_line(size=1) +
-        geom_point(aes(shape="Phase"), size=2) +
-        scale_x_continuous(breaks=sorted(data['Dataset'].unique())) +
-        scale_y_log10(breaks=[10 ** x for x in range(-5, 4)],
+        ggplot(melted_data, aes(x='Dataset', y='Time', color='Phase', group='Phase')) +
+        scale_x_continuous(breaks=sorted(melted_data['Dataset'].unique()), labels=sorted(data['Dataset'].unique()), limits=(0, 205)) +
+        geom_rect(aes(xmin=last_dataset_label - 5, xmax=last_dataset_label + 5, ymin=y_min/3, ymax=y_max*3), color='red', fill='none', size=0.75) +
+        geom_line(aes(linetype='Phase'), size=0.75) +
+        geom_point(aes(shape="Phase"), size=1.75) +
+        scale_y_log10(minor_breaks=[],
+                      breaks=[10 ** x for x in range(-5, 7)],
                       labels=lambda l: ["{:.0e}".format(v).replace("+0", "+").replace("-0", "+") for v in l]) +
         scale_color_brewer(type='qual', palette='Dark2') +
+        scale_linetype_manual(values=line_type_dict) +
         labs(title='LaSSI Phase Execution Times vs. Number of Sentences',
              x='Number of sentences',
              y='Time (seconds, log scale)',
              color='Phase') +
         theme_minimal() +
-        theme(plot_background=element_rect(fill='white'))
-        # coord_cartesian(ylim=(1e-5, 1e+4))
-    )
-    plot.save('performance_metrics_plot.png', width=800, height=600, limitsize=False)
+        theme(
+            plot_background=element_rect(fill='white',color="white"),
+            text=element_rect(fontproperties=font),
+            legend_text=element_text(ha='left'),
+            axis_title_x=element_text(fontproperties=bold_font),
+            axis_title_y=element_text(fontproperties=bold_font),
+            legend_title=element_text(ha='left', fontproperties=bold_font),
+            plot_title=element_text(ha='left', fontproperties=title_font),
+            panel_border=element_blank(),
+        ))
+    plot.save('performance_metrics_plot.png', dpi=1200, width=6.5, height=3.5)
 
 if __name__ == "__main__":
     main()

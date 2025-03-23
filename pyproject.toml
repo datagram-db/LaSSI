@@ -49,7 +49,7 @@ dependencies = [
     "matplotlib",
     "dash",
     "dash_table",
-    "dashviz",
+    "dashvis",
     "dash_bootstrap_components",
     "flask"
 ]
