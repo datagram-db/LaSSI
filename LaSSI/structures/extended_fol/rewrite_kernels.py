@@ -180,7 +180,7 @@ class RewriteKernels:
         for k, v in props.items():
             if k not in discard_properties and k not in {} and ((not isinstance(v, str)) or len(v) == 0):
                 props2[k] = self.make_arg(v) if isinstance(v, Singleton) else v
-        if cop == "usually":  ## TODO:adverb
+        if (cop == "usually") or (isinstance(cop, FVariable) and (cop.name == "usually")):  ## TODO:adverb
             cop = None
         props2 = self.props_as_unique_itemset(props2)
         test, props2 = has_prop_just_one_negated_constituent(props2)

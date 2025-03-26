@@ -14,6 +14,9 @@ requires-python = "3.10"
 dynamic = ["version", "description"]
 dependencies = [
     "requests==2.32.2",
+    "rdflib_sqlalchemy",
+    "sqlalchemy-utils",
+    "drawsvg[all]",
     "psycopg2-binary==2.9.9",
     "psycopg2==2.9.9",
     "stanza==1.8.1",
@@ -36,6 +39,7 @@ dependencies = [
     "rdflib==7.0.0",
     "pandas==2.2.3",
     "dacite",
+    "jsonpath_ng==1.7.0",
     "websockets==13.0.1",
     "fastapi==0.115.0",
     "uvicorn==0.30.6",
