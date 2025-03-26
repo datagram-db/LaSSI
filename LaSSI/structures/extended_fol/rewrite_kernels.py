@@ -52,7 +52,41 @@ def make_or(entities):
 def make_not(param):
     return FNot(arg=param)
 
+def has_prop_just_one_negated_constituent(prop):
+    """
+    This function returns a pair of a boolean and of a rewritten set of properties
 
+    If th proposition contains just one negated constituent and, therefore, the entire clause can be rewritten as
+    one single logical negated constituent, then this function returns a rewritten non-null constituent. If this does not
+    happen, it returns the same proposition. To disambiguate between the two, we use the boolean: if true, it means that
+    the second argument is the cleaned version where the argument is negated
+    :param prop:
+    :return:
+    """
+    if (len(prop) != 1):
+        return False, prop
+    k, x = next(iter(prop))
+    assert isinstance(x, tuple) and len(x) == 1
+    v = x[0]
+    if isinstance(v,FNot):
+        return True, frozenset({(k, (v.arg, ))})
+    elif isinstance(v, FVariable):
+        isCopNegated = ((v.cop is not None) and isinstance(v.cop, FNot))
+        if isCopNegated:
+            assert not isinstance(v.cop.arg, FNot) ## Not considering double negation at the moment, which should not be captured by the pipeline
+        isSpecNegated = v.spec_negation
+        if isCopNegated and isSpecNegated:
+            return True, frozenset({(k, (FVariable(v.name, v.type, v.specification, v.cop.arg, v.id, v.properties, v.meta, False)), )})
+        elif isCopNegated:
+            return True, frozenset(
+                {(k, (FVariable(v.name, v.type, v.specification, v.cop.arg, v.id, v.properties)), )})
+        elif isSpecNegated:
+            return True, frozenset({(k, (FVariable(v.name, v.type, v.specification, v.cop, v.id, v.properties, v.meta, False)), )})
+        else:
+            return False, prop
+    else:
+        assert False
+    return False, prop
 
 
 
@@ -148,8 +182,11 @@ class RewriteKernels:
                 props2[k] = self.make_arg(v) if isinstance(v, Singleton) else v
         if cop == "usually":  ## TODO:adverb
             cop = None
-        return FVariable(name=named_entity, type=type, specification=specifiaction, cop=cop, id=entity.id,
-                         properties=self.props_as_unique_itemset(props2))
+        props2 = self.props_as_unique_itemset(props2)
+        test, props2 = has_prop_just_one_negated_constituent(props2)
+        result = FVariable(name=named_entity, type=type, specification=specifiaction, cop=cop, id=entity.id,
+                         properties=props2)
+        return FNot(result) if test else result
 
     def make_unary(self, rel, dst, score, prop):
         if rel == "be":  # TODO: generalise
@@ -171,7 +208,10 @@ class RewriteKernels:
                     prop[x] = prop[x][0]
                 else:
                     prop[x] = tuple(prop[x])
-        return FUnaryPredicate(rel=rel, arg=dst, score=score, properties=self.props_as_unique_itemset(prop))
+        prop = self.props_as_unique_itemset(prop)
+        test, prop = has_prop_just_one_negated_constituent(prop)
+        result = FUnaryPredicate(rel=rel, arg=dst, score=score, properties=prop)
+        return FNot(result) if test else result
 
     def make_binary(self, rel, src, dst, score, prop):
         if (rel == "be" and (dst is None or (not isinstance(dst, FBinaryPredicate) and not isinstance(dst,
@@ -194,7 +234,10 @@ class RewriteKernels:
                     prop[x] = prop[x][0]
                 else:
                     prop[x] = tuple(prop[x])
-        return FBinaryPredicate(rel=rel, src=src, dst=dst, score=score, properties=self.props_as_unique_itemset(prop))
+        prop = self.props_as_unique_itemset(prop)
+        test, prop = has_prop_just_one_negated_constituent(prop)
+        result =  FBinaryPredicate(rel=rel, src=src, dst=dst, score=score, properties=prop)
+        return FNot(result) if test else result
 
     def make_prop(self, src, rel, negated, score, properties, dst):
         if (dst is not None):
