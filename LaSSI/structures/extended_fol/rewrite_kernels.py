@@ -76,12 +76,12 @@ def has_prop_just_one_negated_constituent(prop):
             assert not isinstance(v.cop.arg, FNot) ## Not considering double negation at the moment, which should not be captured by the pipeline
         isSpecNegated = v.spec_negation
         if isCopNegated and isSpecNegated:
-            return True, frozenset({(k, (FVariable(v.name, v.type, v.specification, v.cop.arg, v.id, v.properties, v.meta, False)), )})
+            return True, frozenset({(k, (FVariable(v.name, v.type, v.specification, v.cop.arg, v.id, v.properties, v.meta, False), ))})
         elif isCopNegated:
             return True, frozenset(
-                {(k, (FVariable(v.name, v.type, v.specification, v.cop.arg, v.id, v.properties)), )})
+                {(k, (FVariable(v.name, v.type, v.specification, v.cop.arg, v.id, v.properties), ))})
         elif isSpecNegated:
-            return True, frozenset({(k, (FVariable(v.name, v.type, v.specification, v.cop, v.id, v.properties, v.meta, False)), )})
+            return True, frozenset({(k, (FVariable(v.name, v.type, v.specification, v.cop, v.id, v.properties, v.meta, False), ))})
         else:
             return False, prop
     else:
