@@ -1,0 +1,212 @@
+import FBinaryPredicate                       in-module "FunctionalMatch.example.parmenides.Formulae"
+import FUnaryPredicate                        in-module "FunctionalMatch.example.parmenides.Formulae"
+import FNot                                   in-module "FunctionalMatch.example.parmenides.Formulae"
+import FVariable                              in-module "FunctionalMatch.example.parmenides.Formulae"
+import "nonEmptyMatch"                        in-module "FunctionalMatch.example.parmenides.queries"
+import "getMultiwayAdjectivalPoint"           in-module "FunctionalMatch.example.parmenides.queries"
+import "getMultiwayTargetSimpleSentence"      in-module "FunctionalMatch.example.parmenides.queries"
+import "isOfType"                             in-module "FunctionalMatch.example.parmenides.queries"
+import "addProperty"                          in-module "FunctionalMatch.example.parmenides.queries"
+import "getOutgoingNodes"                     in-module "FunctionalMatch.example.parmenides.queries"
+import "extractProperties"                    in-module "FunctionalMatch.example.parmenides.queries"
+import "extractJsonPath"                      in-module "FunctionalMatch.example.parmenides.queries"
+import "removeFromProperties"                 in-module "FunctionalMatch.example.parmenides.queries"
+import "addAdjective"                         in-module "FunctionalMatch.example.parmenides.queries"
+import "addSpecification"                     in-module "FunctionalMatch.example.parmenides.queries"
+import "getIngoingNodes"                      in-module "FunctionalMatch.example.parmenides.queries"
+import "dropCopula"                           in-module "FunctionalMatch.example.parmenides.queries"
+import "neitherNegatedNorNone"                in-module "FunctionalMatch.example.parmenides.queries"
+
+// query #1: If x has y and x is part of z, then also z has y (not in eq)
+nested match FBinaryPredicate ( "have", var(src), ( FVariable (var(a), "JJ",var(b),var(c),var(d),var(e)) ) , var(f) , var(g) )
+       replace var(x) with  jsonpath "$0:$.src.name"
+       extend-with "getOutgoingNodes" with variable : "x" result : "f" rel : "partOf"
+       where call "nonEmptyMatch" with variable : "x"
+       as deep rewrite jsonpath "$0:$.src.name" to var(f)
+       ;
+
+/*// query #2 (not in eq)
+nested match FBinaryPredicate ( "have", var(src), ( FVariable (var(a), "JJ",var(b),var(c),var(d),var(e)))  , var(f) , var(g)  )
+       replace var(x) with  jsonpath "$0:$.src.name"
+       extend-with "getOutgoingNodes" with variable : "x" result : "f" rel : "isA"
+       as deep rewrite jsonpath "$0:$.src.name" to var(f)
+       ;*/
+
+// query #3: If x has a property y which is an adjective, then x exists with such a property
+nested match   FBinaryPredicate ( "have", var(src), var(dst) , var(score), var(props) )
+       replace var(x) with  jsonpath "$0:$.dst.name"
+       where (call "nonEmptyMatch" with variable : "x") && (call "isOfType" with variable : "x" type : "Adjective")
+       as      FUnaryPredicate ( "be" ,  ( "addAdjective" ( var(src) ) with adjective : var(x) ) , var(score), var(props) )
+       ;
+
+// query #4: If x has a property y and y is equivalent to z, then x has also z (also subsumes the original query 11)
+nested match   FBinaryPredicate ( "have", var(src), var(dst) , var(score), var(props) )
+       replace var(x) with  jsonpath "$0:$.dst.name"
+       extend-with "getOutgoingNodes" with variable : "x"   result : "z"   rel : "eqTo"
+       as deep rewrite jsonpath "$0:$.dst.name" to var(z)
+       ;
+
+// query #5: If x exists with y and y is equivalent to z, then x exists with z
+nested match   FUnaryPredicate ( "be", var(src)  , var(score), var(props)  )
+       replace var(x) with  jsonpath "$0:$.arg.name"
+       extend-with "getOutgoingNodes" with variable : "x"   result : "z"   rel : "eqTo"
+       where call "nonEmptyMatch" with variable : "x"
+       as deep rewrite jsonpath "$0:$.dst.name" to var(z)
+       ;
+
+
+// query #6: If x has a property y and y is equivalent to z, then x has also z
+nested match        FBinaryPredicate ( "have", var(src), FVariable ( var(x), var(dstt) , var(spect) , var(copt), var(idt),var(propt)) , var(score), var(props) )
+       extend-with  "getOutgoingNodes" with variable : "x"   result : "z"   rel : "neqTo"
+       as FNot( FBinaryPredicate ( "have", var(src), FVariable ( var(z), var(dstt) , var(spect) , var(copt), var(idt),var(propt)) , var(score), var(props) ) )
+       ;
+
+// query #7: If x exists with y and y is opposite to z, then x does not exists with z
+nested match        FUnaryPredicate ( "be",  var(arg) , var(score), var(props)  )
+       replace var(x) with    jsonpath "$0:$.arg.cop.name",
+               var(orig) with jsonpath "$0:$"
+       extend-with  "getOutgoingNodes" with variable : "x"   result : "z"   rel : "neqTo"
+       where call "nonEmptyMatch" with variable : "x"
+       as deep rewrite jsonpath "orig:$.arg.cop.name" to var(z),
+                       jsonpath "$0:$"             to FNot ( var(orig) )
+       ;
+
+// query #8:  If a location has a given property, then this is equal to a thing to exist at a given location
+nested match   FBinaryPredicate ( "have", var(src), var(dst) , var(score), var(props) )
+       replace var(x) with  jsonpath "$0:$.src.name"
+       where (call "nonEmptyMatch" with variable : "x") && (call "isOfType" with variable : "x" type : "LOC") || (call "isOfType" with variable : "x" type : "GPE")
+       as   FUnaryPredicate ( "be" ,   var(dst)   , var(score), ( "addProperty" (var(props)) with key : "SPACE" value : var(src) ) )
+       ;
+//
+
+// query 9: If the nome/adjective pair is related to a given concept, then this can be grouped as one single variable and represent the relatedness as a RelatedTo
+nested match        FBinaryPredicate ( "have", var(src), ( FVariable (var(y), var(a) ,var(b),var(c),var(d),var(e)) ) , var(score), var(props) )
+       replace      var(x) with  jsonpath "$0:$.src.name"
+       extend-with  "getMultiwayAdjectivalPoint" with  main : "x" adj : "y" rel : "relatedTo" result : "z"
+       as           FBinaryPredicate ( "have", ( "addAdjective" ( var(src) ) with adjective : var(y) ) , FVariable( var(z) , "ENTITY" ) , var(score), var(props) )
+;
+
+
+
+// query 10: if x has something which is related to soemthing else, then the source possesses also the related idea (TODO: and y has the same type of z)
+nested match        FBinaryPredicate ( "have" , var(src), ( FVariable (var(z), var(type) ,var(a),var(b),var(c),var(d)) ) , var(score), var(props))
+       extend-with  "getOutgoingNodes" with variable : "z"   result : "y"   rel : "relatedTo"
+       //where        (call "isOfType" with variable : "z" type : "type")
+       as deep rewrite jsonpath "$0:$.dst.name" to var(y)
+       ;
+
+// query 11: see query 4
+
+// query 12: replace equivalent verb names (binary ones)
+nested match   FBinaryPredicate ( var(rel), var(a), var(b) , var(c), var(d) )
+       extend-with "getOutgoingNodes" with variable : "rel"   result : "z"   rel : "eqTo"
+       as deep rewrite jsonpath "$0:$.rel" to var(z)
+       ;
+
+// query 13: replace equivalent verb names (unary ones)
+nested match   FUnaryPredicate ( var(rel),var(a), var(b) , var(c) )
+       extend-with "getOutgoingNodes" with variable : "rel"   result : "z"   rel : "eqTo"
+       as deep rewrite jsonpath "$0:$.rel" to var(z)
+       ;
+
+// query 14: If the occurrence of an entity enables the possibility of deriving a specific action, then the latter is expanded as a new binary predicate
+nested match   FUnaryPredicate ( "be", ( FVariable (var(x), var(a) ,var(b),var(c),var(d),var(e)) ) , var(score), var(props) )
+       extend-with "getMultiwayTargetSimpleSentence" with main : "x" rel :  "capableOf"  resultVerb : "y"   resultSubject : "z"  resultObject : "t"
+       as FBinaryPredicate ( var(y) , FVariable ( var(z) , "Entity" ) , FVariable ( var(t) , "Entity" ), var(score), var(props))
+       ;
+
+// query 15
+nested match FBinaryPredicate (   var(x) , var(src) ,   var(dst) , var(score), var(props) )
+       extend-with "getOutgoingNodes" with variable : "x" result : "f" rel: "adjectivalForm"
+       as   FBinaryPredicate ( "have" ,  var(dst), FVariable ( var(f), "JJ" ) , var(score), var(props) )
+;
+
+// query 16: query invent 88-89
+nested match FUnaryPredicate (   var(x) , var(arg) ,  var(score), var(props) )
+       extend-with "getOutgoingNodes" with variable : "x" result : "f" rel: "adjectivalForm"
+       as   FUnaryPredicate ( "be" ,  ( "addAdjective" ( var(arg) ) with adjective : var(f) ) , var(score), var(props) )
+;
+
+// query 17
+nested match FBinaryPredicate (   var(x) , var(src) ,   var(dst) , var(score), var(props) )
+       extend-with "getOutgoingNodes" with variable : "x" result : "f" rel: "adjectivalForm"
+       as   FUnaryPredicate ( "be" ,  ( "addAdjective" ( var(dst) ) with adjective : var(f) ) , var(score), var(props) )
+;
+
+// query 18
+nested match FUnaryPredicate ("be", var(arg), var(score), var(props) )
+       extend-with "extractProperties" with from : "$0" field : "SPACE" result : "yvar"
+       as FBinaryPredicate ("have", var(yvar) , var(arg), var(score), ( "removeFromProperties" ( var(props) ) with key : "SPACE" )  )
+;
+
+
+// query 19 (not in eq)
+nested match FUnaryPredicate ("be", ( FVariable ( var(x), "JJ",var(b),var(c),var(d),var(e)) ), var(score), var(props) )
+       replace var(arg) with  jsonpath "$0:$.arg"
+       extend-with "extractProperties" with from : "$0" field : "SPACE" result : "yvar",
+                   "extractJsonPath"   with jquery : "yvar:$.name" result : "y",
+                   "getOutgoingNodes" with variable : "y" result : "z" rel : "isA"
+       as deep rewrite var(final) to "addSpecification" ( var(yvar) ) with value : var(z),
+                       jsonpath "$0:$" to FUnaryPredicate ("be", ( FVariable ( var(x), "JJ",var(b),var(c),var(d),var(e)) ), var(score), ( "addProperty" (  "removeFromProperties" ( var(props) ) with key : "SPACE" )  with key : "SPACE" value : var(final) ) )
+       ;
+
+
+// query 20 (not in eq)
+nested match FUnaryPredicate ("be", ( FVariable ( var(x), "JJ",var(b),var(c),var(d),var(e)) ), var(score), var(props) )
+       replace var(arg) with  jsonpath "$0:$.arg"
+       extend-with "extractProperties" with from : "$0" field : "SPACE" result : "yvar",
+                   "extractJsonPath"   with jquery : "yvar:$.specification" result : "z",
+                   "getIngoingNodes" with variable : "z" result : "t" rel : "partOf"
+       as deep rewrite var(final) to "addSpecification" ( var(yvar) ) with value : var(t),
+                       jsonpath "$0:$" to FUnaryPredicate ("be", ( FVariable ( var(x), "JJ",var(b),var(c),var(d),var(e)) ), var(score), ( "addProperty" (  "removeFromProperties" ( var(props) ) with key : "SPACE" )  with key : "SPACE" value : var(final) ) )
+       ;
+
+// query 21: Extracting negation from the argument to the entire sentence (be)
+nested match FUnaryPredicate ("be", FNot (var(arg)), var(score), var(props) )
+       extend-with "extractProperties" with from : "$0" field : "SPACE" result : "yvar"
+       as FNot ( FUnaryPredicate ("be", var(arg), var(score), var(props) ) )
+;
+
+// query 22: Extracting negation from the argument to the entire sentence (have)
+nested match FBinaryPredicate ( "have", FNot (var(src)), var(dst) , var(score), var(props) )
+       as FNot (  FBinaryPredicate ( "have",  var(src), var(dst) , var(score), var(props) ) )
+;
+
+// query 23: Extracting negation from the argument to the entire sentence (have)
+nested match FBinaryPredicate ( "have", var(src), FNot (var(dst)), var(score), var(props) )
+       as FNot (  FBinaryPredicate ( "have",  var(src), var(dst) , var(score), var(props) ) )
+;
+
+// query 24: Extracting be from have target
+nested match FBinaryPredicate ( _, _, var(dst), var(score), var(props) )
+       as (  FUnaryPredicate ( "be",  var(dst) , var(score), ( "removeFromProperties" ( var(props) ) with key : "AIM_OBJECTIVE" ) ) )
+;
+
+// query 25: Extracting be from have target
+nested match FBinaryPredicate ( _, var(src), _, var(score), var(props) )
+       where (call "neitherNegatedNorNone" with variable : "src")
+       as (  FUnaryPredicate ( "be",  var(src) , var(score), ( "removeFromProperties" ( var(props) ) with key : "AIM_OBJECTIVE" )  ) )
+;
+
+// query 26
+nested match   FUnaryPredicate ( "be", var(src), var(score), var(props) )
+       replace var(x) with  jsonpath "$0:$.arg.name",
+               var(cop) with jsonpath "$0:$.arg.cop"
+       where (call "nonEmptyMatch" with variable : "cop") && (call "nonEmptyMatch" with variable : "x") && ((call "isOfType" with variable : "x" type : "LOC") || (call "isOfType" with variable : "x" type : "GPE"))
+       as deep rewrite var(src) to "dropCopula" ( var(src) ) ,
+                       jsonpath "$0:$" to  FUnaryPredicate ( "be" ,  var(cop) , var(score), ( "addProperty" ( var(props) ) with key : "SPACE" value :  var(src) ) )
+       ;
+
+
+ // query 27 (9BIS): If the nome/adjective pair is related to a given concept, then this can be grouped as one single variable and represent the relatedness as a RelatedTo
+nested match        FBinaryPredicate ( "have", var(src), ( FVariable (var(y), var(a) ,var(b),var(c),var(d),var(e)) ) , var(score), var(props) )
+       replace      var(n) with  jsonpath "$0:$.src.name"
+       extend-with  "getOutgoingNodes" with variable : "n"   result : "x"   rel : "isA",
+                    "getMultiwayAdjectivalPoint" with  main : "x" adj : "y" rel : "relatedTo" result : "z"
+       as           FBinaryPredicate ( "have", ( "addAdjective" ( var(src) ) with adjective : var(y) ) , FVariable( var(z) , "ENTITY" ) , var(score), var(props) )
+;
+
+nested match        FBinaryPredicate ( "have", ( FVariable (var(y), var(a) ,var(b),var(c),var(d),var(e)) ) ,var(dst),  var(score), var(props) )
+       extend-with "getOutgoingNodes" with variable : "b"   result : "z"   rel : "eqTo"
+       as deep rewrite jsonpath "$0:$.src.specification" to var(z)
+;
