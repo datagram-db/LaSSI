@@ -236,7 +236,7 @@ class LaSSI():
 
             from LaSSI.structures.extended_fol.TabularCWASemantics import TabularCWASemantics
             f = TabularCWASemantics(obj_list, self.catabolites_of_dataset)
-
+            TBoxReasoningSingleton.instance().dump()
         elif (self.transformation == SentenceRepresentation.LogicalGraph or
               self.transformation == SentenceRepresentation.SimpleGraph):
             f = self.graph_with_logic_similarity
@@ -317,14 +317,13 @@ class LaSSI():
                                     f"{self.get_execution_time_string(meu_execution_time)},{gsm_execution_time[0]},{rewritten_execution_time[0]},{intermediate_execution_time[0]}\n")
 
         if self.transformation == SentenceRepresentation.Logical:  # LogicalGraph
-            # self.logger("[TODO]")
             intermediate_representations = target_file_dump(self.logical_rewriting,
                                                       lambda x: formula_from_dict(json.load(x)),
                                                       lambda: LogicalRewriting(self, intermediate_representations),
                                                       json_dumps,
                                                       self.force)
-        for x in intermediate_representations:
-            print(str(x))
+        # for x in intermediate_representations:
+        #     print(str(x))
         return intermediate_representations
 
     def get_execution_time_string(self, execution_time):

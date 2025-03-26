@@ -137,7 +137,9 @@ def plot_dendogram(model, D, filename="dendrogram.png"):
 
 
 def as_distance_matrix(similarity_matrix):
-    return [[1.0 - value for value in row] for row in similarity_matrix]
+    lls = [[1.0 - value for value in row] for row in similarity_matrix]
+    lls = numpy.asarray(lls)
+    return (lls + lls.transpose())/2
 
 
 def maximal_matching(M):
@@ -179,6 +181,14 @@ def matrix_init_normalize(matrix, normalization):
     else:
         return csr_matrix(matrix)
 
+def knn(similarity_matrix, n_expected_clusters):
+    distances = as_distance_matrix(similarity_matrix)
+    from sklearn_extra.cluster import KMedoids
+    model = KMedoids(n_clusters=n_expected_clusters, metric="precomputed").fit(distances)
+    cluster_assignment = [set() for _ in range(n_expected_clusters)]
+    for i, cluster in zip(range(len(similarity_matrix)), model.labels_):
+        cluster_assignment[cluster].add(i)
+    return cluster_assignment, model, numpy.array(similarity_matrix)
 
 def mcl_clustering_matches(similarity_matrix, expected_clusters):
     normalization = ["simple_laplacian", "sym_normalized_laplacian", "random_walk_normalized", "none"]
@@ -267,18 +277,17 @@ def test_with_maximal_matching(expected_clusters, experiment_name, transformer, 
     agg_cluster_assignment, agg_model, distances = agglomerative_clustering(similarity_matrix, n_expected_clusters)
     plot_dendogram(agg_model, distances, f"catabolites/{experiment_name}/{transformer}_dend.png")
 
-    # print("Markov clustering")
-    # mkv_cluster_assignment, matrix, mkv_clusters, best_inflation, best_norm = mcl_clustering_matches(similarity_matrix,
-    #                                                                                                  expected_clusters)
+    print("Markov clustering")
+    mkv_cluster_assignment, matrix, mkv_clusters = knn(similarity_matrix, n_expected_clusters)
     # graph_plot(matrix, mkv_clusters, f"{experiment_name}/{transformer}_mkv.png")
 
     agg_score = best_clustering_match(agg_cluster_assignment, expected_clusters)
     agg_similarity = 1 - agg_score
     print(f"Best Clustering Match (Agglomerative Clustering): {agg_similarity}. {agg_cluster_assignment}")
 
-    # mkv_score = best_clustering_match(mkv_cluster_assignment, expected_clusters)
-    # mkv_similarity = 1 - mkv_score
-    # print(f"Best Clustering Match (Markov Clustering): {mkv_similarity}. {mkv_cluster_assignment}")
+    mkv_score = best_clustering_match(mkv_cluster_assignment, expected_clusters)
+    mkv_similarity = 1 - mkv_score
+    print(f"Best Clustering Match (k-Medoids): {mkv_similarity}. {mkv_cluster_assignment}")
 
 
 def read_json_array(filepath):

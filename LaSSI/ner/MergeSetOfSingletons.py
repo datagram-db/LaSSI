@@ -101,7 +101,7 @@ def GraphNER_withProperties(node, is_simplistic_rewriting, meu_db_row, parmenide
             d[x[0]] = x[2]
             resolved_d.append([d, x[1], x[3]])  # [d, confidence_score, type]
 
-    print(resolved_d)
+    # print(resolved_d)
     # If resolved_d has > 1 elements, there are multiple resolutions with equal confidence score
     if len(resolved_d) > 1:
         # Therefore find the resolution with the most entities
@@ -116,8 +116,8 @@ def GraphNER_withProperties(node, is_simplistic_rewriting, meu_db_row, parmenide
     elif len(resolved_d) == 1:
         d = resolved_d[0][0]
 
-    print(d)
-    print("OK")
+    # print(d)
+    # print("OK")
 
     extra_name = ""
     extra_min = None
