@@ -158,7 +158,9 @@ def agglomerative_clustering(similarity_matrix, n_expected_clusters):
     return cluster_assignment, model, numpy.array(similarity_matrix)
 
 
-# K-Means clustering could not be used, as it is impossible to determine the centroids out from the distance matrix
+# K-Means clustering could not be used, as it is impossible to determine the coordinates out from the distance matrix
+# - I can use the inference of the points given their distances
+# - But this always assumes that distances are valid for triangular inequality, and that similarities are always symmetrical, which is not the case for logical elements
 
 def matrix_init_normalize(matrix, normalization):
     import numpy
@@ -263,20 +265,20 @@ def test_with_maximal_matching(expected_clusters, experiment_name, transformer, 
     print("Agglomerative clustering")
     n_expected_clusters = len(expected_clusters)
     agg_cluster_assignment, agg_model, distances = agglomerative_clustering(similarity_matrix, n_expected_clusters)
-    plot_dendogram(agg_model, distances, f"{experiment_name}/{transformer}_dend.png")
+    plot_dendogram(agg_model, distances, f"catabolites/{experiment_name}/{transformer}_dend.png")
 
-    print("Markov clustering")
-    mkv_cluster_assignment, matrix, mkv_clusters, best_inflation, best_norm = mcl_clustering_matches(similarity_matrix,
-                                                                                                     expected_clusters)
-    graph_plot(matrix, mkv_clusters, f"{experiment_name}/{transformer}_mkv.png")
+    # print("Markov clustering")
+    # mkv_cluster_assignment, matrix, mkv_clusters, best_inflation, best_norm = mcl_clustering_matches(similarity_matrix,
+    #                                                                                                  expected_clusters)
+    # graph_plot(matrix, mkv_clusters, f"{experiment_name}/{transformer}_mkv.png")
 
     agg_score = best_clustering_match(agg_cluster_assignment, expected_clusters)
     agg_similarity = 1 - agg_score
     print(f"Best Clustering Match (Agglomerative Clustering): {agg_similarity}. {agg_cluster_assignment}")
 
-    mkv_score = best_clustering_match(mkv_cluster_assignment, expected_clusters)
-    mkv_similarity = 1 - mkv_score
-    print(f"Best Clustering Match (Markov Clustering): {mkv_similarity}. {mkv_cluster_assignment}")
+    # mkv_score = best_clustering_match(mkv_cluster_assignment, expected_clusters)
+    # mkv_similarity = 1 - mkv_score
+    # print(f"Best Clustering Match (Markov Clustering): {mkv_similarity}. {mkv_cluster_assignment}")
 
 
 def read_json_array(filepath):

@@ -13,7 +13,6 @@ import json
 import os.path
 import time
 
-import numpy as np
 import pkg_resources
 
 from LaSSI.Configuration import SentenceRepresentation
@@ -29,8 +28,7 @@ from LaSSI.phases.LogicalRewriting import LogicalRewriting
 from LaSSI.phases.ResolveBasicTypes import ExplainTextWithNER
 from LaSSI.phases.SemanticGraphRewriting import SemanticGraphRewriting
 from LaSSI.similarities.graph_similarity import SimilarityScore
-from LaSSI.structures.extended_fol.Sentences import formula_from_dict
-from LaSSI.structures.extended_fol.sentence_expansion import SentenceExpansion
+from LaSSI.structures.extended_fol.Formulae import formula_from_dict
 from LaSSI.structures.internal_graph.Graph import Graph
 from LaSSI.structures.internal_graph.InternalData import InternalRepresentation
 from LaSSI.structures.meuDB.meuDB import MeuDB
@@ -72,6 +70,8 @@ class LaSSI():
         if not isinstance(fuzzyDBs, DatabaseConfiguration):
             fuzzyDBs = str(fuzzyDBs)
             fuzzyDBs = load_db_configuration(fuzzyDBs)
+        if hasattr(fuzzyDBs, "huggingface") and fuzzyDBs.huggingface is not None:
+            self.legacy_conf.HuggingFace = fuzzyDBs.huggingface
 
         self.logger("init non-postgres services and the wrapper for the former...")
         self.initServices = Services.getInstance(self.logger)
@@ -84,10 +84,6 @@ class LaSSI():
 
         self.logger(" - Loading the tab files or streaming those remotely, if required.")
         import tempfile
-        with tempfile.NamedTemporaryFile() as parmenides_tab:
-            with open(parmenides_tab.name, 'w') as f:
-                self.initServices.getParmenides().dumpTypedObjectsToTAB(f)
-            FuzzyStringMatchDatabase.instance().create_typed_table("parmenides", parmenides_tab.name)
         for k, v in fuzzyDBs.fuzzy_dbs.items():
             self.logger(f" - Loading {k}.")
             FuzzyStringMatchDatabase.instance().create(k, v)
@@ -115,6 +111,19 @@ class LaSSI():
         self.query_file = pkg_resources.resource_filename("LaSSI.resources", "gsm_query.txt")
         self.sc = None
         self.meu_dbs = None
+
+
+        from LaSSI.Parmenides.Parmenides import ParmenidesSingleton
+        ParmenidesSingleton.instance()
+        ## TODO: move parmenides.ttl to the resources
+        ParmenidesSingleton.init("catabolites", fuzzyDBs.uname, fuzzyDBs.pw,
+                                 fuzzyDBs.host, fuzzyDBs.port, False, "parmenides.ttl")
+        self.initServices.setParmenides(ParmenidesSingleton.get())
+        with tempfile.NamedTemporaryFile() as parmenides_tab:
+            with open(parmenides_tab.name, 'w') as f:
+                self.initServices.getParmenides().dumpTypedObjectsToTAB(f)
+            FuzzyStringMatchDatabase.instance().create_typed_table("parmenides", parmenides_tab.name)
+
 
     def create_catabolites_dir(self, dataset_name):
         # if "/" in dataset_name:
@@ -212,9 +221,22 @@ class LaSSI():
         if self.transformation == SentenceRepresentation.FullText:
             f = self.fulltext_similarity
         if self.transformation == SentenceRepresentation.Logical:
-            from LaSSI.Parmenides.TBox.CrossMatch import DoExpand  # LogicalGraph
-            doexp = DoExpand()
-            f = SentenceExpansion(obj_list, doexp, self.catabolites_of_dataset)
+            # from LaSSI.Parmenides.TBox.CrossMatch import DoExpand  # LogicalGraph
+            # doexp = DoExpand()
+            # f = SentenceExpansion(obj_list, doexp, self.catabolites_of_dataset)
+
+            self.logger("Starting the TBox Reasoning service")
+            from LaSSI.structures.extended_fol.TBoxReasoning import TBoxReasoningSingleton
+            TBoxReasoningSingleton.instance()
+            # TODO: move the txt files to the resources
+            kexp_pickle = os.path.join(self.catabolites_of_dataset, "_kexp.pickle")
+            TBoxReasoningSingleton.init("query_impl.txt",
+                                        "query_eq.txt",
+                                        kexp_pickle)
+
+            from LaSSI.structures.extended_fol.TabularCWASemantics import TabularCWASemantics
+            f = TabularCWASemantics(obj_list, self.catabolites_of_dataset)
+
         elif (self.transformation == SentenceRepresentation.LogicalGraph or
               self.transformation == SentenceRepresentation.SimpleGraph):
             f = self.graph_with_logic_similarity
@@ -232,7 +254,8 @@ class LaSSI():
     def post_hoc_explain(self, lists):
         from LaSSI.files.FileDumpUtilities import target_file_dump
         self.logger("computing similarities")
-        confusion_matrices = target_file_dump(self.confusion_matrices + self.transformation.name + (f"_{self.legacy_conf.HuggingFace.split('/')[-1]}.json" if self.transformation == SentenceRepresentation.FullText else ".json"),
+        experiment_name = self.transformation.name + (f"_{self.legacy_conf.HuggingFace.split('/')[-1]}" if self.transformation == SentenceRepresentation.FullText else "")
+        confusion_matrices = target_file_dump(self.confusion_matrices + experiment_name + ".json",
                                               json.load,
                                               lambda: CalculateMatrix(self, lists),
                                               json_dumps,
@@ -243,8 +266,8 @@ class LaSSI():
             clusters = []
             with open(self.clusters_file, "r") as f:
                 clusters = json.load(f)
-            test_with_maximal_matching(confusion_matrices, clusters,
-                                       os.path.join(self.catabolites_of_dataset, self.transformation.name))
+            test_with_maximal_matching(clusters, self.catabolites_dir,
+                                       experiment_name, confusion_matrices)
 
     def sentence_transform(self, sentences):
         if self.transformation == SentenceRepresentation.FullText:
@@ -323,7 +346,7 @@ class LaSSI():
                                     f"{self.dataset_name.split('/')[-1].split('.yaml')[0]},{loading_sentences_execution_time},")
 
         result = self.sentence_transform(sentences)
-        # self.post_hoc_explain(result)
+        self.post_hoc_explain(result)
 
     def close(self):
         if isinstance(self.sentences, io.IOBase):

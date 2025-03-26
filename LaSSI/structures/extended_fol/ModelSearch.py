@@ -1,9 +1,8 @@
 # from LaSSI.Parmenides.TBox.ExpandConstituents import CasusHappening, test_pairwise_sentence_similarity, isImplication
 # from logical_repr.Sentences import FUnaryPredicate, FBinaryPredicate, FNot
 # from logical_repr.rewrite_kernels import make_not
-
-from LaSSI.structures.extended_fol.Sentences import FUnaryPredicate, FBinaryPredicate, FNot
-from LaSSI.structures.extended_fol.rewrite_kernels import make_not
+from LaSSI.structures.extended_fol.Formulae import *
+from LaSSI.Parmenides.Parmenides import CasusHappening
 
 
 class ModelSearchBasis:
@@ -27,21 +26,23 @@ class ModelSearchBasis:
             else:
                 raise Exception("Unexpected expression: "+str(constituent))
 
+    def all(self):
+        return self.unary + self.binary
+
 
 
 class ModelSearch:
-    def __init__(self, kb):
+    def __init__(self):
         self.pairwise_similarity_cache = dict()
-        self.kb = kb
+        # self.kb = kb
         self.main_cache = dict()
 
     def searchInSet(self, lhs, rhsSet):
         foundImplication = False
         foundEquivalence = False
-        from LaSSI.Parmenides.TBox.ExpandConstituents import CasusHappening
         for rhs in rhsSet:
             from LaSSI.Parmenides.TBox.ExpandConstituents import test_pairwise_sentence_similarity
-            val = test_pairwise_sentence_similarity(self.pairwise_similarity_cache, lhs, rhs, kb=self.kb, shift=False)
+            val = test_pairwise_sentence_similarity(self.pairwise_similarity_cache, lhs, rhs, shift=False)
             if (val == CasusHappening.EXCLUSIVES):
                 # val = test_pairwise_sentence_similarity(dict(), lhs, rhs, kb=self.kb, shift=False)
                 return val
@@ -54,7 +55,6 @@ class ModelSearch:
         return CasusHappening.GENERAL_IMPLICATION if foundImplication else CasusHappening.INDIFFERENT
 
     def compare(self, objLHS:ModelSearchBasis, objRHS:ModelSearchBasis)->'CasusHappening':
-        from LaSSI.Parmenides.TBox.ExpandConstituents import CasusHappening
         cp = (objLHS.original, objRHS.original)
         if cp in self.main_cache:
             return self.main_cache[cp]

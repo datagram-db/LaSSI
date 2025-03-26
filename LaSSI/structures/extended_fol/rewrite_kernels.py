@@ -20,9 +20,8 @@ type_conversion =             {"GPE": "SPACE",
              "DATE": "TIME"}
 
 from LaSSI.structures.internal_graph.EntityRelationship import NodeEntryPoint, Singleton, SetOfSingletons, Grouping
-from LaSSI.structures.extended_fol.Sentences import FNot, FOr, FAnd, FUnaryPredicate, FVariable, FBinaryPredicate, \
-    Formula, \
-    prune_from_cop, id_formula, type_atom
+from LaSSI.structures.extended_fol.Formulae import FNot, FOr, FAnd, FUnaryPredicate, FVariable, FBinaryPredicate, \
+    Formula
 
 bogus_dst = FVariable(name="there", type="non_verb", specification=None, cop=None, id=-1)
 bogus_src = {"it"}

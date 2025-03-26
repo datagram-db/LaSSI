@@ -38,6 +38,7 @@ def print_proprieties(proprieties, cop=None):
     else:
         return ""
 
+
 def update_property(prop, key, value):
     d = {k: v for k, v in prop} if prop is not None else {}
     if key in d:
@@ -63,7 +64,7 @@ class FVariable:
     # matched: bool = field(default_factory=lambda: False)
 
     def add_adjective(self, adj, type="JJ"):
-        return FVariable(self.name, self.type, self.specification, FVariable(adj, type, "", None, -1), self.id, self.properties)
+        return FVariable(self.name, self.type, self.specification, FVariable(adj, type, "", None, None), self.id, self.properties)
 
     def dropCopula(self):
         return FVariable(self.name, self.type, self.specification, None, self.id, self.properties)
@@ -238,6 +239,10 @@ class FNot:
 
 def make_not(param):
     return FNot(arg=param)
+
+def prune_from_cop(var: FVariable):
+    return FVariable(name=var.name, type=var.type, specification=var.specification, cop=None, id=var.id)
+
 
 def formula_from_dict(f: Union[dict, str]):
     """

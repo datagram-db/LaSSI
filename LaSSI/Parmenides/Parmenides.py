@@ -3,20 +3,15 @@ import io
 import pickle
 from dataclasses import dataclass
 import os.path
-import urllib
 from collections import defaultdict
 from enum import Enum
 from functools import lru_cache
 from typing import Optional, List
 
 import dacite
-import rdflib
-from rdflib.graph import Graph, ConjunctiveGraph
-from rdflib import Graph, URIRef, BNode, Literal, XSD
-from rdflib import Namespace
-from rdflib.namespace import OWL, RDF, RDFS, FOAF
+from rdflib import Literal, XSD
 
-from FunctionalMatch.example.parmenides import SentenceStructure, Prepositions
+from LaSSI.Parmenides import SentenceStructure, Prepositions
 from FunctionalMatch.rdf.RDFGraph import RDFGraph
 
 
@@ -308,7 +303,7 @@ class Parmenides(RDFGraph):
             with open(prep_pickle, "rb") as f:
                 self.prepositions = pickle.load(f)
         if self.prepositions is None or len(self.prepositions) == 0:
-            from FunctionalMatch.example.parmenides.Prepositions import Preposition
+            from LaSSI.Parmenides.Prepositions import Preposition
             query = """
             SELECT *
             WHERE {

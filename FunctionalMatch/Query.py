@@ -80,7 +80,7 @@ class Query:
                 dct = rewrite_as(dct, self.as_.replacement)
                 rewritten.append(dct)
 
-            from FunctionalMatch.example.parmenides.Formulae import FUnaryPredicate
+            from LaSSI.structures.extended_fol.Formulae import FUnaryPredicate
             ## Now, I am updating each object j, recursively, according to the dictionary entry.
             for key in grouped_results:
                 root_objects, result_id = key
@@ -117,7 +117,7 @@ class Query:
                 if result2 is not None:
                     result = evaluate_structural_function(result2.obj)
                     if result is not None:
-                        from FunctionalMatch.example.parmenides.Formulae import FUnaryPredicate
+                        from LaSSI.structures.extended_fol.Formulae import FUnaryPredicate
                         assert (not isinstance(result, FUnaryPredicate)) or (result.arg is not None)
                         results.append(result)
         return True, results

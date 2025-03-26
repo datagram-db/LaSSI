@@ -15,6 +15,9 @@ class Services:
             Services(logger)
         return Services.__instance
 
+    def setParmenides(self, parmenides):
+        self.parmenides = parmenides
+
     def getParmenides(self):
         return self.parmenides
 
@@ -84,7 +87,7 @@ class Services:
             from LaSSI.external_services.ParmenidesFuzzyMatch import ParmenidesFuzzyMatch
             self.logger = logger
             self.logger("init parmenides")
-            self.parmenides = LaSSI.Parmenides.paremenides.Parmenides()
+            self.parmenides = None
             self.logger("retrieving postgres")
             self.postgres = FuzzyStringMatchDatabase.instance()
             self.logger("init stanza")

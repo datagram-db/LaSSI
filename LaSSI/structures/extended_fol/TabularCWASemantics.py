@@ -1,15 +1,14 @@
 import os
 import pickle
-import subprocess
 from collections import defaultdict
 from typing import List
 
 import pandas
 from functools import reduce
 
-from FunctionalMatch.example.LaSSI.eFOLsemantics.ExpandConstituents import ExpandConstituents
-from FunctionalMatch.example.parmenides.Formulae import Formula
-from FunctionalMatch.example.parmenides.formula_utils import latex_rendering, latex_rendering_to_raster_file
+from LaSSI.Parmenides.TBox.ExpandConstituents import ExpandConstituents
+from LaSSI.structures.extended_fol.Formulae import Formula
+from LaSSI.Parmenides.formula_utils import latex_rendering, latex_rendering_to_raster_file
 from FunctionalMatch.utils import CountingDictionary
 
 def png_node(obj, key, dir, nodes_map,fillColor=None):
@@ -30,7 +29,7 @@ def png_node(obj, key, dir, nodes_map,fillColor=None):
     return nodes_map
 
 def with_variables_from(f, l, minimal_constituents: CountingDictionary, fn, selection=False):
-    from FunctionalMatch.example.parmenides.formula_utils import semantic
+    from LaSSI.Parmenides.formula_utils import semantic
     pdf = reduce(lambda x,y: x.merge(y, how="cross"),[pandas.DataFrame({str(x): [1,0]}) for x in l])
     L = []
     for x in pdf.to_dict(orient='records'):
@@ -64,7 +63,7 @@ class TabularCWASemantics:
         #getSentenceAtomsFromId
         for sentence_id in range(len(self.sentence_list)):
             # collect_sentence_constituents
-            from FunctionalMatch.example.parmenides.formula_utils import getAtoms
+            from LaSSI.Parmenides.formula_utils import getAtoms
             # getSentenceAtomsFromId, for arg
             for x in getAtoms(self.sentence_list[sentence_id]):
                 self.minimal_constituent_dict[sentence_id].add(self.minimal_constituents.add(x))
@@ -105,7 +104,7 @@ class TabularCWASemantics:
         test = self.ec.determine(i, j) #self.get_mutual_truth(i, j)
         # relation = Relation()
         # relation.add_attributes([str(i), str(j)])
-        from FunctionalMatch.example.LaSSI.eFOLsemantics.Enums import PairwiseCases
+        from LaSSI.structures.extended_fol.Enums import PairwiseCases
         if (test == PairwiseCases.NonImplying):
             return pandas.DataFrame({str(i): [0,0,1,1],
                      str(j): [0,1,0,1]})
@@ -145,7 +144,7 @@ class TabularCWASemantics:
     def buildReport(self, file, mathJax = True):
         from bs4 import Tag, BeautifulSoup
         import pydot
-        from FunctionalMatch.example.parmenides.formula_utils import latex_formula_rendering
+        from LaSSI.Parmenides.formula_utils import latex_formula_rendering
 
         from pathlib import Path
         Path(file+"_dir").mkdir(parents=True, exist_ok=True)
@@ -233,7 +232,8 @@ class TabularCWASemantics:
 
             ol.append(li)
         body.append(ol)
-        print("Finished to write the rules")
+        from LaSSI.external_services.Services import Services
+        Services.getInstance().log("Finished to write the rules")
 
         p_ = Tag(name="h1")
         p_.append("Sentences DB")
@@ -245,7 +245,7 @@ class TabularCWASemantics:
             minimal_constituents = self.minimal_constituent_dict[i]
             ref = f"Sentence{i}"
             Sentence = f"Sentence #{i}"
-            print(ref)
+            Services.getInstance().log(ref)
             nodes_map[ref] = pydot.Node(ref, shape="circle",fillcolor="lightyellow",style="filled")
             graph.add_node(nodes_map[ref])
 
@@ -294,14 +294,14 @@ class TabularCWASemantics:
         html.append(body)
         html.decode()
 
-        print("Printing html...")
+        Services.getInstance().log("Printing html...")
         with open(file+".html", "w") as f:
             f.write(html.prettify())
-        print("... done")
+        Services.getInstance().log("... done")
 
         graphIDX = self.getIDXGraph()
         for idx, ls in graphIDX.items():
-            print(f"Node {idx}")
+            Services.getInstance().log(f"Node {idx}")
             label = f"constituent{idx}"
             if label not in nodes_map:
                 src_obj = self.getConstituentFromIDX(idx)
@@ -318,18 +318,17 @@ class TabularCWASemantics:
                 # else:
                 #     dst_obj = nodes_map[labelDst]
                 graph.add_edge(pydot.Edge(label, labelDst, label=str(ruleId)))
-        print("Graph finalised")
+        Services.getInstance().log("Graph finalised")
 
         with open(file+".dot", "w") as f:
             # As a string:
             output_raw_dot = graph.to_string()
-            from FunctionalMatch.example.utils.doc2tex import convert_graph
             # tex_graph = convert_graph(output_raw_dot)
             f.write(output_raw_dot)
-        print("Dot written")
+        Services.getInstance().log("Dot written")
 
         graph.write(file + ".pdf", format="pdf")
-        print("PDF written")
+        Services.getInstance().log("PDF written")
         # with open(file+".dot", "w") as f:
         #     # As a string:
         #     output_raw_dot = graph.to_string()

@@ -1,5 +1,6 @@
 import dataclasses
 import io
+from typing import Optional
 
 import dacite
 import yaml
@@ -13,7 +14,7 @@ class DatabaseConfiguration:
     host: str
     port: int
     fuzzy_dbs: dict
-
+    huggingface: Optional[str]
 
 def load_db_configuration(file: str | io.IOBase, data_class=DatabaseConfiguration):
     f = file

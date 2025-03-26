@@ -1,8 +1,6 @@
-from curses.ascii import isdigit
-
 from FunctionalMatch import JSONPath
-from FunctionalMatch.example.parmenides.Formulae import FVariable, FUnaryPredicate, FBinaryPredicate, FNot
-from FunctionalMatch.example.parmenides.Parmenides import ParmenidesSingleton
+from LaSSI.structures.extended_fol.Formulae import FVariable, FUnaryPredicate, FBinaryPredicate, FNot
+from LaSSI.Parmenides.Parmenides import ParmenidesSingleton
 
 ## TODO: use single_edge_src_multipoint to retrive the target nodes given the name, the adjective, and the relationship
 
@@ -268,7 +266,7 @@ def addProperty(arg, **kwargs):
         assert isinstance(var, str)
         value = kwargs.get("value", None)
         assert value is not None
-        from FunctionalMatch.example.parmenides.Formulae import update_property
+        from LaSSI.structures.extended_fol.Formulae import update_property
         return update_property(arg, var, value)
     if ((isinstance(arg, FVariable) or type(arg).__name__ == "FVariable") or
             (isinstance(arg, FUnaryPredicate) or type(arg).__name__ == "FUnaryPredicate") or

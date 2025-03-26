@@ -1,7 +1,0 @@
-dacite==1.8.1
-jsonpath_ng==1.7.0
-antlr4-python3-runtime==4.13.1
-psycopg2-binary
-rdflib_sqlalchemy
-sqlalchemy-utils
-drawsvg[all]

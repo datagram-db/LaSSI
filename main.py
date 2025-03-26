@@ -12,6 +12,6 @@ if __name__ == '__main__':
     if len(sys.argv) > 2:
         fuzzyDBs = sys.argv[2]
 
-    pipeline = LaSSI(dataset_name, fuzzyDBs) #, SentenceRepresentation.FullText)
+    pipeline = LaSSI(dataset_name, fuzzyDBs, SentenceRepresentation.Logical)
     pipeline.run()
     pipeline.close()

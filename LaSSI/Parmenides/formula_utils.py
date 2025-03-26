@@ -1,7 +1,7 @@
 import latextools
 
-from FunctionalMatch.example.parmenides.Formulae import Formula
-from bs4 import BeautifulSoup, Tag
+from LaSSI.structures.extended_fol.Formulae import Formula
+from bs4 import Tag
 
 def latex_rendering(strx, mathjax=True):
     if mathjax:
@@ -41,7 +41,7 @@ def getAtoms(self):
     """
     This function decomposes the formula (self) in its atomic constituents, returned as a bag of atoms
     """
-    from FunctionalMatch.example.parmenides.Formulae import FUnaryPredicate, FBinaryPredicate, FAnd, FNot, FOr
+    from LaSSI.structures.extended_fol.Formulae import FUnaryPredicate, FBinaryPredicate, FAnd, FNot, FOr
     if practicalInstance(self, FUnaryPredicate, "FUnaryPredicate") or practicalInstance(self, FBinaryPredicate, "FBinaryPredicate"):
         return {self}
     elif practicalInstance(self, FAnd, "FAnd") or practicalInstance(self, FOr, "FOr"):
@@ -55,7 +55,7 @@ def getAtoms(self):
         print("WARNING: cannot perform the atomization of a variable")
         return {}
 
-from FunctionalMatch.example.parmenides.Formulae import *
+from LaSSI.structures.extended_fol.Formulae import *
 
 def semantic(self, d: Dict[Formula, bool]):
     """
