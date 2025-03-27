@@ -349,8 +349,7 @@ class RewriteKernels:
                 elif src.type == Grouping.NOT:
                     return make_not(self.src_make_prop(list(src.entities)[0], rel, negated, score, properties, dst))
                 elif src.type == Grouping.NEITHER:
-                    return make_not(
-                        make_and(map(lambda x: self.src_make_prop(x, rel, negated, score, properties, dst), src.entities)))
+                    return make_and(map(lambda x: make_not(self.src_make_prop(x, rel, negated, score, properties, dst)), src.entities))
                 else:
                     n = src.type.name
                     raise RuntimeError(f"Unknown source type: {n}")
