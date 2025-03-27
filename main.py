@@ -4,7 +4,7 @@ from LaSSI.Configuration import SentenceRepresentation
 from LaSSI.LaSSI import LaSSI
 
 if __name__ == '__main__':
-    dataset_name = "test_sentences/orig/alice_bob.yaml"
+    dataset_name = "test_sentences/orig/all_newcastle.yaml"
     fuzzyDBs = "connection_giacomo.yaml"
 
     if len(sys.argv) > 1:

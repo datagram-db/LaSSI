@@ -134,10 +134,14 @@ class TabularCWASemantics:
             return reduce(lambda x, y: x.merge(y), L)
 
     def get_straightforward_id_similarity(self, i, j):
+        ## Obtaining the constituents' combination where Ri always holds (premise)
         Ri = with_variables_from(self.sentence_list[i], self.minimal_constituent_dict[i], self.minimal_constituents, "R" + str(i), True)
+        ## Obtaining all the constituents' combinations for Rj
         Rj = with_variables_from(self.sentence_list[j], self.minimal_constituent_dict[j], self.minimal_constituents, "R" + str(j))
+        ## Joining Ri (where i always holds) and Rj by the constituents. If the result is empty, is because there is no combination between
         result = self._universal_truth(set(self.minimal_constituent_dict[i]), set(self.minimal_constituent_dict[j])).merge(Ri).merge(Rj)[list(set(Ri.columns).union(set(Rj.columns)))].drop_duplicates()[["R" + str(j)]].prod(axis=1)
-        total = result.sum(axis=0)/len(result)
+        Rj_holding = len(result)
+        total = result.sum(axis=0)/Rj_holding if Rj_holding>0.0 else 0.0
         # print(f"{i}~{j} := {total}")
         return total
 
