@@ -1,4 +1,4 @@
-from FunctionalMatch import JSONPath
+
 from LaSSI.structures.extended_fol.Formulae import FVariable, FUnaryPredicate, FBinaryPredicate, FNot
 from LaSSI.Parmenides.Parmenides import ParmenidesSingleton
 
@@ -77,6 +77,7 @@ def extractJsonPath(d, **kwargs):
         return []
 
     from FunctionalMatch.PropositionalLogic import var_interpret
+    from FunctionalMatch.functions.structural_match import JSONPath
     result = var_interpret(JSONPath(jquery), d, keepList=True)
     L = []
     for x in result:
