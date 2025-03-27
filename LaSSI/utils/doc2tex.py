@@ -36,10 +36,9 @@ import argparse
 import os.path as path
 import sys, tempfile, os, re
 import logging
-import warnings
 from subprocess import Popen, PIPE
 
-from FunctionalMatch.example.utils import dotparsing
+from LaSSI.utils import dotparsing
 
 # initialize logging module
 log = logging.getLogger("dot2tex")
