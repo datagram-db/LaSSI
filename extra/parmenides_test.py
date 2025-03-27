@@ -113,7 +113,7 @@ def simpler_test():
                              "localhost", 5432, False, parmenides)
     queries = parse_query("/home/giacomo/PyCharmProjects/FunctionalMatch/query_test.txt")
     ke = KnowledgeExpansion("/home/giacomo/PyCharmProjects/FunctionalMatch/data/cache/_kexp.pickle")
-    ke.expand(Sentence, queries, "implDebug", filter=non_redundant_constituents)
+    ke.pruned_expansion(Sentence, queries, "implDebug", filter=non_redundant_constituents)
 
     # from FunctionalMatch.example.LaSSI.eFOLsemantics.TBoxReasoning import knowledge_expansion
     for k,v in ke.fullGraph().items():

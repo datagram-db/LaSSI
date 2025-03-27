@@ -1,6 +1,8 @@
 # from LaSSI.Parmenides.TBox.ExpandConstituents import CasusHappening, test_pairwise_sentence_similarity, isImplication
 # from logical_repr.Sentences import FUnaryPredicate, FBinaryPredicate, FNot
 # from logical_repr.rewrite_kernels import make_not
+from pydatagramdb import result
+
 from LaSSI.structures.extended_fol.Formulae import *
 from LaSSI.Parmenides.Parmenides import CasusHappening
 
@@ -77,12 +79,12 @@ class ModelSearch:
         else:
             # Performing the constituents search:
             for lhs in objLHS.unary:
-                negForm = make_not(lhs)
+                negForm = make_not(lhs) if not isinstance(lhs, FNot) else lhs.arg
                 if negForm in objRHS.unary:
                     self.main_cache[cp] = CasusHappening.EXCLUSIVES
                     return self.main_cache[cp]
             for lhs in objLHS.binary:
-                negForm = make_not(lhs)
+                negForm = make_not(lhs) if not isinstance(lhs, FNot) else lhs.arg
                 if negForm in objRHS.binary:
                     self.main_cache[cp] = CasusHappening.EXCLUSIVES
                     return self.main_cache[cp]
@@ -95,15 +97,39 @@ class ModelSearch:
                     self.main_cache[cp] = CasusHappening.GENERAL_IMPLICATION
                     return self.main_cache[cp]
             # Performing the exhaustive search:
+            elems = set()
+            firstConst = None
             for lhs in objLHS.unary:
                 val = self.searchInSet(lhs, objRHS.unary)
-                if val != CasusHappening.INDIFFERENT:
+                if val == CasusHappening.EXCLUSIVES:
                     self.main_cache[cp] = val
                     return val
+                elif val != CasusHappening.INDIFFERENT:
+                    elems.add(val)
+                    if firstConst is None:
+                        firstConst = val
+                    # return val
+            from LaSSI.Parmenides.TBox.ExpandConstituents import simplifyConstituents
+            result = simplifyConstituents(elems)
+            # assert (firstConst is None) or (result == firstConst)
+            if result != CasusHappening.INDIFFERENT:
+                self.main_cache[cp] = result
+                return result
+            elems = set()
+            firstConst = None
             for lhs in objLHS.binary:
+                elems = {CasusHappening.INDIFFERENT}
                 val = self.searchInSet(lhs, objRHS.binary)
-                if val != CasusHappening.INDIFFERENT:
+                if val == CasusHappening.EXCLUSIVES:
                     self.main_cache[cp] = val
                     return val
-            self.main_cache[cp] = CasusHappening.INDIFFERENT
+                elif val != CasusHappening.INDIFFERENT:
+                    elems.add(val)
+                    if firstConst is None:
+                        firstConst = val
+                    # return val
+            from LaSSI.Parmenides.TBox.ExpandConstituents import simplifyConstituents
+            result = simplifyConstituents(elems)
+            # assert (firstConst is None) or (result == firstConst)
+            self.main_cache[cp] = result
             return self.main_cache[cp]

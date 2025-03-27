@@ -2,6 +2,8 @@ import os.path
 import pickle
 from collections import defaultdict
 
+from torch.fx.experimental.symbolic_shapes import lru_cache
+
 from LaSSI.structures.extended_fol.Enums import PairwiseCases
 from LaSSI.structures.extended_fol.ModelSearch import ModelSearch, ModelSearchBasis
 from LaSSI.structures.extended_fol.TBoxReasoning import TBoxReasoningSingleton
@@ -307,15 +309,29 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
         d[(x, y)] = val
     return val
 
+@lru_cache(maxsize=128)
+def expandOver(obj, s, isImpl):
+    result = set()
+    Q = set(s.keys())
+    for ls in s.values():
+        for _, out in ls:
+            Q.add(out)
+    Q = list(Q)
+    while len(Q)>0:
+        curr = Q.pop(0)
+        if result in result:
+            continue
+        result.add(curr)
+        TBoxReasoningSingleton.subGraphImpl()
 
 def instantiate_rules(constituents, expansion_dictionary, final_constituents, isImpl):
-    for constituent in constituents:
+    for idx, constituent in enumerate(constituents):
         from LaSSI.structures.extended_fol.TBoxReasoning import TBoxReasoningSingleton
         s = TBoxReasoningSingleton.knowledge_expand(constituent, isImpl)
         # s.add(constituent)
         expansion_dictionary[constituent] = s
     for y in expansion_dictionary.values():
-        final_constituents = final_constituents.union(set(y.keys()))
+        final_constituents = final_constituents.union(set(y))
     # return {(x, y): CasusHappening.NONE for x in final_constituents for y in
     #         final_constituents}
 
@@ -383,8 +399,8 @@ class ExpandConstituents:
         Services.getInstance().log("Splitting across unary and binary constituents for each sentence...")
         for i, sentence in enumerate(self.constituents):
             self.inv_idx[sentence] = i
-            self.lhsOrigDict[i] = ModelSearchBasis(sentence, self.impl_expansion_dictionary[sentence].keys())
-            self.rhsOrigDict[i] = ModelSearchBasis(sentence, self.eq_expansion_dictionary[sentence].keys())
+            self.lhsOrigDict[i] = ModelSearchBasis(sentence, self.impl_expansion_dictionary[sentence])
+            self.rhsOrigDict[i] = ModelSearchBasis(sentence, self.eq_expansion_dictionary[sentence])
 
     def getImplExpansions(self, idx):
         return self.lhsOrigDict[idx].all() if idx in self.lhsOrigDict else []

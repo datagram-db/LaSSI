@@ -127,7 +127,24 @@ class KnowledgeExpansion:
     def getIDx(self, obj):
         return self.constituents.contains(obj)
 
-    def expand(self, sentence, queries, ruleLabel=None, alreadyVisitedIdx=None, filter=None):
+    def get_full_expansion(self, sentence, ruleLabel):
+        idx, wasAlreadyPresent = self.constituents.add_with_wasPresent(sentence)
+        assert wasAlreadyPresent
+        allVisited = self._subGraph[idx]
+        finallyVisited = set()
+        Q = list(allVisited)
+        while len(Q)>0:
+            curr = Q.pop(0)
+            if curr in finallyVisited:
+                continue
+            finallyVisited.add(curr)
+            if curr in self.Graph:
+                for (lR, idxR), dst in self.Graph[curr]:
+                    if lR == ruleLabel:
+                        Q.append(dst)
+        return {self.constituents.fromId(x) for x in finallyVisited}
+
+    def pruned_expansion(self, sentence, queries, ruleLabel=None, alreadyVisitedIdx=None, filter=None):
         if alreadyVisitedIdx is None:
             alreadyVisitedIdx = set()
         if isinstance(queries, list) or isinstance(queries, tuple):
@@ -275,12 +292,12 @@ class TBoxReasoningSingleton(object):
         rules = TBoxReasoningSingleton.get_eq_rules() if (not isImpl) else TBoxReasoningSingleton.get_impl_rules()
         label = "implR" if isImpl else "eqR"
         S = TBoxReasoningSingleton._instance.rules.impl_already_visited_set if isImpl else TBoxReasoningSingleton._instance.rules.eq_already_visited_set
-        result = TBoxReasoningSingleton._instance.rules.ke.expand(formula, rules, label, S, non_redundant_constituents)
+        result = TBoxReasoningSingleton._instance.rules.ke.pruned_expansion(formula, rules, label, S, non_redundant_constituents)
         if isImpl:
             TBoxReasoningSingleton._instance.rules.impl_already_visited_set.update(result)
         else:
             TBoxReasoningSingleton._instance.rules.eq_already_visited_set.update(result)
-        return TBoxReasoningSingleton._instance.rules.ke.subGraphPred(formula, lambda z: z[0] == label)
+        return TBoxReasoningSingleton._instance.rules.ke.get_full_expansion(formula, label)
 
     @staticmethod
     def get_ke_file_name():
