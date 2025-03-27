@@ -242,9 +242,9 @@ class LaSSI():
             f = self.graph_with_logic_similarity
 
         matrices = []
-        for x in obj_list:
+        for i, x in enumerate(obj_list):
             ls = []
-            for y in obj_list:
+            for j, y in enumerate(obj_list):
                 ls.append(f(x, y))
             matrices.append(ls)
         # matrices = np.array(matrices)

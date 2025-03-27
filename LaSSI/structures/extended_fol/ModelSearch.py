@@ -16,12 +16,13 @@ class ModelSearchBasis:
             self.binary.insert(0, original)
         else:
             raise Exception("Unexpected expression: " + str(original))
+        from LaSSI.structures.extended_fol.TBoxReasoning import non_redundant_constituents
         for constituent in constituents:
             if isinstance(constituent, FUnaryPredicate) or (isinstance(constituent, FNot) and isinstance(constituent.arg, FUnaryPredicate)):
-                if not (constituent == original):
+                if not (constituent == original) and non_redundant_constituents(constituent, False):
                     self.unary.append(constituent)
             elif isinstance(constituent, FBinaryPredicate) or (isinstance(constituent, FNot) and isinstance(constituent.arg, FBinaryPredicate)):
-                if not (constituent == original):
+                if not (constituent == original) and non_redundant_constituents(constituent, False):
                     self.binary.append(constituent)
             else:
                 raise Exception("Unexpected expression: "+str(constituent))

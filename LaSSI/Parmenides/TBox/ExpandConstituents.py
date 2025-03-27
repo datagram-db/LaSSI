@@ -326,6 +326,7 @@ class ExpandConstituents:
         This class provides the expansion for each of the sentences, as well as caching the direction of the implication for each of the formulae
         """
         print("Setting up the rule expander...")
+        from LaSSI.external_services.Services import Services
         # self.kb = kb
 
         self.constituents = list(constituents)
@@ -357,7 +358,6 @@ class ExpandConstituents:
 
             # Expanding the constituents
 
-            from LaSSI.external_services.Services import Services
             Services.getInstance().log("Expanding the constituents...")
             # self.outcome_implication_dictionary =
             instantiate_rules(self.constituents, self.eq_expansion_dictionary, self.eq_constituents,

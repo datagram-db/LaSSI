@@ -206,11 +206,11 @@ class KnowledgeExpansion:
 
 
 
-def non_redundant_constituents(f):
+def non_redundant_constituents(f, strictTyping = True):
     assert ParmenidesSingleton.isReady()
     p = ParmenidesSingleton.get()
     from LaSSI.structures.extended_fol.Formulae import is_selfstanding_variable
-    return not (isinstance(f, FUnaryPredicate) and (f.rel == "be") and ((f.properties is None) or ((len(f.properties) == 0))) and ((is_selfstanding_variable(f.arg) and p.hasTypedObject(f.arg.name))))
+    return not (isinstance(f, FUnaryPredicate) and (f.rel == "be") and ((f.properties is None) or ((len(f.properties) == 0))) and ((is_selfstanding_variable(f.arg) and ((not strictTyping) or p.hasTypedObject(f.arg.name)))))
 
 class TBoxReasoningSingleton(object):
     _instance = None
