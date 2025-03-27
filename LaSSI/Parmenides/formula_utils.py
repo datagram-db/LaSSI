@@ -50,7 +50,7 @@ def getAtoms(self):
             s = s.union(getAtoms(x))
         return s
     elif practicalInstance(self, FNot, "FNot"):
-        return {self.arg}
+        return getAtoms(self.arg)
     else:
         print("WARNING: cannot perform the atomization of a variable")
         return {}
