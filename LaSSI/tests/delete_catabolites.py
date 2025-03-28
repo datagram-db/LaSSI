@@ -16,7 +16,8 @@ def delete_files(delete_all_files=False, benchmarking=False):
                         print(f"Error deleting {dir_path}: {e}")
             for file in files:
                 if (file in ("gsmDB.txt", "datagramdb_output.json") or
-                    (file in ("internals.json", "internals-bin.json", "string_rep.txt", "meuDBs.json") and delete_all_files)):
+                    (file in ("internals.json", "internals-bin.json", "string_rep.txt", "meuDBs.json", "logical_rewriting.json",
+                              "_cd.pickle", "_d.pickle", "_ec.pickle", "_eed.pickle", "_ic.pickle", "_ied.pickle") and delete_all_files)):
                     file_path = os.path.join(subdir, file)
                     print(f"Deleting file: {str(file_path)}")
                     try:

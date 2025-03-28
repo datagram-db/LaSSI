@@ -268,6 +268,8 @@ def test_with_maximal_matching(expected_clusters, experiment_name, transformer, 
     if similarity_matrix is None:
         similarity_matrix = read_json_array(
             f"catabolites/{experiment_name}/confusion_matrices_{transformer}.json")
+        if similarity_matrix is None:
+            return
 
     if not os.path.exists(experiment_name):
         os.makedirs(experiment_name)
@@ -313,7 +315,7 @@ if __name__ == '__main__':
     tests = [
         [[[0], [1], [2], [3], [4], [5], [6], [7]], "alice_bob"],
         [[[0, 1], [2, 3], [4], [5]], "cat_mouse"]
-        # [[[0, 1, 3, 9], [4], [5], [6, 7, 8], [10], [2, 11, 12], [13]], "all_newcastle"]
+        # [[[0, 1, 9], [2], [3], [4], [5], [6, 7, 8], [10], [11], [12]], "newcastle_mdpi"]
     ]
     transformers = ["SimpleGraph", "LogicalGraph", "Logical", "FullText_all-MiniLM-L6-v2", "FullText_all-MiniLM-L12-v2", "FullText_all-mpnet-base-v2", "FullText_all-roberta-large-v1"]
 
