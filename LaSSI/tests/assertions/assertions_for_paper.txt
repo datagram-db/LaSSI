@@ -10,11 +10,18 @@ Neither Alice nor Bob play football ⇒ play(NEITHER(Bob, Alice), football)
 
 // Newcastle
 There is traffic in the Newcastle city centre ⇒ be(traffic, ?1)[(SPACE:Newcastle[(extra:city centre), (type:stay in place), (det:the)])]
-Newcastle city centre is trafficked ⇒ traffic(?2[(subjpass:subjpass)], None)[(GPE:Newcastle[(extra:city centre)])]
+In the Newcastle city centre there is traffic ⇒ be(traffic, ?5)[(SPACE:Newcastle[(extra:city centre), (type:stay in place), (det:the)])]
 There is traffic but not in the Newcastle city centre ⇒ be(traffic, ?4)[(SPACE:AND(NOT(Newcastle[(extra:city centre), (type:stay in place), (det:the)])))]
-In Newcastle city center on saturdays, traffic is flowing ⇒ flow(traffic, None)[(TIME:saturdays[(type:defined)]), (SPACE:Newcastle[(type:stay in place), (extra:city center)])]
+Newcastle city centre is trafficked ⇒ traffic(?4, Newcastle[(extra:city centre)])
 It is busy in Newcastle ⇒ be(It, busy)[(SPACE:Newcastle[(type:stay in place)])]
 Saturdays have usually busy city centers ⇒ have(Saturdays, city centers[(JJ:busy[(advmod:usually)])])
+In Newcastle city center on saturdays, traffic is flowing ⇒ flow(traffic, None)[(TIME:saturdays[(type:defined)]), (SPACE:Newcastle[(type:stay in place), (extra:city center)])]
+Traffic is flowing in Newcastle city centre, on Saturdays ⇒ flow(Traffic, None)[(TIME:Saturdays[(type:defined)]), (SPACE:Newcastle[(type:stay in place), (extra:city centre)])]
+On Saturdays, traffic is flowing in Newcastle city centre ⇒ flow(Traffic, None)[(TIME:Saturdays[(type:defined)]), (SPACE:Newcastle[(type:stay in place), (extra:city centre)])]
+Newcastle city centre has traffic ⇒ have(Newcastle[(extra:city centre)], traffic)
+Newcastle city center does not have traffic ⇒ NOT(have(Newcastle[(extra:city center)], traffic))
+Newcastle has traffic but not in the city centre ⇒ have(Newcastle, traffic)[(SPACE:AND(NOT(city centre[(type:stay in place), (det:the)])))]
+The busy Newcastle city centre is closed for traffic ⇒ close(?9, Newcastle[(extra:city centre), (det:The), (amod:busy)])[(AIM_OBJECTIVE:traffic[(8:for)])]
 
 // Cat and Mouse
 The cat eats the mouse ⇒ eat(cat[(det:The)], mouse[(det:the)])

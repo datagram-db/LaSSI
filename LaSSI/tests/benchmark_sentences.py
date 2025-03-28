@@ -11,11 +11,12 @@ def benchmark_sentences(iterations=1):
 
 if __name__ == '__main__':
     num_of_iterations = 5
-    should_rerun_meuDB_generation = True
+    should_rerun_meuDB_generation = False
 
     if should_rerun_meuDB_generation:
         for i in range(num_of_iterations):
             delete_files(True, True)  # First delete ALL files (inc. meuDB) and only benchmarking files
             benchmark_sentences(num_of_iterations)
     else:
-        benchmark_sentences()
+        delete_files(False, True)  # First delete ONLY benchmarking files
+        benchmark_sentences(num_of_iterations)

@@ -57,7 +57,9 @@ dependencies = [
     "dash_table",
     "dashvis",
     "dash_bootstrap_components",
-    "flask"
+    "flask",
+    "latextools",
+    "scikit-learn-extra"
 ]
 
 #[tool.scikit-build]
