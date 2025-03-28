@@ -132,7 +132,7 @@ def create_dash_app(requests_pathname_prefix: str = None):
         assert isinstance(data, list)
         assert len(data) == len(lines)
         for logical in data:
-            from LaSSI.structures.extended_fol.Sentences import formula_from_dict
+            from LaSSI.structures.extended_fol.Formulae import formula_from_dict
             actual = formula_from_dict(logical)
 
             import latextools

@@ -23,7 +23,7 @@ from LaSSI.structures.internal_graph.EntityRelationship import NodeEntryPoint, S
 from LaSSI.structures.extended_fol.Formulae import FNot, FOr, FAnd, FUnaryPredicate, FVariable, FBinaryPredicate, \
     Formula, prune_from_cop, type_atom
 
-bogus_dst = FVariable(name="there", type="non_verb", specification=None, cop=None, id=-1)
+bogus_dst = FVariable(name="there", type="non_verb", specification=None, cop=None, id=None)
 bogus_src = {"it"}
 discard_properties = {"end", "lemma", "begin", "kernel", "expl", "pos", "root", "common", "number", "adv", "conj"}
 relative_pronouns = {"which","that", "who", "whom" }
@@ -75,12 +75,12 @@ def has_prop_just_one_negated_constituent(prop):
             assert not isinstance(v.cop.arg, FNot) ## Not considering double negation at the moment, which should not be captured by the pipeline
         isSpecNegated = v.spec_negation
         if isCopNegated and isSpecNegated:
-            return True, frozenset({(k, (FVariable(v.name, v.type, v.specification, v.cop.arg, v.id, v.properties, v.meta, False), ))})
+            return True, frozenset({(k, (FVariable(v.name, v.type, v.specification, v.cop.arg, v.id, v.properties), ))})
         elif isCopNegated:
             return True, frozenset(
                 {(k, (FVariable(v.name, v.type, v.specification, v.cop.arg, v.id, v.properties), ))})
         elif isSpecNegated:
-            return True, frozenset({(k, (FVariable(v.name, v.type, v.specification, v.cop, v.id, v.properties, v.meta, False), ))})
+            return True, frozenset({(k, (FVariable(v.name, v.type, v.specification, v.cop, v.id, v.properties), ))})
         else:
             return False, prop
     else:
@@ -138,7 +138,7 @@ class RewriteKernels:
         if entity is None:
             return None
         elif isinstance(entity, str):
-            return FVariable(name=entity, type="JJ", specification=None, cop=None, id=-1)
+            return FVariable(name=entity, type="JJ", specification=None, cop=None, id=None)
         else:
             return self.make_arg(entity[0])  # TODO: Will we ever have more than one cop for a given entity?
 
@@ -183,7 +183,7 @@ class RewriteKernels:
             cop = None
         props2 = self.props_as_unique_itemset(props2)
         test, props2 = has_prop_just_one_negated_constituent(props2)
-        result = FVariable(name=named_entity, type=type, specification=specifiaction, cop=cop, id=entity.id,
+        result = FVariable(name=named_entity, type=type, specification=specifiaction, cop=cop, id=None,
                          properties=props2)
         return FNot(result) if test else result
 

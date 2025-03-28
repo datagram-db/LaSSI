@@ -172,6 +172,18 @@ def simplifyConstituents(constituentCollection):
         return CasusHappening.INDIFFERENT
 
 
+def is_direct_subset(kv1, kv2):
+    d1 = []
+    d2 = []
+    for k, t1 in kv1:
+        for x in t1:
+            d1.append((k,x))
+    for k, t2 in kv2:
+        for x in t2:
+            d2.append((k, x))
+    return set(d1).issubset(set(d2))
+
+
 def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
     if shift:
         if (y, x) in d:
@@ -212,7 +224,6 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
             keys = set(map(lambda z: z[0], xprop)).union(map(lambda z: z[0], yprop))
             dLHS = dict(xprop)
             dRHS = dict(yprop)
-            keyComparison = (None, None)
             for key in keys:
                 if key in dLHS and key in dRHS:
                     for xx in dLHS[key]:
@@ -236,7 +247,6 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
                 if (x.rel != y.rel):
                     val = CasusHappening.INDIFFERENT
                 else:
-                    keyComparison = (x.src, y.src)
                     srcCmp = compare_variable(d, x.src, y.src)
                     if (srcCmp == CasusHappening.INDIFFERENT):
                         val = CasusHappening.INDIFFERENT
@@ -263,7 +273,6 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
                 if (x.rel != y.rel):
                     val = CasusHappening.INDIFFERENT
                 else:
-                    keyComparison = (x.arg, y.arg)
                     val = compare_variable(d, x.arg, y.arg)
                 keyComparisonOutcome = compare_variable(d, x.arg, y.arg)
                 copKeyComparisonOutcome = compare_variable(d, x.arg.cop, y.arg.cop)
@@ -282,6 +291,8 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
                                 elif keyCmpElements == CasusHappening.INSTANTIATION_IMPLICATION or CasusHappening.INSTANTIATION_IMPLICATION in set(
                                         keyCmp.values()):  # or keyCmpElements == CasusHappening.GENERAL_IMPLICATION:
                                     val = keyCmpElements
+                                # elif is_direct_subset(xprop, yprop):
+                                #     val = CasusHappening.MISSING_1ST_IMPLICATION
                                 else:
                                     val = CasusHappening.INDIFFERENT
                             else:
@@ -308,21 +319,6 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
     if store:
         d[(x, y)] = val
     return val
-
-@lru_cache(maxsize=128)
-def expandOver(obj, s, isImpl):
-    result = set()
-    Q = set(s.keys())
-    for ls in s.values():
-        for _, out in ls:
-            Q.add(out)
-    Q = list(Q)
-    while len(Q)>0:
-        curr = Q.pop(0)
-        if result in result:
-            continue
-        result.add(curr)
-        TBoxReasoningSingleton.subGraphImpl()
 
 def instantiate_rules(constituents, expansion_dictionary, final_constituents, isImpl):
     for idx, constituent in enumerate(constituents):

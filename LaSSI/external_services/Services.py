@@ -17,6 +17,8 @@ class Services:
 
     def setParmenides(self, parmenides):
         self.parmenides = parmenides
+        from LaSSI.external_services.ParmenidesFuzzyMatch import ParmenidesFuzzyMatch
+        self.fuzzyParmenides = ParmenidesFuzzyMatch(self.postgres, self.stanza.nlp_token, self.parmenides)
 
     def getParmenides(self):
         return self.parmenides
@@ -97,7 +99,7 @@ class Services:
             self.logger("init conceptnet wrapper")
             self.conceptnet = ConceptNetService(self.postgres, self.stanza.nlp_token)
             self.logger("init fuzzyParmenides wrapper")
-            self.fuzzyParmenides = ParmenidesFuzzyMatch(self.postgres, self.stanza.nlp_token, self.parmenides)
+            self.fuzzyParmenides = None
             self.logger("init old java service")
             self.old_java_Service = None
             self.logger("init WordNet Lemmatizer")
