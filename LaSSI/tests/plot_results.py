@@ -9,11 +9,11 @@ import matplotlib.font_manager as fm
 def main():
     font = fm.FontProperties(fname='./fonts/Satoshi-Medium.ttf', size=8)
     bold_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=8)
-    title_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=10)
+    title_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=12)
 
     pd.set_option('display.max_columns', None)
 
-    data = pd.read_csv('benchmarks/mar18-benchmark.csv')  # FYI: mar18 is used in MDPI25 paper
+    data = pd.read_csv('benchmarks/mar18-benchmark-added-logical.csv')  # FYI: mar18 is used in MDPI25 paper
     data = data.sort_values(by='Dataset')
     data = data.replace(0, np.nan)  # For generating/loading meuDB where values are 0
     averaged_data = data.groupby('Dataset', as_index=False).mean(numeric_only=True)
@@ -40,8 +40,17 @@ def main():
     # Highlight last dataset
     last_dataset_label = sorted(data['Dataset'].unique())[-1]
     last_dataset_data = melted_data[pd.to_numeric(melted_data['Dataset']) == last_dataset_label]
+    last_dataset_data = last_dataset_data[(last_dataset_data['Phase'] != "GPT-3 training time")]
     y_min = last_dataset_data['Time'].min()
-    y_max = last_dataset_data[(last_dataset_data['Phase'] != "GPT-3 training time")]['Time'].max()
+    y_max = last_dataset_data['Time'].max()
+
+    last_dataset_data_meu = last_dataset_data[(last_dataset_data['Phase'] != "Loading meuDB")]
+    total_time_last_dataset = last_dataset_data_meu['Time'].sum()
+    print(f"Total time for the {last_dataset_label} dataset w/ MEU: {total_time_last_dataset/60} minutes")
+
+    last_dataset_data_no_meu = last_dataset_data[(last_dataset_data['Phase'] != "Generating meuDB")]
+    total_time_last_dataset = last_dataset_data_no_meu['Time'].sum()
+    print(f"Total time for the {last_dataset_label} dataset w/out MEU: {total_time_last_dataset} minutes")
 
     plot = (
             ggplot(melted_data, aes(x='Dataset', y='Time', color='Phase', group='Phase')) +
@@ -74,7 +83,7 @@ def main():
                 legend_direction='horizontal'
             )
     )
-    plot.save('performance_metrics_plot.png', dpi=1200, width=6.5, height=5)
+    plot.save('performance_metrics_plot.png', dpi=1200, width=7.5, height=5)
 
 if __name__ == "__main__":
     main()
