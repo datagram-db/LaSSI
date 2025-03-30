@@ -176,7 +176,11 @@ class RewriteKernels:
         if (type != "GPE") and (type != "SPACE"):
             named_entity = named_entity.lower()
         props2 = dict()
+        asAll = False
         for k, v in props.items():
+            if k == 'det' and isinstance(v, str):
+                if v.lower() == "all":
+                    asAll = True
             if k not in discard_properties and k not in {} and ((not isinstance(v, str)) or len(v) == 0):
                 props2[k] = self.make_arg(v) if isinstance(v, Singleton) else v
         if (cop == "usually") or (isinstance(cop, FVariable) and (cop.name == "usually")):  ## TODO:adverb
@@ -184,20 +188,20 @@ class RewriteKernels:
         props2 = self.props_as_unique_itemset(props2)
         test, props2 = has_prop_just_one_negated_constituent(props2)
         result = FVariable(name=named_entity, type=type, specification=specifiaction, cop=cop, id=None,
-                         properties=props2)
+                         properties=props2, asAll=asAll)
         return FNot(result) if test else result
 
-    def make_unary(self, rel, dst, score, prop):
+    def make_unary(self, rel, src, score, prop):
         if rel == "be":  # TODO: generalise
-            if dst is not None and dst.cop is not None and (prune_from_cop(dst).type != "JJ"):  # TODO: generalise
-                return self.make_binary("have", prune_from_cop(dst), dst.cop, score, prop)
-            if dst is not None and (
-                    dst.type == "DATE" or dst.type == "GPE" or dst.type == "LOC" or dst.type == "SPACE") and dst.cop is not None:  # TODO: generalise
-                dstType = type_conversion.get(dst.type, dst.type)
+            if src is not None and src.cop is not None and (prune_from_cop(src).type != "JJ"):  # TODO: generalise
+                return self.make_binary("have", prune_from_cop(src), src.cop, score, prop)
+            if src is not None and (
+                    src.type == "DATE" or src.type == "GPE" or src.type == "LOC" or src.type == "SPACE") and src.cop is not None:  # TODO: generalise
+                dstType = type_conversion.get(src.type, src.type)
                 if dstType not in prop:
                     prop[dstType] = []
-                prop[dstType].append(dst)
-                return self.make_unary(rel, dst.cop, score, prop)
+                prop[dstType].append(src)
+                return self.make_unary(rel, src.cop, score, prop)
         if "non_verb" in prop:
             prop.pop("non_verb")
         s = set(prop.keys())
@@ -209,7 +213,7 @@ class RewriteKernels:
                     prop[x] = tuple(prop[x])
         prop = self.props_as_unique_itemset(prop)
         test, prop = has_prop_just_one_negated_constituent(prop)
-        result = FUnaryPredicate(rel=rel, arg=dst, score=score, properties=prop)
+        result = FUnaryPredicate(rel=rel, arg=src, score=score, properties=prop)
         return FNot(result) if test else result
 
     def make_binary(self, rel, src, dst, score, prop):

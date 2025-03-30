@@ -44,8 +44,8 @@ class CasusHappening(Enum):
     NONE = 3
     GENERAL_IMPLICATION = 8
     LOSE_SPEC_IMPLICATION = 9
-    INSTANTIATION_IMPLICATION = 10
-    MISSING_1ST_IMPLICATION = 12
+    INSTANTIATION_IMPLICATION = 10 #isa
+    MISSING_1ST_IMPLICATION = 12 #miss
 
 
 class ParmenidesSingleton(object):

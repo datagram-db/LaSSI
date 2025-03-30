@@ -50,6 +50,8 @@ def compare_variable(d, lhs, rhs):
         val = transformCaseWhenOneArgIsNegated(compare_variable(d, lhs.arg, rhs))
     elif isinstance(rhs, FNot):
         val = transformCaseWhenOneArgIsNegated(compare_variable(d, lhs, rhs.arg))
+    elif (not isinstance(lhs, FVariable)) or (not isinstance(rhs, FVariable)):
+        return CasusHappening.INDIFFERENT
     else:
         assert isinstance(lhs, FVariable)
         assert isinstance(rhs, FVariable)
@@ -60,16 +62,32 @@ def compare_variable(d, lhs, rhs):
             specEQ = transformCaseWhenOneArgIsNegated(specEQ)
         copCompareInv = compare_variable(d, rhs.cop, lhs.cop)
         val = CasusHappening.INDIFFERENT
-        if (nameEQ == specEQ) and (specEQ == copCompareInv):
+        if (nameEQ == specEQ) and (specEQ == copCompareInv) and (lhs.asAll == rhs.asAll):
             d[cp] = specEQ
             return d[cp]
         if nameEQ == CasusHappening.INDIFFERENT:
-            nameAgainstSpec = kb.name_eq(lhs.name, rhs.specification)
-            if nameAgainstSpec == CasusHappening.EQUIVALENT and lhs.name is not None and rhs.specification is not None:
-                val = CasusHappening.INSTANTIATION_IMPLICATION
+            if lhs.asAll:
+                if rhs.asAll:
+                    nameAgainstSpec = kb.name_eq(lhs.name, rhs.specification)
+                    if nameAgainstSpec == CasusHappening.EQUIVALENT and lhs.name is not None and rhs.specification is not None:
+                        val = CasusHappening.INSTANTIATION_IMPLICATION
+                else:
+                    flipNameEq = kb.name_eq(rhs.name, lhs.name)
+                    nameAgainstSpec = kb.name_eq(rhs.name, lhs.specification)
+                    if nameAgainstSpec == CasusHappening.EQUIVALENT and rhs.name is not None and lhs.specification is not None:
+                        val = CasusHappening.INSTANTIATION_IMPLICATION
+                    elif isImplication(flipNameEq):
+                        val = flipNameEq
+            else:
+                if not rhs.asAll:
+                    nameAgainstSpec = kb.name_eq(rhs.name, lhs.specification)
+                    if nameAgainstSpec == CasusHappening.EQUIVALENT and rhs.name is not None and lhs.specification is not None:
+                        val = CasusHappening.INSTANTIATION_IMPLICATION
+                else:
+                    val = CasusHappening.INDIFFERENT
         elif nameEQ == CasusHappening.EQUIVALENT:
             if (specEQ == copCompareInv):
-                val = specEQ
+                val = specEQ if ((lhs.asAll == rhs.asAll) or (lhs.asAll)) else CasusHappening.INDIFFERENT
             elif (specEQ == CasusHappening.EQUIVALENT):
                 if copCompareInv == CasusHappening.MISSING_1ST_IMPLICATION:
                     val = CasusHappening.LOSE_SPEC_IMPLICATION
@@ -77,17 +95,17 @@ def compare_variable(d, lhs, rhs):
                     val = copCompareInv
             else:
                 if specEQ == CasusHappening.MISSING_1ST_IMPLICATION:
-                    val = CasusHappening.INSTANTIATION_IMPLICATION
+                    val = CasusHappening.INSTANTIATION_IMPLICATION if lhs.asAll else CasusHappening.INDIFFERENT
                 else:
                     val = specEQ
         elif isImplication(nameEQ):
             nameAgainstSpec = kb.name_eq(lhs.name, rhs.specification)
             if (specEQ == copCompareInv) and (specEQ == CasusHappening.EQUIVALENT):
-                val = nameEQ  ## If everything is equivalent, then it is implying as the arguments are
+                val = nameEQ if (not rhs.asAll) and lhs.asAll else CasusHappening.INDIFFERENT ## If everything is equivalent, then it is implying as the arguments are
             elif (specEQ == CasusHappening.EQUIVALENT) and (copCompareInv == CasusHappening.EXCLUSIVES):
                 val = CasusHappening.EXCLUSIVES
             elif lhs.specification is None and nameAgainstSpec == CasusHappening.EQUIVALENT:
-                val = CasusHappening.INSTANTIATION_IMPLICATION
+                val = CasusHappening.INSTANTIATION_IMPLICATION if lhs.asAll else CasusHappening.INDIFFERENT
         elif nameEQ == CasusHappening.EXCLUSIVES:
             if (specEQ == copCompareInv) and (specEQ == CasusHappening.EQUIVALENT):
                 val = CasusHappening.EXCLUSIVES
@@ -96,7 +114,6 @@ def compare_variable(d, lhs, rhs):
 
 
 def simplifyConstituentsAcross(constituentCollection):
-
     if isinstance(constituentCollection, CasusHappening):
         return constituentCollection
     if CasusHappening.INDIFFERENT in constituentCollection:
@@ -256,7 +273,7 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
                             val = CasusHappening.INDIFFERENT
                         else:
                             keyComparisonOutcome = compare_variable(d, x.src, y.src)
-                            copKeyComparisonOutcome = compare_variable(d, x.src.cop, y.src.cop)
+                            copKeyComparisonOutcome = compare_variable(d, x.src.cop if hasattr(x.src, "cop") else None, y.src.cop if hasattr(y.str, "cop") else Npo)
                             if (srcCmp == CasusHappening.EXCLUSIVES) and (dstCmp == CasusHappening.EXCLUSIVES):
                                 val = CasusHappening.INDIFFERENT
                             elif (srcCmp == CasusHappening.EXCLUSIVES) and (dstCmp != CasusHappening.INDIFFERENT):
@@ -275,24 +292,21 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
                 else:
                     val = compare_variable(d, x.arg, y.arg)
                 keyComparisonOutcome = compare_variable(d, x.arg, y.arg)
-                copKeyComparisonOutcome = compare_variable(d, x.arg.cop, y.arg.cop)
+                copKeyComparisonOutcome = compare_variable(d, x.arg.cop if hasattr(x.arg, "cop") else None, y.arg.cop if hasattr(x.arg, "cop") else None)
             else:
                 raise ValueError("Unexpected comparison between " + str(x) + " and" + str(y))
             if val != CasusHappening.INDIFFERENT:
                 if val == CasusHappening.EQUIVALENT:
                     if keyComparisonOutcome == CasusHappening.EQUIVALENT:
                         if isImplication(keyCmpElements):
-                            if copKeyComparisonOutcome == CasusHappening.EQUIVALENT:  # and (
-                                # (y.arg is not None) and (y.arg.cop is not None)):
+                            if copKeyComparisonOutcome == CasusHappening.EQUIVALENT:
                                 if CasusHappening.INDIFFERENT in set(keyCmp.values()):
                                     val = CasusHappening.INDIFFERENT
                                 elif CasusHappening.LOSE_SPEC_IMPLICATION in set(keyCmp.values()):
                                     val = CasusHappening.INDIFFERENT
                                 elif keyCmpElements == CasusHappening.INSTANTIATION_IMPLICATION or CasusHappening.INSTANTIATION_IMPLICATION in set(
-                                        keyCmp.values()):  # or keyCmpElements == CasusHappening.GENERAL_IMPLICATION:
+                                        keyCmp.values()):
                                     val = keyCmpElements
-                                # elif is_direct_subset(xprop, yprop):
-                                #     val = CasusHappening.MISSING_1ST_IMPLICATION
                                 else:
                                     val = CasusHappening.INDIFFERENT
                             else:

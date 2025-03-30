@@ -184,7 +184,7 @@ def matrix_init_normalize(matrix, normalization):
 def knn(similarity_matrix, n_expected_clusters):
     distances = as_distance_matrix(similarity_matrix)
     from sklearn_extra.cluster import KMedoids
-    model = KMedoids(n_clusters=n_expected_clusters, metric="precomputed").fit(distances)
+    model = KMedoids(n_clusters=n_expected_clusters, metric="precomputed", init="k-medoids++").fit(distances)
     cluster_assignment = [set() for _ in range(n_expected_clusters)]
     for i, cluster in zip(range(len(similarity_matrix)), model.labels_):
         cluster_assignment[cluster].add(i)

@@ -1143,7 +1143,7 @@ parmenides:compound a parmenides:Rejectable,
         parmenides:dependency ;
     rdfs:label "compound"^^xsd:string .
 
-parmenides:compound%3Aprt a parmenides:Rejectable,
+parmenides:compound%3Aprt a
         parmenides:dependency ;
     rdfs:label "compound:prt"^^xsd:string .
 
@@ -1165,7 +1165,7 @@ parmenides:conclusion a parmenides:AbstractEntity ;
 parmenides:confuse a parmenides:TransitiveVerb ;
     rdfs:label "confuse"^^xsd:string .
 
-parmenides:conj a parmenides:Rejectable,
+parmenides:conj a
         parmenides:dependency ;
     rdfs:label "conj"^^xsd:string .
 
@@ -1205,7 +1205,7 @@ parmenides:convert a parmenides:TransitiveVerb ;
 parmenides:convince a parmenides:CausativeVerb ;
     rdfs:label "convince"^^xsd:string .
 
-parmenides:cop a parmenides:Rejectable,
+parmenides:cop a
         parmenides:dependency ;
     rdfs:label "cop"^^xsd:string .
 
@@ -1251,11 +1251,11 @@ parmenides:creep a parmenides:MovementVerb,
 parmenides:cross a parmenides:TransitiveVerb ;
     rdfs:label "cross"^^xsd:string .
 
-parmenides:csubj a parmenides:Rejectable,
+parmenides:csubj a
         parmenides:dependency ;
     rdfs:label "csubj"^^xsd:string .
 
-parmenides:csubjpass a parmenides:Rejectable,
+parmenides:csubjpass a
         parmenides:dependency ;
     rdfs:label "csubjpass"^^xsd:string .
 
@@ -1322,7 +1322,7 @@ parmenides:deny a parmenides:CausativeVerb,
         parmenides:Verb ;
     rdfs:label "deny"^^xsd:string .
 
-parmenides:dep a parmenides:Rejectable,
+parmenides:dep a
         parmenides:dependency ;
     rdfs:label "dep"^^xsd:string .
 
@@ -1352,11 +1352,11 @@ parmenides:despite a parmenides:DependantPreposition,
 parmenides:destroy a parmenides:TransitiveVerb ;
     rdfs:label "destroy"^^xsd:string .
 
-parmenides:det a parmenides:Rejectable,
+parmenides:det a
         parmenides:dependency ;
     rdfs:label "det"^^xsd:string .
 
-parmenides:det_predet a parmenides:Rejectable,
+parmenides:det_predet a
         parmenides:dependency ;
     rdfs:label "det_predet"^^xsd:string .
 
@@ -1370,7 +1370,7 @@ parmenides:disagree a parmenides:CausativeVerb,
         parmenides:Verb ;
     rdfs:label "disagree"^^xsd:string .
 
-parmenides:discourse a parmenides:Rejectable,
+parmenides:discourse a
         parmenides:dependency ;
     rdfs:label "discourse"^^xsd:string .
 
@@ -1384,7 +1384,7 @@ parmenides:dislike a parmenides:CausativeVerb,
         parmenides:Verb ;
     rdfs:label "dislike"^^xsd:string .
 
-parmenides:dislocated a parmenides:Rejectable,
+parmenides:dislocated a
         parmenides:dependency ;
     rdfs:label "dislocated"^^xsd:string .
 
@@ -1407,7 +1407,7 @@ parmenides:dive a parmenides:MovementVerb,
 parmenides:do a parmenides:TransitiveVerb ;
     rdfs:label "do"^^xsd:string .
 
-parmenides:dobj a parmenides:Rejectable,
+parmenides:dobj a
         parmenides:dependency ;
     rdfs:label "dobj"^^xsd:string .
 
@@ -1675,7 +1675,7 @@ parmenides:excuse a parmenides:TransitiveVerb ;
 parmenides:execute a parmenides:TransitiveVerb ;
     rdfs:label "execute"^^xsd:string .
 
-parmenides:expl a parmenides:Rejectable,
+parmenides:expl a
         parmenides:dependency ;
     rdfs:label "expl"^^xsd:string .
 
@@ -1838,7 +1838,7 @@ parmenides:force a parmenides:CausativeVerb,
         parmenides:TransitiveVerb ;
     rdfs:label "force"^^xsd:string .
 
-parmenides:foreign a parmenides:Rejectable,
+parmenides:foreign a
         parmenides:dependency ;
     rdfs:label "foreign"^^xsd:string .
 
@@ -1958,7 +1958,7 @@ parmenides:go a parmenides:MovementVerb,
         parmenides:Verb ;
     rdfs:label "go"^^xsd:string .
 
-parmenides:goeswith a parmenides:Rejectable,
+parmenides:goeswith a
         parmenides:dependency ;
     rdfs:label "goeswith"^^xsd:string .
 
@@ -2632,7 +2632,7 @@ parmenides:inwards a parmenides:Preposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:iobj a parmenides:Rejectable,
+parmenides:iobj a
         parmenides:dependency ;
     rdfs:label "iobj"^^xsd:string .
 
@@ -2853,7 +2853,7 @@ parmenides:linger a parmenides:StateVerb,
 parmenides:link a parmenides:TransitiveVerb ;
     rdfs:label "link"^^xsd:string .
 
-parmenides:list a parmenides:Rejectable,
+parmenides:list a
         parmenides:TransitiveVerb,
         parmenides:dependency ;
     rdfs:label "list"^^xsd:string .
@@ -3468,7 +3468,7 @@ parmenides:march a parmenides:MovementVerb,
         parmenides:Verb ;
     rdfs:label "march"^^xsd:string .
 
-parmenides:mark a parmenides:Rejectable,
+parmenides:mark a
         parmenides:TransitiveVerb,
         parmenides:dependency ;
     rdfs:label "mark"^^xsd:string .
@@ -3590,7 +3590,7 @@ parmenides:munch a parmenides:TransitiveVerb ;
 parmenides:murder a parmenides:TransitiveVerb ;
     rdfs:label "murder"^^xsd:string .
 
-parmenides:mwe a parmenides:Rejectable,
+parmenides:mwe a
         parmenides:dependency ;
     rdfs:label "mwe"^^xsd:string .
 
@@ -3602,7 +3602,7 @@ parmenides:myself a parmenides:PersonalPronoun,
         parmenides:Pronoun ;
     rdfs:label "myself"^^xsd:string .
 
-parmenides:name a parmenides:Rejectable,
+parmenides:name a
         parmenides:TransitiveVerb,
         parmenides:dependency ;
     rdfs:label "name"^^xsd:string .
@@ -3654,7 +3654,7 @@ parmenides:need a parmenides:CausativeVerb,
         parmenides:Verb ;
     rdfs:label "need"^^xsd:string .
 
-parmenides:neg a parmenides:Rejectable,
+parmenides:neg a
         parmenides:dependency ;
     rdfs:label "neg"^^xsd:string .
 
@@ -3686,19 +3686,19 @@ parmenides:next a parmenides:PrototypicalPreposition ;
         parmenides:Verb ;
     rdfs:label "nip over"^^xsd:string .
 
-parmenides:nmod a parmenides:Rejectable,
+parmenides:nmod a
         parmenides:dependency ;
     rdfs:label "nmod"^^xsd:string .
 
-parmenides:nmod_npmod a parmenides:Rejectable,
+parmenides:nmod_npmod a
         parmenides:dependency ;
     rdfs:label "nmod_npmod"^^xsd:string .
 
-parmenides:nmod_poss a parmenides:Rejectable,
+parmenides:nmod_poss a
         parmenides:dependency ;
     rdfs:label "nmod_poss"^^xsd:string .
 
-parmenides:nmod_tmod a parmenides:Rejectable,
+parmenides:nmod_tmod a
         parmenides:dependency ;
     rdfs:label "nmod_tmod"^^xsd:string .
 
@@ -3710,7 +3710,7 @@ parmenides:nobody a parmenides:IndefinitePronoun,
         parmenides:Pronoun ;
     rdfs:label "nobody"^^xsd:string .
 
-parmenides:none a parmenides:Rejectable,
+parmenides:none a
         parmenides:dependency ;
     rdfs:label "none"^^xsd:string .
 
@@ -3780,18 +3780,18 @@ parmenides:now a parmenides:DependantPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:nsubj a parmenides:Rejectable,
+parmenides:nsubj a
         parmenides:dependency ;
     rdfs:label "nsubj"^^xsd:string .
 
-parmenides:nsubjpass a parmenides:Rejectable,
+parmenides:nsubjpass a
         parmenides:dependency ;
     rdfs:label "nsubjpass"^^xsd:string .
 
 parmenides:number a parmenides:TransitiveVerb ;
     rdfs:label "number"^^xsd:string .
 
-parmenides:nummod a parmenides:Rejectable,
+parmenides:nummod a
         parmenides:dependency ;
     rdfs:label "nummod"^^xsd:string .
 
@@ -3817,11 +3817,11 @@ parmenides:o%27er a parmenides:PrototypicalPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:obj a parmenides:Rejectable,
+parmenides:obj a
         parmenides:dependency ;
     rdfs:label "obj"^^xsd:string .
 
-parmenides:obl a parmenides:Rejectable,
+parmenides:obl a
         parmenides:dependency ;
     rdfs:label "obl"^^xsd:string .
 
@@ -4167,7 +4167,7 @@ parmenides:parade a parmenides:MovementVerb,
 parmenides:paralyze a parmenides:TransitiveVerb ;
     rdfs:label "paralyze"^^xsd:string .
 
-parmenides:parataxis a parmenides:Rejectable,
+parmenides:parataxis a
         parmenides:dependency ;
     rdfs:label "parataxis"^^xsd:string .
 
@@ -4440,7 +4440,7 @@ parmenides:pull a parmenides:TransitiveVerb ;
 parmenides:punch a parmenides:TransitiveVerb ;
     rdfs:label "punch"^^xsd:string .
 
-parmenides:punct a parmenides:Rejectable,
+parmenides:punct a
         parmenides:dependency ;
     rdfs:label "punct"^^xsd:string .
 
@@ -4574,14 +4574,14 @@ parmenides:remember a parmenides:CausativeVerb,
 parmenides:remind a parmenides:TransitiveVerb ;
     rdfs:label "remind"^^xsd:string .
 
-parmenides:remnant a parmenides:Rejectable,
+parmenides:remnant a
         parmenides:dependency ;
     rdfs:label "remnant"^^xsd:string .
 
 parmenides:remove a parmenides:TransitiveVerb ;
     rdfs:label "remove"^^xsd:string .
 
-parmenides:reparandum a parmenides:Rejectable,
+parmenides:reparandum a
         parmenides:dependency ;
     rdfs:label "reparandum"^^xsd:string .
 
@@ -4668,7 +4668,7 @@ parmenides:roll a parmenides:MovementVerb,
         parmenides:Verb ;
     rdfs:label "roll"^^xsd:string .
 
-parmenides:root a parmenides:Rejectable,
+parmenides:root a
         parmenides:dependency ;
     rdfs:label "root"^^xsd:string .
 
@@ -5893,7 +5893,7 @@ parmenides:vis-%C3%A0-vis a parmenides:PrototypicalPreposition ;
 parmenides:visit a parmenides:TransitiveVerb ;
     rdfs:label "visit"^^xsd:string .
 
-parmenides:vocative a parmenides:Rejectable,
+parmenides:vocative a
         parmenides:dependency ;
     rdfs:label "vocative"^^xsd:string .
 
@@ -6255,7 +6255,7 @@ parmenides:wrap a parmenides:TransitiveVerb ;
 parmenides:wreck a parmenides:TransitiveVerb ;
     rdfs:label "wreck"^^xsd:string .
 
-parmenides:xcomp a parmenides:Rejectable,
+parmenides:xcomp a
         parmenides:dependency ;
     rdfs:label "xcomp"^^xsd:string .
 

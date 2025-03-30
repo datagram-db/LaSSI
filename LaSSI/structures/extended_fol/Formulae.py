@@ -52,7 +52,7 @@ def update_property(prop, key, value):
     return frozenset(d.items())
 
 @dataclass(order=True, frozen=True, eq=True)
-class FVariable:
+class FVariable: ## TODO: rename to FTerm or FConstant
     name: str
     type: str
     specification: Optional[str|Ignore] = None  # extra
@@ -61,6 +61,7 @@ class FVariable:
     properties: frozenset = field(default_factory=lambda: frozenset())
     spec_negation:bool = False
     meta: str = field(default_factory=lambda: "FVariable")
+    asAll: bool = False ## By default, the interpretation is exitential. If not, this is interpreted as All
     # matched: bool = field(default_factory=lambda: False)
 
     def add_adjective(self, adj, type="JJ"):
@@ -68,6 +69,9 @@ class FVariable:
 
     def dropCopula(self):
         return FVariable(self.name, self.type, self.specification, None, self.id, self.properties)
+
+    def makeAsAll(self):
+        return FVariable(self.name, self.type, self.specification, self.cop, self.id, self.properties, self.spec_negation, self.meta, True)
 
     def add_property(self, key, value):
         # d = {k:v for k,v in self.properties} if self.properties is not None else {}
@@ -83,8 +87,9 @@ class FVariable:
 
     def __repr__(self):
         return self.__str__()
+
     def __str__(self):
-        name = self.name
+        name = ("\\forall" if self.asAll else "\\exists") + self.name
         if name is None:
             name = "?"
         else:
