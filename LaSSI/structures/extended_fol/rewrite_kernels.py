@@ -65,6 +65,8 @@ def has_prop_just_one_negated_constituent(prop):
     if (len(prop) != 1):
         return False, prop
     k, x = next(iter(prop))
+    if k in Grouping.__members__.keys():
+        return False, prop
     assert isinstance(x, tuple) and len(x) == 1
     v = x[0]
     if isinstance(v,FNot):
@@ -83,8 +85,8 @@ def has_prop_just_one_negated_constituent(prop):
             return True, frozenset({(k, (FVariable(v.name, v.type, v.specification, v.cop, v.id, v.properties), ))})
         else:
             return False, prop
-    else:
-        assert False
+    # else:
+    #     assert False
     return False, prop
 
 
@@ -182,7 +184,10 @@ class RewriteKernels:
                 if v.lower() == "all":
                     asAll = True
             if k not in discard_properties and k not in {} and ((not isinstance(v, str)) or len(v) == 0):
-                props2[k] = self.make_arg(v) if isinstance(v, Singleton) else v
+                if isinstance(v, tuple):
+                    props2[k] = tuple([self.make_arg(x) if isinstance(x, Singleton) else x for x in v])
+                else:
+                    props2[k] = self.make_arg(v) if isinstance(v, Singleton) else v
         if (cop == "usually") or (isinstance(cop, FVariable) and (cop.name == "usually")):  ## TODO:adverb
             cop = None
         props2 = self.props_as_unique_itemset(props2)
@@ -365,9 +370,9 @@ class RewriteKernels:
     def props_as_unique_itemset(self, prop):
         d = dict()
         for k, v in prop.items():
-            if k in discard_properties:
+            if k in discard_properties or len(k) == 0:
                 continue
-            if len(v)==1:
+            if len(v)==1 or k in Grouping.__members__.keys():
                 d[k] = tuple(set(v))
             else:
                 assert len(v)==2

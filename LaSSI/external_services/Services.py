@@ -3,6 +3,7 @@ from nltk import WordNetLemmatizer
 
 import LaSSI.Parmenides.paremenides
 from LaSSI.external_services.Existentials import Existentials
+from LaSSI.external_services.ParmenidesFuzzyMatch import ParmenidesFuzzyMatch
 
 
 class Services:

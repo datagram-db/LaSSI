@@ -6,4 +6,3 @@ host: localhost
 port: 5432
 pw: password #omocaig
 uname: fox #giacomo
-huggingface: 'sentence-transformers/all-MiniLM-L6-v2'

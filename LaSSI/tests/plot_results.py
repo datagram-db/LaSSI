@@ -9,11 +9,11 @@ import matplotlib.font_manager as fm
 def main():
     font = fm.FontProperties(fname='./fonts/Satoshi-Medium.ttf', size=8)
     bold_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=8)
-    title_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=10)
+    title_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=12)
 
     pd.set_option('display.max_columns', None)
 
-    data = pd.read_csv('benchmarks/mar18-benchmark.csv')  # FYI: mar18 is used in MDPI25 paper
+    data = pd.read_csv('benchmarks/mar18-benchmark-added-logical.csv')  # FYI: mar18 is used in MDPI25 paper
     data = data.sort_values(by='Dataset')
     data = data.replace(0, np.nan)  # For generating/loading meuDB where values are 0
     averaged_data = data.groupby('Dataset', as_index=False).mean(numeric_only=True)
@@ -40,36 +40,50 @@ def main():
     # Highlight last dataset
     last_dataset_label = sorted(data['Dataset'].unique())[-1]
     last_dataset_data = melted_data[pd.to_numeric(melted_data['Dataset']) == last_dataset_label]
+    last_dataset_data = last_dataset_data[(last_dataset_data['Phase'] != "GPT-3 training time")]
     y_min = last_dataset_data['Time'].min()
-    y_max = last_dataset_data[(last_dataset_data['Phase'] != "GPT-3 training time")]['Time'].max()
+    y_max = last_dataset_data['Time'].max()
+
+    last_dataset_data_meu = last_dataset_data[(last_dataset_data['Phase'] != "Loading meuDB")]
+    total_time_last_dataset = last_dataset_data_meu['Time'].sum()
+    print(f"Total time for the {last_dataset_label} dataset w/ MEU: {total_time_last_dataset/60} minutes")
+
+    last_dataset_data_no_meu = last_dataset_data[(last_dataset_data['Phase'] != "Generating meuDB")]
+    total_time_last_dataset = last_dataset_data_no_meu['Time'].sum()
+    print(f"Total time for the {last_dataset_label} dataset w/out MEU: {total_time_last_dataset} minutes")
 
     plot = (
-        ggplot(melted_data, aes(x='Dataset', y='Time', color='Phase', group='Phase')) +
-        scale_x_continuous(breaks=sorted(melted_data['Dataset'].unique()), labels=sorted(data['Dataset'].unique()), limits=(0, 205)) +
-        geom_rect(aes(xmin=last_dataset_label - 5, xmax=last_dataset_label + 5, ymin=y_min/3, ymax=y_max*3), color='red', fill='none', size=0.75) +
-        geom_line(aes(linetype='Phase'), size=0.75) +
-        geom_point(aes(shape="Phase"), size=1.75) +
-        scale_y_log10(minor_breaks=[],
-                      breaks=[10 ** x for x in range(-5, 7)],
-                      labels=lambda l: ["{:.0e}".format(v).replace("+0", "+").replace("-0", "+") for v in l]) +
-        scale_color_brewer(type='qual', palette='Dark2') +
-        scale_linetype_manual(values=line_type_dict) +
-        labs(title='LaSSI Phase Execution Times vs. Number of Sentences',
-             x='Number of sentences',
-             y='Time (seconds, log scale)',
-             color='Phase') +
-        theme_minimal() +
-        theme(
-            plot_background=element_rect(fill='white',color="white"),
-            text=element_rect(fontproperties=font),
-            legend_text=element_text(ha='left'),
-            axis_title_x=element_text(fontproperties=bold_font),
-            axis_title_y=element_text(fontproperties=bold_font),
-            legend_title=element_text(ha='left', fontproperties=bold_font),
-            plot_title=element_text(ha='left', fontproperties=title_font),
-            panel_border=element_blank(),
-        ))
-    plot.save('performance_metrics_plot.png', dpi=1200, width=6.5, height=3.5)
+            ggplot(melted_data, aes(x='Dataset', y='Time', color='Phase', group='Phase')) +
+            scale_x_continuous(breaks=sorted(melted_data['Dataset'].unique()), labels=sorted(data['Dataset'].unique()),
+                               limits=(0, 205)) +
+            geom_rect(aes(xmin=last_dataset_label - 5, xmax=last_dataset_label + 5, ymin=y_min / 3, ymax=y_max * 3),
+                      color='red', fill='none', size=0.75) +
+            geom_line(aes(linetype='Phase'), size=0.75) +
+            geom_point(aes(shape="Phase"), size=1.75) +
+            scale_y_log10(minor_breaks=[],
+                          breaks=[10 ** x for x in range(-5, 7)],
+                          labels=lambda l: ["{:.0e}".format(v).replace("+0", "+").replace("-0", "-") for v in l]) +
+            scale_color_brewer(type='qual', palette='Dark2') +
+            scale_linetype_manual(values=line_type_dict) +
+            labs(title='LaSSI Phase Execution Times vs. Number of Sentences',
+                 x='Number of sentences',
+                 y='Time (seconds, log scale)',
+                 color='Phase') +
+            theme_minimal() +
+            theme(
+                plot_background=element_rect(fill='white', color="white"),
+                text=element_rect(fontproperties=font),
+                legend_text=element_text(ha='left'),
+                axis_title_x=element_text(fontproperties=bold_font),
+                axis_title_y=element_text(fontproperties=bold_font),
+                legend_title=element_text(ha='left', fontproperties=bold_font),
+                plot_title=element_text(ha='center', fontproperties=title_font),
+                panel_border=element_blank(),
+                legend_position='bottom',
+                legend_direction='horizontal'
+            )
+    )
+    plot.save('performance_metrics_plot.png', dpi=1200, width=7.5, height=5)
 
 if __name__ == "__main__":
     main()

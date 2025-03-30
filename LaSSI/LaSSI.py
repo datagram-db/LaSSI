@@ -39,6 +39,7 @@ class LaSSI():
     def __init__(self, dataset_name: str,
                  fuzzyDBs: str | DatabaseConfiguration,
                  transformation: SentenceRepresentation = SentenceRepresentation.Logical,
+                 transformer='sentence-transformers/all-MiniLM-L6-v2',  # all-MiniLM-L6-v2 / all-MiniLM-L12-v2 / all-mpnet-base-v2 / all-roberta-large-v1
                  sentences: ScraperConfiguration | str | collections.abc.Iterable = None,
                  logger=None,
                  web_dir=None,
@@ -52,8 +53,10 @@ class LaSSI():
             self.legacy_conf = LegacySemanticConfiguration()
         else:
             self.legacy_conf = legacy_conf
+        self.legacy_conf.HuggingFace = transformer
         self.string_rep_dir = None
         self.benchmarking_file = None
+        self.run_ex_post = True
         self.create_catabolites_dir(dataset_name)
         self.dataset_name = dataset_name
         tmp = f"{self.dataset_name}_clusters.txt"
@@ -70,8 +73,8 @@ class LaSSI():
         if not isinstance(fuzzyDBs, DatabaseConfiguration):
             fuzzyDBs = str(fuzzyDBs)
             fuzzyDBs = load_db_configuration(fuzzyDBs)
-        if hasattr(fuzzyDBs, "huggingface") and fuzzyDBs.huggingface is not None:
-            self.legacy_conf.HuggingFace = fuzzyDBs.huggingface
+        # if hasattr(fuzzyDBs, "huggingface") and fuzzyDBs.huggingface is not None:
+        #     self.legacy_conf.HuggingFace = fuzzyDBs.huggingface
 
         self.logger("init non-postgres services and the wrapper for the former...")
         self.initServices = Services.getInstance(self.logger)
@@ -87,6 +90,7 @@ class LaSSI():
         for k, v in fuzzyDBs.fuzzy_dbs.items():
             self.logger(f" - Loading {k}.")
             FuzzyStringMatchDatabase.instance().create(k, v)
+
 
         if sentences is None:
             sentences = open(self.dataset_name, "r")
@@ -126,14 +130,6 @@ class LaSSI():
 
 
     def create_catabolites_dir(self, dataset_name):
-        # if "/" in dataset_name:
-        #     name_arr = dataset_name.split("/")
-        #     self.catabolites_dir = name_arr[len(name_arr) - 1]
-        # else:
-        #     self.catabolites_dir = dataset_name
-        # if "." in self.catabolites_dir:
-        #     name_arr = self.catabolites_dir.split(".")
-        #     self.catabolites_dir = name_arr[0]
         from pathlib import Path
         self.catabolites_dir = Path(dataset_name).stem
         self.catabolites_of_dataset = os.path.join("catabolites", self.catabolites_dir)
@@ -145,7 +141,11 @@ class LaSSI():
             self.write_variable_to_file(self.benchmarking_file, "Dataset,Loading sentences,Generating meuDB,"
                                                                 "Loading meuDB,Generating gsmDB,Generating "
                                                                 "rewritten graphs,Generating intermediate "
-                                                                "representation\n")
+                                                                "representation,Generating logical representation")
+            if self.run_ex_post:
+                self.write_variable_to_file(self.benchmarking_file, ",Ex Post Explanation\n")
+            else:
+                self.write_variable_to_file(self.benchmarking_file, "\n")
         else:
             # If last line is not finished, add new line to ensure next benchmark is written to file correctly
             with open(self.benchmarking_file, 'r') as file:
@@ -251,7 +251,7 @@ class LaSSI():
 
         return matrices
 
-    def post_hoc_explain(self, lists):
+    def ex_post_explain(self, lists):
         from LaSSI.files.FileDumpUtilities import target_file_dump
         self.logger("computing similarities")
         experiment_name = self.transformation.name + (f"_{self.legacy_conf.HuggingFace.split('/')[-1]}" if self.transformation == SentenceRepresentation.FullText else "")
@@ -311,20 +311,34 @@ class LaSSI():
             lambda: SemanticGraphRewriting(self, rewritten_graphs),
             obj_pickle if is_binary else json_dumps, not is_binary, self.should_benchmark, is_binary
         )
-        # rewrite_kernels(intermediate_representations[0].sentences)
-        print(f"Generating intermediate representation time: {intermediate_execution_time} seconds")
+        print(f"Generating intermediate representations time: {intermediate_execution_time} seconds")
         self.write_variable_to_file(self.benchmarking_file,
-                                    f"{self.get_execution_time_string(meu_execution_time)},{gsm_execution_time[0]},{rewritten_execution_time[0]},{intermediate_execution_time[0]}\n")
+                                    f"{self.get_execution_time_string(meu_execution_time)},{gsm_execution_time[0]},{rewritten_execution_time[0]},{intermediate_execution_time[0]},")
 
         if self.transformation == SentenceRepresentation.Logical:  # LogicalGraph
-            intermediate_representations = target_file_dump(self.logical_rewriting,
-                                                      lambda x: formula_from_dict(json.load(x)),
-                                                      lambda: LogicalRewriting(self, intermediate_representations),
-                                                      json_dumps,
-                                                      self.force)
-        for x in intermediate_representations:
-            print(str(x))
-        return intermediate_representations
+            #<<<<<<< HEAD
+            # intermediate_representations = target_file_dump(self.logical_rewriting,
+            #                                           lambda x: formula_from_dict(json.load(x)),
+            #                                           lambda: LogicalRewriting(self, intermediate_representations),
+            #                                           json_dumps,
+            #                                           self.force)
+            # for x in intermediate_representations:
+            #     print(str(x))
+            # return intermediate_representations
+            #=======
+            logical_representations, logical_rewriting_execution_time = target_file_dump(
+                self.logical_rewriting,
+                lambda x: formula_from_dict(json.load(x)),
+                lambda: LogicalRewriting(self, intermediate_representations),
+                json_dumps, self.force, self.should_benchmark)
+            self.write_variable_to_file(self.benchmarking_file,f"{logical_rewriting_execution_time[0]}")
+            print(f"Generating logical representations time: {logical_rewriting_execution_time} seconds")
+        else:
+            logical_representations = intermediate_representations
+            self.write_variable_to_file(self.benchmarking_file, f"{None}")
+        # for x in intermediate_representations:
+        #     print(str(x))
+        return logical_representations
 
     def get_execution_time_string(self, execution_time):
         if 'w' == execution_time[1]:
@@ -345,7 +359,19 @@ class LaSSI():
                                     f"{self.dataset_name.split('/')[-1].split('.yaml')[0]},{loading_sentences_execution_time},")
 
         result = self.sentence_transform(sentences)
-        self.post_hoc_explain(result)
+
+        if self.run_ex_post:
+            start_time = time.time()
+            self.ex_post_explain(result)
+            end_time = time.time()
+            ex_post_execution_time = end_time - start_time
+            self.logger(f"Ex Post Time: {loading_sentences_execution_time} seconds")
+            self.write_variable_to_file(self.benchmarking_file,
+                                        f",{ex_post_execution_time}\n")
+        else:
+            self.write_variable_to_file(self.benchmarking_file,
+                                        f"\n")
+
 
     def close(self):
         if isinstance(self.sentences, io.IOBase):
