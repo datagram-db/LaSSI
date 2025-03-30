@@ -239,27 +239,33 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
             yprop = set() if y.properties is None else y.properties
             keyCmp, keyCmpInv = defaultdict(set), defaultdict(set)
             keys = set(map(lambda z: z[0], xprop)).union(map(lambda z: z[0], yprop))
-            dLHS = dict(xprop)
-            dRHS = dict(yprop)
-            for key in keys:
-                if key in dLHS and key in dRHS:
-                    for xx in dLHS[key]:
-                        for yy in dRHS[key]:
-                            keyCmp[key].add(compare_variable(d, xx, yy))
-                            keyCmpInv[key].add(compare_variable(d, yy, xx))
-                elif key in dLHS:
-                    keyCmp[key].add(CasusHappening.INDIFFERENT)
-                    keyCmpInv[key].add(CasusHappening.GENERAL_IMPLICATION)
+            hasDirectSubset = False
+            if is_direct_subset(yprop, xprop):
+                keyCmpElements = CasusHappening.GENERAL_IMPLICATION
+                keyCmpElementsInv = CasusHappening.INDIFFERENT
+                hasDirectSubset = True
+            else:
+                dLHS = dict(xprop)
+                dRHS = dict(yprop)
+                for key in keys:
+                    if key in dLHS and key in dRHS:
+                        for xx in dLHS[key]:
+                            for yy in dRHS[key]:
+                                keyCmp[key].add(compare_variable(d, xx, yy))
+                                keyCmpInv[key].add(compare_variable(d, yy, xx))
+                    elif key in dLHS:
+                        keyCmp[key].add(CasusHappening.INDIFFERENT)
+                        keyCmpInv[key].add(CasusHappening.GENERAL_IMPLICATION)
+                    else:
+                        keyCmp[key].add(CasusHappening.GENERAL_IMPLICATION)
+                        keyCmpInv[key].add(CasusHappening.INDIFFERENT)
+                keyCmp = {key: simplifyConstituents(val) for key, val in keyCmp.items()}
+                keyCmpInv = {key: simplifyConstituents(val) for key, val in keyCmpInv.items()}
+                if len(keyCmp) > 0:
+                    keyCmpElements = simplifyConstituentsAcross({keyCmp[key] for key in keyCmp})
+                    keyCmpElementsInv = simplifyConstituentsAcross({keyCmpInv[key] for key in keyCmpInv})
                 else:
-                    keyCmp[key].add(CasusHappening.GENERAL_IMPLICATION)
-                    keyCmpInv[key].add(CasusHappening.INDIFFERENT)
-            keyCmp = {key: simplifyConstituents(val) for key, val in keyCmp.items()}
-            keyCmpInv = {key: simplifyConstituents(val) for key, val in keyCmpInv.items()}
-            keyCmpElements, keyCmpElementsInv = CasusHappening.EQUIVALENT, CasusHappening.EQUIVALENT
-            keyComparisonOutcome = copKeyComparisonOutcome = CasusHappening.INDIFFERENT
-            if len(keyCmp) > 0:
-                keyCmpElements = simplifyConstituentsAcross({keyCmp[key] for key in keyCmp})
-                keyCmpElementsInv = simplifyConstituentsAcross({keyCmpInv[key] for key in keyCmpInv})
+                    keyCmpElements, keyCmpElementsInv = CasusHappening.EQUIVALENT, CasusHappening.EQUIVALENT
             if isinstance(x, FBinaryPredicate) and isinstance(y, FBinaryPredicate):
                 if (x.rel != y.rel):
                     val = CasusHappening.INDIFFERENT
@@ -273,7 +279,7 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
                             val = CasusHappening.INDIFFERENT
                         else:
                             keyComparisonOutcome = compare_variable(d, x.src, y.src)
-                            copKeyComparisonOutcome = compare_variable(d, x.src.cop if hasattr(x.src, "cop") else None, y.src.cop if hasattr(y.str, "cop") else Npo)
+                            copKeyComparisonOutcome = compare_variable(d, x.src.cop if hasattr(x.src, "cop") else None, y.src.cop if hasattr(y.src, "cop") else None)
                             if (srcCmp == CasusHappening.EXCLUSIVES) and (dstCmp == CasusHappening.EXCLUSIVES):
                                 val = CasusHappening.INDIFFERENT
                             elif (srcCmp == CasusHappening.EXCLUSIVES) and (dstCmp != CasusHappening.INDIFFERENT):
@@ -308,7 +314,7 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
                                         keyCmp.values()):
                                     val = keyCmpElements
                                 else:
-                                    val = CasusHappening.INDIFFERENT
+                                    val = CasusHappening.INDIFFERENT if not hasDirectSubset else CasusHappening.GENERAL_IMPLICATION
                             else:
                                 val = keyCmpElements
                         elif keyCmpElementsInv == CasusHappening.LOSE_SPEC_IMPLICATION:
