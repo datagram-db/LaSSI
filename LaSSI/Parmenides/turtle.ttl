@@ -6122,6 +6122,13 @@ parmenides:logrule%2F33 a parmenides:LogicalRewritingRule ;
         "while"^^xsd:string ;
     parmenides:rule_order 33 .
 
+parmenides:logrule%2F34 a parmenides:LogicalRewritingRule ;
+    rdfs:label "logrule/34"^^xsd:string ;
+    parmenides:hasNMod true ;
+    parmenides:logicalConstructName "specification"^^xsd:string ;
+    parmenides:logicalConstructProperty "inverse"^^xsd:string ;
+    parmenides:rule_order 34 .
+
 parmenides:logrule%2F4 a parmenides:LogicalRewritingRule ;
     rdfs:label "logrule/4"^^xsd:string ;
     parmenides:abstract_entity false ;

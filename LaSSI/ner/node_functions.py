@@ -160,9 +160,7 @@ class NodeFunctions:
         else:
             return has_auxiliary(current_edge.edgeLabel.named_entity)
 
-    def convert_relationship_to_sentence(self, sentence_id, kernel, edge_label=None, properties=None):
-        if edge_label is None:
-            edge_label = kernel.edgeLabel
+    def convert_relationship_to_sentence(self, sentence_id, kernel, properties=None):
         valid_nodes = self.get_valid_nodes([kernel.source, kernel.target])
         return Singleton(
             id=sentence_id,
@@ -174,7 +172,7 @@ class NodeFunctions:
             kernel=Relationship(
                 source=kernel.source,
                 target=kernel.target,
-                edgeLabel=edge_label,
+                edgeLabel=kernel.edgeLabel,
                 isNegated=kernel.isNegated
             ),
             properties=frozenset() if properties is None else create_props_for_singleton(properties),

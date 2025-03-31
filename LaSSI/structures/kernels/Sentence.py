@@ -203,6 +203,9 @@ def create_sentence(edges, nodes, negations, root_sentence_id, found_preposition
         kernel, properties, kernel_nodes = add_to_properties(
             kernel, edge.target, 'target', kernel_nodes, properties, negations, node_functions)
 
+        # Lemmatize edge name
+        edge = edge.update_vertex(edge.edgeLabel.update_name(lemmatize_verb(edge.edgeLabel.named_entity)) if edge.edgeLabel is not None else None, "edgeLabel")
+
         # Add certain edges to be rewritten later
         if edge.edgeLabel.named_entity in {'acl_relcl', 'nmod', 'nmod_poss'}:
             if edge.edgeLabel.named_entity in {'acl_relcl'}:
@@ -264,7 +267,7 @@ def create_sentence(edges, nodes, negations, root_sentence_id, found_preposition
             )
 
     # Lemmatize edge label
-    edge_label = kernel.edgeLabel.update_name(lemmatize_verb(kernel.edgeLabel.named_entity)) if kernel.edgeLabel is not None else None
+    # edge_label = kernel.edgeLabel.update_name(lemmatize_verb(kernel.edgeLabel.named_entity)) if kernel.edgeLabel is not None else None
 
     properties_to_keep = defaultdict()
     new_kernel = None
@@ -281,8 +284,7 @@ def create_sentence(edges, nodes, negations, root_sentence_id, found_preposition
         else:
             properties_to_keep[key] = properties[key]
 
-    final_kernel = node_functions.convert_relationship_to_sentence(
-        root_sentence_id, kernel, edge_label, properties_to_keep)
+    final_kernel = node_functions.convert_relationship_to_sentence(root_sentence_id, kernel, properties_to_keep)
 
     if new_kernel is not None:
         valid_nodes = node_functions.get_valid_nodes([kernel.source, kernel.target])  # Get all nodes that are not None else return -1
@@ -672,7 +674,7 @@ def assign_kernel(edges, kernel, negations, nodes, root_sentence_id, found_prepo
             isNegated=kernel.isNegated
         )
 
-    return kernel
+    return kernel.update_vertex(kernel.edgeLabel.update_name(lemmatize_verb(kernel.edgeLabel.named_entity)) if kernel.edgeLabel is not None else None, "edgeLabel")
 
 
 def find_existential_in_properties(node):
@@ -743,7 +745,7 @@ def create_edge_kernel(node):
         kernel=Relationship(
             source=create_existential_node(),
             target=None,
-            edgeLabel=node,
+            edgeLabel=node.update_name(lemmatize_verb(node.named_entity)) if node is not None else None,
             isNegated=False
         ),
         properties=frozenset(),  # TODO: Should this be empty?

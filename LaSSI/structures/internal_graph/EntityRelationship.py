@@ -213,6 +213,13 @@ class Relationship:  # Representation of an edge
                 edgeLabel=self.edgeLabel,
                 isNegated=self.isNegated
             )
+        elif vertex_type == 'edgeLabel':
+            return Relationship(
+                source=self.source,
+                target=self.target,
+                edgeLabel=node,
+                isNegated=self.isNegated
+            )
 
 
 @dataclass(order=True, frozen=True, eq=True)

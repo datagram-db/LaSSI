@@ -930,6 +930,20 @@
       "__sentence_examples": [
         "clean up after yourself"
       ]
+    },
+    {
+      "premise": {
+        "hasNMod": true
+      },
+      "classification": [
+        {
+          "type": "specification",
+          "property": "inverse"
+        }
+      ],
+      "__sentence_examples": [
+        "you see a head-on collision coming"
+      ]
     }
   ]
 }

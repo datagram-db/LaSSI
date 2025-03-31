@@ -77,6 +77,28 @@ class AssignTypeToSingleton:
         # Scan for 'inherit' edges and contain them in the node that has that edge
         number_of_nodes = range(len(gsm_json))
         ids_to_remove = []
+        hyph_ids_to_remove = []
+        for row in number_of_nodes:
+            gsm_item = gsm_json[row]
+
+            # Look for hyphens, to properly concatenate
+            if 'HYPH' in gsm_item['ell'] and gsm_item['xi'][0] == '-':  # TODO: Handle '/' being typed as HYPH?
+                first_word = None
+                second_word = None
+                for inner_row in number_of_nodes:
+                    if first_word is not None and second_word is not None:
+                        break
+
+                    inner_gsm_item = gsm_json[inner_row]
+                    if inner_gsm_item['properties']['begin'] == gsm_item['properties']['end']:
+                        second_word = inner_gsm_item
+                    elif inner_gsm_item['properties']['end'] == gsm_item['properties']['begin']:
+                        first_word = inner_gsm_item
+
+                if first_word is not None and second_word is not None:
+                    first_word['xi'][0] = f"{first_word['xi'][0]}-{second_word['xi'][0]}"
+                    hyph_ids_to_remove.append(second_word['id'])
+
         for row in number_of_nodes:
             gsm_item = gsm_json[row]
 
@@ -90,6 +112,21 @@ class AssignTypeToSingleton:
             # Remove unwanted subjpass value
             if 'subjpass' in gsm_item['xi']:
                 gsm_item['xi'].remove('subjpass')
+
+            # Remove possible '-' dangling second word
+            keys_to_remove = []
+            for remove_id in hyph_ids_to_remove:
+                remove_node = self.node_functions.get_gsm_item_from_id(remove_id, gsm_json)
+                for key, value in dict(gsm_item['properties']).items():
+                    try:
+                        x = float(key)
+                        if x == float(remove_node['properties']['pos']):
+                            keys_to_remove.append(key)
+                    except:
+                        continue
+
+            for key in keys_to_remove:
+                del gsm_item['properties'][key]
 
             edges_to_keep = []
             for edge in gsm_item['phi']:

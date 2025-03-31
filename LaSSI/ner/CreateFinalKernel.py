@@ -429,7 +429,7 @@ class CreateFinalKernel:
             return properties
 
     def check_property_replacement(self, kernel, properties):
-        keys_to_remove = []
+        nodes_to_remove = []
         force_update = False
         for key in properties:
             for prop_node in properties[key]:
@@ -437,76 +437,76 @@ class CreateFinalKernel:
                     # TODO: Do we consider edgeLabel too?
                     if kernel.kernel.source.id == prop_node.id:
                         kernel = kernel.update_kernel(prop_node, "source")
-                        keys_to_remove.append(key)
-                    elif kernel.kernel.target is not None and kernel.kernel.target.id == prop_node.id:
+                        nodes_to_remove.append(prop_node)
+                    elif kernel.kernel.target is not None and (kernel.kernel.target.id == prop_node.id or ('extra' in dict(prop_node.properties) and len([x for x in list(dict(prop_node.properties)['extra']) if x.id == kernel.kernel.target.id]) > 0)):  # TODO: Copy logic for checking extra in source
                         if key == 'INSTRUMENT':
                             kernel = kernel.update_kernel(None, "target")
                         else:
                             kernel = kernel.update_kernel(prop_node, "target")
-                            keys_to_remove.append(key)
-        for remove_key in keys_to_remove:
-            force_update = True
-            del properties[remove_key]
+                            nodes_to_remove.append(prop_node)
+        for remove_node in nodes_to_remove:
+            for key, value in dict(properties).items():
+                force_update = True
+                properties[key] = [x for x in properties[key] if x.id != remove_node.id]
         return kernel, properties, force_update
 
     def acl_replacement(self, kernel, acl_relcl_map):
         # TODO: This isn't entirely recursive...
-        if len(acl_relcl_map.values()) > 0:
-            if kernel.kernel is not None:
-                kernel_source = self.get_acl_replacement(acl_relcl_map, kernel.kernel.source)
-                kernel_target = self.get_acl_replacement(acl_relcl_map, kernel.kernel.target)
+        if len(acl_relcl_map.values()) > 0 and kernel.kernel is not None:
+            kernel_source = self.get_acl_replacement(acl_relcl_map, kernel.kernel.source)
+            kernel_target = self.get_acl_replacement(acl_relcl_map, kernel.kernel.target)
 
-                properties_to_keep = defaultdict(list)
+            properties_to_keep = defaultdict(list)
 
-                # Check if properties has any Singleton's and replace those
-                for key in dict(kernel.properties):
-                    properties_key_ = dict(kernel.properties)[key]
-                    if not isinstance(properties_key_, str):
-                        if isinstance(properties_key_, Singleton):
-                            new_prop = self.get_acl_replacement(acl_relcl_map, properties_key_)
-                            properties_to_keep[key].append(new_prop)
-                        else:
-                            for prop_node in properties_key_:
-                                if prop_node.kernel.target is not None and prop_node.kernel.target.id in acl_relcl_map.keys():
-                                    continue
-
-                                if prop_node.type == 'SENTENCE':
-                                    prop_sing_source = self.get_acl_replacement(acl_relcl_map, prop_node.kernel.source)
-                                    prop_sing_target = self.get_acl_replacement(acl_relcl_map, prop_node.kernel.target)
-
-                                    properties_to_keep[key].append(Singleton(
-                                        id=prop_node.id,
-                                        named_entity='',
-                                        type='SENTENCE',
-                                        min=prop_node.min,
-                                        max=prop_node.max,
-                                        confidence=1,
-                                        kernel=Relationship(
-                                            source=prop_sing_source,
-                                            target=prop_sing_target,
-                                            edgeLabel=prop_node.kernel.edgeLabel,
-                                            isNegated=prop_node.kernel.isNegated,
-                                        ),
-                                        properties=prop_node.properties,
-                                    ))
+            # Check if properties has any Singleton's and replace those
+            for key in dict(kernel.properties):
+                properties_key_ = dict(kernel.properties)[key]
+                if not isinstance(properties_key_, str):
+                    if isinstance(properties_key_, Singleton):
+                        new_prop = self.get_acl_replacement(acl_relcl_map, properties_key_)
+                        properties_to_keep[key].append(new_prop)
                     else:
-                        properties_to_keep[key].append(properties_key_)
+                        for prop_node in properties_key_:
+                            if prop_node.kernel.target is not None and prop_node.kernel.target.id in acl_relcl_map.keys():
+                                continue
 
-                return Singleton(
-                    id=kernel.id,
-                    named_entity='',
-                    type='SENTENCE',
-                    min=kernel.min,
-                    max=kernel.max,
-                    confidence=1,
-                    kernel=Relationship(
-                        source=kernel_source,
-                        target=kernel_target,
-                        edgeLabel=kernel.kernel.edgeLabel,
-                        isNegated=kernel.kernel.isNegated,
-                    ),
-                    properties=create_props_for_singleton(properties_to_keep),
-                )
+                            if prop_node.type == 'SENTENCE':
+                                prop_sing_source = self.get_acl_replacement(acl_relcl_map, prop_node.kernel.source)
+                                prop_sing_target = self.get_acl_replacement(acl_relcl_map, prop_node.kernel.target)
+
+                                properties_to_keep[key].append(Singleton(
+                                    id=prop_node.id,
+                                    named_entity='',
+                                    type='SENTENCE',
+                                    min=prop_node.min,
+                                    max=prop_node.max,
+                                    confidence=1,
+                                    kernel=Relationship(
+                                        source=prop_sing_source,
+                                        target=prop_sing_target,
+                                        edgeLabel=prop_node.kernel.edgeLabel,
+                                        isNegated=prop_node.kernel.isNegated,
+                                    ),
+                                    properties=prop_node.properties,
+                                ))
+                else:
+                    properties_to_keep[key].append(properties_key_)
+
+            return Singleton(
+                id=kernel.id,
+                named_entity='',
+                type='SENTENCE',
+                min=kernel.min,
+                max=kernel.max,
+                confidence=1,
+                kernel=Relationship(
+                    source=kernel_source,
+                    target=kernel_target,
+                    edgeLabel=kernel.kernel.edgeLabel,
+                    isNegated=kernel.kernel.isNegated,
+                ),
+                properties=create_props_for_singleton(properties_to_keep),
+            )
         else:
             return kernel
 
