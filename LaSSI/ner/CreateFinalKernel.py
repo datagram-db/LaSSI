@@ -261,6 +261,12 @@ class CreateFinalKernel:
         source_props = dict(kernel.kernel.source.properties) if isinstance(kernel.kernel.source, Singleton) else None
         if source_props is not None and 'adv' in source_props and source_props['adv']:
             new_edge_label_name = f"{kernel.kernel.edgeLabel.named_entity} {source_props['adv']}"
+
+            # If the concatenation is not present in the list of phrasal verbs, reject and return kernel as it was
+            phrasal_verbs = Services.getInstance().getParmenides().getPhrasalVerbs()
+            if len({new_edge_label_name.replace(" ", "")}.intersection(x.replace(" ", "") for x in phrasal_verbs)) == 0:
+                return kernel
+
             edge_label = kernel.kernel.edgeLabel.update_name(new_edge_label_name)
             edge_source = kernel.kernel.source.remove_prop('adv')
 

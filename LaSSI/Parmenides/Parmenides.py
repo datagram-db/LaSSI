@@ -129,6 +129,7 @@ class Parmenides(RDFGraph):
         self.means_verbs = set(self.get_label_is_a("MeansVerb"))
         self.state_verbs = set(self.get_label_is_a("StateVerb"))
         self.materialisation_verbs = set(self.get_label_is_a("MaterialisationVerb"))
+        self.phrasal_verbs = set(self.get_label_is_a("PhrasalVerb"))
         self.units_of_measure = set(self.get_label_is_a("UnitOfMeasure"))
         self.abstract_entities = set(self.get_label_is_a("AbstractEntity"))
         self.rejected_edges = set(self.get_label_is_a("Rejectable"))
@@ -552,6 +553,9 @@ class Parmenides(RDFGraph):
     def getPrototypicalPrepositions(self):
         return self.prototypical_prepositions
 
+    def getPhrasalVerbs(self):
+        return self.phrasal_verbs
+
     def getTransitiveVerbs(self):
         return self.transitive_verbs
 
@@ -690,6 +694,7 @@ def generate_parmenides_graph(p:Parmenides, data_path:str, result_path:str=None)
     meansverb_T = p.create_class("MeansVerb", "Verb")
     stateverb_T = p.create_class("StateVerb", "Verb")
     matverb_T = p.create_class("MaterialisationVerb", "Verb")
+    phrasalverb_T = p.create_class("PhrasalVerb", "Verb")
     semimodalverb_T = p.create_class("SemiModalVerb", "Verb")
     proto_Prop = p.create_class("PrototypicalPreposition", "Preposition")
     dep_Prop = p.create_class("DependantPreposition", "Preposition")
@@ -717,6 +722,7 @@ def generate_parmenides_graph(p:Parmenides, data_path:str, result_path:str=None)
     load_from_txt_file(p, os.path.join(data_path,  "verbs", "state_verbs.txt"), ["Verb", "StateVerb"], to_reject)
     load_from_txt_file(p, os.path.join(data_path,  "verbs", "movement_verbs.txt"), ["Verb", "MovementVerb"], to_reject)
     load_from_txt_file(p, os.path.join(data_path,  "verbs", "materialisation_verbs.txt"), ["Verb", "MaterialisationVerb"], to_reject)
+    load_from_txt_file(p, os.path.join(data_path,  "verbs", "phrasal_verbs.txt"), ["Verb", "PhrasalVerb"], to_reject)
 
 
     for preposition in Prepositions.load_prepositions(os.path.join(data_path, "prepositions.json")):

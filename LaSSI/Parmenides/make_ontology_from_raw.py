@@ -244,6 +244,7 @@ def make_ontology_from_raw():
     stateverb_T = p.create_class("StateVerb", "Verb")
     matverb_T = p.create_class("MaterialisationVerb", "Verb")
     semimodalverb_T = p.create_class("SemiModalVerb", "Verb")
+    phrasalverb_T = p.create_class("PhrasalVerb", "Verb")
     proto_Prop = p.create_class("PrototypicalPreposition", "Preposition")
     dep_Prop = p.create_class("DependantPreposition", "Preposition")
     idio_Prop = p.create_class("IdiomaticPreposition", "Preposition")
@@ -339,6 +340,13 @@ def make_ontology_from_raw():
             classes = ["MaterialisationVerb"]
             if line in to_reject:
                 classes.append("Rejectable")  # TODO: Check
+            p.create_entity(line, classes)
+    with open("../../raw_data/verbs/phrasal_verbs.txt", "r") as dep:
+        for line in dep:
+            line = line.strip()
+            classes = ["PhrasalVerb"]
+            if line in to_reject:
+                classes.append("Rejectable")
             p.create_entity(line, classes)
     for preposition in Prepositions.load_prepositions("../../raw_data/prepositions.json"):
         classes = preposition.generate_classes(preposition.name.lower() in to_reject)

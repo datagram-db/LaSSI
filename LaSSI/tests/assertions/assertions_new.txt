@@ -228,7 +228,7 @@ enjoyment and relaxation ⇒ be(AND(enjoyment, relaxation), ?17)
 come to his senses ⇒ come(?18, None)[(OFTERM:senses[(2:to), (nmod_poss:his)])]
 lead to fatal diseases ⇒ lead(?20, None)[(CAUSATION:diseases[(2:to), (amod:fatal)])]
 clean up after yourself ⇒ clean up(?22, None)[(TIME:yourself[(type:continuous)])]
-grab it before it stops ringing ⇒ grab it(?24, it)[(SENTENCE:before stop(it, ringing(?26, None)))]
+grab it before it stops ringing ⇒ grab(?149[(adv:it)], it)[(SENTENCE:before stop(it, ringing(?150, None)))]
 a football and protective padding ⇒ be(AND(football[(det:a)], padding[(amod:protective)]), ?28)
 putting images on paper ⇒ put(?29, images)[(SPACE:paper[(type:stay in place)])]
 cranking up your economy ⇒ crank up(?31, economy[(nmod_poss:your)])
@@ -285,8 +285,8 @@ one kind of bread ⇒ be(kind[(nummod:one), (extra:bread[(3:of)])], ?35)
 expressign your ideas ⇒ expressign(?36, None)[(ENTITY:ideas[(nmod_poss:your)])]
 look into the facts ⇒ look(?38, None)[(SPACE:facts[(type:stay in place), (det:the)])]
 utilized for many different things ⇒ utilize(?40, None)[(AIM_OBJECTIVE:things[(2:for), (amod:different)])]
-raises one’s hand to ⇒ raise to(?42, hand[(extra:one[(3:’s)])])
+raises one’s hand to ⇒ raise(?42[(adv:to)], hand[(extra:one[(3:’s)])])
 If something resembles a horse, it ⇒ be(it[(punct:,)], ?45)[(SENTENCE:resemble[(mark:If)](?44, something)[(ENTITY:horse[(det:a)])])]
 scissors need sharpening ⇒ need(scissors, sharpening(?46, None))
-know how to use it best ⇒ know(?49, to use how(?47, best)[(PRONOUN:it)])
+know how to use it best ⇒ know(?208, to use(?49[(adv:how)], best)[(PRONOUN:it)])
 you don't have any change ⇒ NOT(have(you, change[(det:any)]))
