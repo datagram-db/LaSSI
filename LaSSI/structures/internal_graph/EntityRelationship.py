@@ -215,6 +215,8 @@ class Relationship:  # Representation of an edge
             )
 
 
+
+
 @dataclass(order=True, frozen=True, eq=True)
 class Singleton(NodeEntryPoint):  # Graph node representing just one entity
     id: int

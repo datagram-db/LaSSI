@@ -131,7 +131,7 @@ class FVariable: ## TODO: rename to FTerm or FConstant
 
     def __str__(self):
         premise = self.asLatexString()
-        vars = list(get_existential_variables(self))
+        vars = list(set(get_existential_variables(self)))
         if len(vars) == 0:
             return premise
         else:
@@ -187,7 +187,7 @@ class FUnaryPredicate:
 
     def __str__(self):
         premise = self.asLatexString()
-        vars = list(get_existential_variables(self))
+        vars = list(set(get_existential_variables(self)))
         if len(vars) == 0:
             return premise
         else:
@@ -229,7 +229,7 @@ class FBinaryPredicate:
 
     def __str__(self):
         premise = self.asLatexString()
-        vars = list(get_existential_variables(self))
+        vars = list(set(get_existential_variables(self)))
         if len(vars) == 0:
             return premise
         else:
@@ -268,7 +268,7 @@ class FAnd:
 
     def __str__(self):
         premise = self.asLatexString()
-        vars = list(get_existential_variables(self))
+        vars = list(set(get_existential_variables(self)))
         if len(vars) == 0:
             return premise
         else:
@@ -289,7 +289,7 @@ class FOr:
 
     def __str__(self):
         premise = self.asLatexString()
-        vars = list(get_existential_variables(self))
+        vars = list(set(get_existential_variables(self)))
         if len(vars) == 0:
             return premise
         else:
@@ -309,7 +309,7 @@ class FNot:
 
     def __str__(self):
         premise = self.asLatexString()
-        vars = list(get_existential_variables(self))
+        vars = list(set(get_existential_variables(self)))
         if len(vars) == 0:
             return premise
         else:
