@@ -1917,6 +1917,9 @@ parmenides:fry a parmenides:TransitiveVerb ;
 parmenides:fulfil a parmenides:TransitiveVerb ;
     rdfs:label "fulfil"^^xsd:string .
 
+parmenides:fulfill a parmenides:TransitiveVerb ;
+    rdfs:label "fulfill"^^xsd:string .
+
 parmenides:furnish a parmenides:TransitiveVerb ;
     rdfs:label "furnish"^^xsd:string .
 
@@ -2555,6 +2558,9 @@ parmenides:indoors a parmenides:Preposition ;
 
 parmenides:indulge a parmenides:TransitiveVerb ;
     rdfs:label "indulge"^^xsd:string .
+
+parmenides:choose a parmenides:TransitiveVerb ;
+    rdfs:label "choose"^^xsd:string .
 
 parmenides:inform a parmenides:TransitiveVerb ;
     rdfs:label "inform"^^xsd:string .

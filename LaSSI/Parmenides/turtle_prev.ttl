@@ -1057,9 +1057,6 @@ parmenides:chill a parmenides:StateVerb,
         parmenides:TransitiveVerb ;
     rdfs:label "chill"^^xsd:string .
 
-parmenides:choose a parmenides:TransitiveVerb ;
-    rdfs:label "choose"^^xsd:string .
-
 parmenides:circa a parmenides:PrototypicalPreposition ;
     rdfs:label "circa"^^xsd:string ;
     parmenides:alwaysOmit false ;
@@ -1845,9 +1842,6 @@ parmenides:fry a parmenides:TransitiveVerb ;
 
 parmenides:fulfil a parmenides:TransitiveVerb ;
     rdfs:label "fulfil"^^xsd:string .
-
-parmenides:fulfill a parmenides:TransitiveVerb ;
-    rdfs:label "fulfill"^^xsd:string .
 
 parmenides:furnish a parmenides:TransitiveVerb ;
     rdfs:label "furnish"^^xsd:string .
@@ -5317,9 +5311,12 @@ parmenides:track a parmenides:AbstractEntity ;
 parmenides:traffic a parmenides:TransitiveVerb ;
     rdfs:label "traffic"^^xsd:string .
 
+<<<<<<< HEAD
+=======
 parmenides:traffick a parmenides:TransitiveVerb ;
     rdfs:label "traffick"^^xsd:string .
 
+>>>>>>> 37df97dd6c02481af065d264ea96dfca2cd2ba6c
 parmenides:traipse a parmenides:MovementVerb ;
     rdfs:label "traipse"^^xsd:string .
 

@@ -98,7 +98,8 @@ parmenides:a a parmenides:PrototypicalPreposition ;
 
 parmenides:abbreviationOf a owl:ObjectProperty .
 
-parmenides:abide a parmenides:StateVerb ;
+parmenides:abide a parmenides:StateVerb,
+        parmenides:Verb ;
     rdfs:label "abide"^^xsd:string .
 
 parmenides:aboard a parmenides:PrototypicalPreposition ;
@@ -210,7 +211,8 @@ parmenides:adrift a parmenides:Preposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:advance a parmenides:MovementVerb ;
+parmenides:advance a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "advance"^^xsd:string .
 
 parmenides:advcl a parmenides:dependency ;
@@ -274,7 +276,8 @@ parmenides:ago a parmenides:Preposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:agree a parmenides:CausativeVerb ;
+parmenides:agree a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "agree"^^xsd:string .
 
 parmenides:ahead a parmenides:Preposition ;
@@ -293,7 +296,8 @@ parmenides:ahead a parmenides:Preposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-<https://logds.github.io/parmenides#aim+for> a parmenides:MovementVerb ;
+<https://logds.github.io/parmenides#aim+for> a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "aim for"^^xsd:string .
 
 parmenides:allow a parmenides:CausativeVerb ;
@@ -345,7 +349,8 @@ parmenides:alwaysOmit a owl:ObjectProperty .
 
 parmenides:alwaysTakeInfinitive a owl:ObjectProperty .
 
-parmenides:amble a parmenides:MovementVerb ;
+parmenides:amble a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "amble"^^xsd:string .
 
 parmenides:amid a parmenides:PrototypicalPreposition ;
@@ -385,7 +390,8 @@ parmenides:amongst a parmenides:PrototypicalPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-<https://logds.github.io/parmenides#angle+towards> a parmenides:MovementVerb ;
+<https://logds.github.io/parmenides#angle+towards> a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "angle towards"^^xsd:string .
 
 parmenides:answer a parmenides:TransitiveVerb ;
@@ -427,7 +433,8 @@ parmenides:apart a parmenides:Preposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:appear a parmenides:CausativeVerb ;
+parmenides:appear a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "appear"^^xsd:string .
 
 parmenides:appos a parmenides:dependency ;
@@ -563,7 +570,8 @@ parmenides:aslant a parmenides:PrototypicalPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:astonish a parmenides:CausativeVerb ;
+parmenides:astonish a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "astonish"^^xsd:string .
 
 parmenides:astride a parmenides:PrototypicalPreposition ;
@@ -662,7 +670,8 @@ parmenides:auxpass a parmenides:dependency ;
 parmenides:avoid a parmenides:TransitiveVerb ;
     rdfs:label "avoid"^^xsd:string .
 
-parmenides:await a parmenides:StateVerb ;
+parmenides:await a parmenides:StateVerb,
+        parmenides:Verb ;
     rdfs:label "await"^^xsd:string .
 
 parmenides:away a parmenides:Preposition ;
@@ -689,10 +698,12 @@ parmenides:back a parmenides:Preposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-<https://logds.github.io/parmenides#back+away> a parmenides:MovementVerb ;
+<https://logds.github.io/parmenides#back+away> a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "back away"^^xsd:string .
 
-<https://logds.github.io/parmenides#back+out> a parmenides:MovementVerb ;
+<https://logds.github.io/parmenides#back+out> a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "back out"^^xsd:string .
 
 <https://logds.github.io/parmenides#back+to> a parmenides:ComplexPreposition ;
@@ -727,7 +738,8 @@ parmenides:bar a parmenides:PrototypicalPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:barrel a parmenides:MovementVerb ;
+parmenides:barrel a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "barrel"^^xsd:string .
 
 parmenides:barring a parmenides:PrototypicalPreposition ;
@@ -742,7 +754,8 @@ parmenides:bash a parmenides:TransitiveVerb ;
     rdfs:label "bash"^^xsd:string .
 
 parmenides:be a parmenides:CausativeVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "be"^^xsd:string .
 
 parmenides:beat a parmenides:TransitiveVerb ;
@@ -764,7 +777,8 @@ parmenides:because a parmenides:DependantPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:beetle a parmenides:MovementVerb ;
+parmenides:beetle a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "beetle"^^xsd:string .
 
 parmenides:before a parmenides:DependantPreposition,
@@ -792,10 +806,12 @@ parmenides:behind a parmenides:PrototypicalPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:believe a parmenides:CausativeVerb ;
+parmenides:believe a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "believe"^^xsd:string .
 
-parmenides:belong a parmenides:CausativeVerb ;
+parmenides:belong a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "belong"^^xsd:string .
 
 parmenides:below a parmenides:PrototypicalPreposition ;
@@ -806,7 +822,8 @@ parmenides:below a parmenides:PrototypicalPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:belt a parmenides:MovementVerb ;
+parmenides:belt a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "belt"^^xsd:string .
 
 parmenides:bend a parmenides:TransitiveVerb ;
@@ -855,10 +872,12 @@ parmenides:beyond a parmenides:PrototypicalPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:bez a parmenides:MovementVerb ;
+parmenides:bez a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "bez"^^xsd:string .
 
-parmenides:bide a parmenides:StateVerb ;
+parmenides:bide a parmenides:StateVerb,
+        parmenides:Verb ;
     rdfs:label "bide"^^xsd:string .
 
 parmenides:bite a parmenides:TransitiveVerb ;
@@ -870,19 +889,23 @@ parmenides:bless a parmenides:TransitiveVerb ;
 parmenides:blow a parmenides:TransitiveVerb ;
     rdfs:label "blow"^^xsd:string .
 
-parmenides:bluster a parmenides:MovementVerb ;
+parmenides:bluster a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "bluster"^^xsd:string .
 
-parmenides:bolt a parmenides:MovementVerb ;
+parmenides:bolt a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "bolt"^^xsd:string .
 
 parmenides:bother a parmenides:TransitiveVerb ;
     rdfs:label "bother"^^xsd:string .
 
-parmenides:bounce a parmenides:MovementVerb ;
+parmenides:bounce a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "bounce"^^xsd:string .
 
-parmenides:bound a parmenides:MovementVerb ;
+parmenides:bound a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "bound"^^xsd:string .
 
 parmenides:break a parmenides:TransitiveVerb ;
@@ -894,7 +917,8 @@ parmenides:brush a parmenides:TransitiveVerb ;
 parmenides:build a parmenides:TransitiveVerb ;
     rdfs:label "build"^^xsd:string .
 
-parmenides:bumble a parmenides:MovementVerb ;
+parmenides:bumble a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "bumble"^^xsd:string .
 
 parmenides:bump a parmenides:TransitiveVerb ;
@@ -994,22 +1018,26 @@ parmenides:canOmit a owl:ObjectProperty .
 parmenides:cancel a parmenides:TransitiveVerb ;
     rdfs:label "cancel"^^xsd:string .
 
-parmenides:canter a parmenides:MovementVerb ;
+parmenides:canter a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "canter"^^xsd:string .
 
 parmenides:capture a parmenides:TransitiveVerb ;
     rdfs:label "capture"^^xsd:string .
 
-parmenides:careen a parmenides:MovementVerb ;
+parmenides:careen a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "careen"^^xsd:string .
 
-parmenides:career a parmenides:MovementVerb ;
+parmenides:career a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "career"^^xsd:string .
 
 parmenides:carry a parmenides:TransitiveVerb ;
     rdfs:label "carry"^^xsd:string .
 
-parmenides:carve a parmenides:MaterialisationVerb ;
+parmenides:carve a parmenides:MaterialisationVerb,
+        parmenides:Verb ;
     rdfs:label "carve"^^xsd:string .
 
 parmenides:case a parmenides:dependency ;
@@ -1033,7 +1061,8 @@ parmenides:change a parmenides:TransitiveVerb ;
     rdfs:label "change"^^xsd:string .
 
 parmenides:charge a parmenides:MovementVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "charge"^^xsd:string .
 
 parmenides:chase a parmenides:TransitiveVerb ;
@@ -1054,7 +1083,8 @@ parmenides:chez a parmenides:PrototypicalPreposition ;
     parmenides:superlative false .
 
 parmenides:chill a parmenides:StateVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "chill"^^xsd:string .
 
 parmenides:circa a parmenides:PrototypicalPreposition ;
@@ -1113,10 +1143,12 @@ parmenides:compound a parmenides:Rejectable,
         parmenides:dependency ;
     rdfs:label "compound"^^xsd:string .
 
-parmenides:compound%3Aprt a parmenides:dependency ;
+parmenides:compound%3Aprt a
+        parmenides:dependency ;
     rdfs:label "compound:prt"^^xsd:string .
 
-parmenides:concern a parmenides:CausativeVerb ;
+parmenides:concern a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "concern"^^xsd:string .
 
 parmenides:concerning a parmenides:PrototypicalPreposition ;
@@ -1133,7 +1165,8 @@ parmenides:conclusion a parmenides:AbstractEntity ;
 parmenides:confuse a parmenides:TransitiveVerb ;
     rdfs:label "confuse"^^xsd:string .
 
-parmenides:conj a parmenides:dependency ;
+parmenides:conj a
+        parmenides:dependency ;
     rdfs:label "conj"^^xsd:string .
 
 parmenides:considering a parmenides:DependantPreposition ;
@@ -1144,13 +1177,15 @@ parmenides:considering a parmenides:DependantPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:consist a parmenides:CausativeVerb ;
+parmenides:consist a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "consist"^^xsd:string .
 
 parmenides:consume a parmenides:TransitiveVerb ;
     rdfs:label "consume"^^xsd:string .
 
-parmenides:contain a parmenides:CausativeVerb ;
+parmenides:contain a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "contain"^^xsd:string .
 
 parmenides:contra a parmenides:PrototypicalPreposition ;
@@ -1170,7 +1205,8 @@ parmenides:convert a parmenides:TransitiveVerb ;
 parmenides:convince a parmenides:CausativeVerb ;
     rdfs:label "convince"^^xsd:string .
 
-parmenides:cop a parmenides:dependency ;
+parmenides:cop a
+        parmenides:dependency ;
     rdfs:label "cop"^^xsd:string .
 
 parmenides:copy a parmenides:TransitiveVerb ;
@@ -1204,19 +1240,23 @@ parmenides:crack a parmenides:TransitiveVerb ;
 parmenides:crank a parmenides:TransitiveVerb ;
     rdfs:label "crank"^^xsd:string .
 
-parmenides:crawl a parmenides:MovementVerb ;
+parmenides:crawl a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "crawl"^^xsd:string .
 
-parmenides:creep a parmenides:MovementVerb ;
+parmenides:creep a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "creep"^^xsd:string .
 
 parmenides:cross a parmenides:TransitiveVerb ;
     rdfs:label "cross"^^xsd:string .
 
-parmenides:csubj a parmenides:dependency ;
+parmenides:csubj a
+        parmenides:dependency ;
     rdfs:label "csubj"^^xsd:string .
 
-parmenides:csubjpass a parmenides:dependency ;
+parmenides:csubjpass a
+        parmenides:dependency ;
     rdfs:label "csubjpass"^^xsd:string .
 
 parmenides:cum a parmenides:PrototypicalPreposition ;
@@ -1232,13 +1272,15 @@ parmenides:cut a parmenides:TransitiveVerb ;
 
 parmenides:d_object a owl:ObjectProperty .
 
-parmenides:dally a parmenides:StateVerb ;
+parmenides:dally a parmenides:StateVerb,
+        parmenides:Verb ;
     rdfs:label "dally"^^xsd:string .
 
 parmenides:dampen a parmenides:TransitiveVerb ;
     rdfs:label "dampen"^^xsd:string .
 
-parmenides:dance a parmenides:MovementVerb ;
+parmenides:dance a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "dance"^^xsd:string .
 
 parmenides:dare a parmenides:SemiModalVerb,
@@ -1246,15 +1288,18 @@ parmenides:dare a parmenides:SemiModalVerb,
         parmenides:Verb ;
     rdfs:label "dare"^^xsd:string .
 
-parmenides:dart a parmenides:MovementVerb ;
+parmenides:dart a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "dart"^^xsd:string .
 
 parmenides:dash a parmenides:MovementVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "dash"^^xsd:string .
 
 parmenides:dawdle a parmenides:MovementVerb,
-        parmenides:StateVerb ;
+        parmenides:StateVerb,
+        parmenides:Verb ;
     rdfs:label "dawdle"^^xsd:string .
 
 parmenides:daze a parmenides:TransitiveVerb ;
@@ -1273,13 +1318,16 @@ parmenides:delay a parmenides:TransitiveVerb ;
     rdfs:label "delay"^^xsd:string .
 
 parmenides:deny a parmenides:CausativeVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "deny"^^xsd:string .
 
-parmenides:dep a parmenides:dependency ;
+parmenides:dep a
+        parmenides:dependency ;
     rdfs:label "dep"^^xsd:string .
 
-parmenides:depend a parmenides:CausativeVerb ;
+parmenides:depend a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "depend"^^xsd:string .
 
 parmenides:derail a parmenides:TransitiveVerb ;
@@ -1288,7 +1336,8 @@ parmenides:derail a parmenides:TransitiveVerb ;
 parmenides:describe a parmenides:TransitiveVerb ;
     rdfs:label "describe"^^xsd:string .
 
-parmenides:deserve a parmenides:CausativeVerb ;
+parmenides:deserve a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "deserve"^^xsd:string .
 
 parmenides:despite a parmenides:DependantPreposition,
@@ -1303,10 +1352,12 @@ parmenides:despite a parmenides:DependantPreposition,
 parmenides:destroy a parmenides:TransitiveVerb ;
     rdfs:label "destroy"^^xsd:string .
 
-parmenides:det a parmenides:dependency ;
+parmenides:det a
+        parmenides:dependency ;
     rdfs:label "det"^^xsd:string .
 
-parmenides:det_predet a parmenides:dependency ;
+parmenides:det_predet a
+        parmenides:dependency ;
     rdfs:label "det_predet"^^xsd:string .
 
 parmenides:devastate a parmenides:TransitiveVerb ;
@@ -1315,10 +1366,12 @@ parmenides:devastate a parmenides:TransitiveVerb ;
 parmenides:dig a parmenides:TransitiveVerb ;
     rdfs:label "dig"^^xsd:string .
 
-parmenides:disagree a parmenides:CausativeVerb ;
+parmenides:disagree a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "disagree"^^xsd:string .
 
-parmenides:discourse a parmenides:dependency ;
+parmenides:discourse a
+        parmenides:dependency ;
     rdfs:label "discourse"^^xsd:string .
 
 parmenides:discover a parmenides:TransitiveVerb ;
@@ -1327,10 +1380,12 @@ parmenides:discover a parmenides:TransitiveVerb ;
 parmenides:discuss a parmenides:TransitiveVerb ;
     rdfs:label "discuss"^^xsd:string .
 
-parmenides:dislike a parmenides:CausativeVerb ;
+parmenides:dislike a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "dislike"^^xsd:string .
 
-parmenides:dislocated a parmenides:dependency ;
+parmenides:dislocated a
+        parmenides:dependency ;
     rdfs:label "dislocated"^^xsd:string .
 
 parmenides:dismiss a parmenides:TransitiveVerb ;
@@ -1345,22 +1400,27 @@ parmenides:distinguish a parmenides:TransitiveVerb ;
 parmenides:disturb a parmenides:TransitiveVerb ;
     rdfs:label "disturb"^^xsd:string .
 
-parmenides:dive a parmenides:MovementVerb ;
+parmenides:dive a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "dive"^^xsd:string .
 
 parmenides:do a parmenides:TransitiveVerb ;
     rdfs:label "do"^^xsd:string .
 
-parmenides:dobj a parmenides:dependency ;
+parmenides:dobj a
+        parmenides:dependency ;
     rdfs:label "dobj"^^xsd:string .
 
-parmenides:dodder a parmenides:MovementVerb ;
+parmenides:dodder a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "dodder"^^xsd:string .
 
-parmenides:dogtrot a parmenides:MovementVerb ;
+parmenides:dogtrot a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "dogtrot"^^xsd:string .
 
-parmenides:doubt a parmenides:CausativeVerb ;
+parmenides:doubt a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "doubt"^^xsd:string .
 
 parmenides:down a parmenides:PrototypicalPreposition ;
@@ -1517,7 +1577,8 @@ parmenides:embarrass a parmenides:TransitiveVerb ;
 parmenides:embrace a parmenides:TransitiveVerb ;
     rdfs:label "embrace"^^xsd:string .
 
-<https://logds.github.io/parmenides#emerge+from> a parmenides:MovementVerb ;
+<https://logds.github.io/parmenides#emerge+from> a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "emerge from"^^xsd:string .
 
 parmenides:employ a parmenides:CausativeVerb ;
@@ -1556,7 +1617,8 @@ parmenides:ere a parmenides:PrototypicalPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:escape a parmenides:MovementVerb ;
+parmenides:escape a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "escape"^^xsd:string .
 
 parmenides:escort a parmenides:TransitiveVerb ;
@@ -1613,7 +1675,8 @@ parmenides:excuse a parmenides:TransitiveVerb ;
 parmenides:execute a parmenides:TransitiveVerb ;
     rdfs:label "execute"^^xsd:string .
 
-parmenides:expl a parmenides:dependency ;
+parmenides:expl a
+        parmenides:dependency ;
     rdfs:label "expl"^^xsd:string .
 
 parmenides:expressing a parmenides:TransitiveVerb ;
@@ -1645,7 +1708,8 @@ parmenides:feed a parmenides:TransitiveVerb ;
     rdfs:label "feed"^^xsd:string .
 
 parmenides:feel a parmenides:CausativeVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "feel"^^xsd:string .
 
 parmenides:fencing a parmenides:AbstractEntity ;
@@ -1660,7 +1724,8 @@ parmenides:figure a parmenides:TransitiveVerb ;
 parmenides:file a parmenides:TransitiveVerb ;
     rdfs:label "file"^^xsd:string .
 
-<https://logds.github.io/parmenides#file+in> a parmenides:MovementVerb ;
+<https://logds.github.io/parmenides#file+in> a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "file in"^^xsd:string .
 
 parmenides:fill a parmenides:TransitiveVerb ;
@@ -1675,13 +1740,15 @@ parmenides:finish a parmenides:TransitiveVerb ;
 parmenides:fire a parmenides:TransitiveVerb ;
     rdfs:label "fire"^^xsd:string .
 
-parmenides:fit a parmenides:CausativeVerb ;
+parmenides:fit a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "fit"^^xsd:string .
 
 parmenides:fix a parmenides:TransitiveVerb ;
     rdfs:label "fix"^^xsd:string .
 
-parmenides:flee a parmenides:MovementVerb ;
+parmenides:flee a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "flee"^^xsd:string .
 
 parmenides:flick a parmenides:TransitiveVerb ;
@@ -1690,10 +1757,12 @@ parmenides:flick a parmenides:TransitiveVerb ;
 parmenides:flip a parmenides:TransitiveVerb ;
     rdfs:label "flip"^^xsd:string .
 
-parmenides:flop a parmenides:MovementVerb ;
+parmenides:flop a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "flop"^^xsd:string .
 
-parmenides:flounce a parmenides:MovementVerb ;
+parmenides:flounce a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "flounce"^^xsd:string .
 
 <https://logds.github.io/parmenides#flow+fast> a parmenides:CompoundForm ;
@@ -1701,7 +1770,8 @@ parmenides:flounce a parmenides:MovementVerb ;
     parmenides:entryPoint parmenides:flow%23v ;
     parmenides:hasAdjective parmenides:fast .
 
-parmenides:fly a parmenides:MovementVerb ;
+parmenides:fly a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "fly"^^xsd:string .
 
 parmenides:follow a parmenides:TransitiveVerb ;
@@ -1715,7 +1785,8 @@ parmenides:following a parmenides:PrototypicalPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:footslog a parmenides:MovementVerb ;
+parmenides:footslog a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "footslog"^^xsd:string .
 
 parmenides:for a parmenides:DependantPreposition,
@@ -1767,13 +1838,16 @@ parmenides:force a parmenides:CausativeVerb,
         parmenides:TransitiveVerb ;
     rdfs:label "force"^^xsd:string .
 
-parmenides:foreign a parmenides:dependency ;
+parmenides:foreign a
+        parmenides:dependency ;
     rdfs:label "foreign"^^xsd:string .
 
-<https://logds.github.io/parmenides#forge+ahead> a parmenides:MovementVerb ;
+<https://logds.github.io/parmenides#forge+ahead> a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "forge ahead"^^xsd:string .
 
-<https://logds.github.io/parmenides#forge+on> a parmenides:MovementVerb ;
+<https://logds.github.io/parmenides#forge+on> a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "forge on"^^xsd:string .
 
 parmenides:forget a parmenides:TransitiveVerb ;
@@ -1843,13 +1917,18 @@ parmenides:fry a parmenides:TransitiveVerb ;
 parmenides:fulfil a parmenides:TransitiveVerb ;
     rdfs:label "fulfil"^^xsd:string .
 
+parmenides:fulfill a parmenides:TransitiveVerb ;
+    rdfs:label "fulfill"^^xsd:string .
+
 parmenides:furnish a parmenides:TransitiveVerb ;
     rdfs:label "furnish"^^xsd:string .
 
-parmenides:gallop a parmenides:MovementVerb ;
+parmenides:gallop a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "gallop"^^xsd:string .
 
-parmenides:gambol a parmenides:MovementVerb ;
+parmenides:gambol a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "gambol"^^xsd:string .
 
 parmenides:gather a parmenides:TransitiveVerb ;
@@ -1862,7 +1941,8 @@ parmenides:get a parmenides:CausativeVerb,
         parmenides:TransitiveVerb ;
     rdfs:label "get"^^xsd:string .
 
-<https://logds.github.io/parmenides#get+in> a parmenides:MovementVerb ;
+<https://logds.github.io/parmenides#get+in> a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "get in"^^xsd:string .
 
 parmenides:given a parmenides:DependantPreposition ;
@@ -1873,13 +1953,16 @@ parmenides:given a parmenides:DependantPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:glide a parmenides:MovementVerb ;
+parmenides:glide a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "glide"^^xsd:string .
 
-parmenides:go a parmenides:MovementVerb ;
+parmenides:go a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "go"^^xsd:string .
 
-parmenides:goeswith a parmenides:dependency ;
+parmenides:goeswith a
+        parmenides:dependency ;
     rdfs:label "goeswith"^^xsd:string .
 
 parmenides:grab a parmenides:TransitiveVerb ;
@@ -1909,10 +1992,12 @@ parmenides:handle a parmenides:TransitiveVerb ;
     rdfs:label "handle"^^xsd:string .
 
 parmenides:hang a parmenides:StateVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "hang"^^xsd:string .
 
-parmenides:hare a parmenides:MovementVerb ;
+parmenides:hare a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "hare"^^xsd:string .
 
 parmenides:hasAdjective a owl:ObjectProperty .
@@ -1927,14 +2012,17 @@ parmenides:hasNumber a owl:ObjectProperty .
 
 parmenides:hasUnitOfMeasure a owl:ObjectProperty .
 
-parmenides:hasten a parmenides:MovementVerb ;
+parmenides:hasten a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "hasten"^^xsd:string .
 
-parmenides:hate a parmenides:CausativeVerb ;
+parmenides:hate a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "hate"^^xsd:string .
 
 parmenides:have a parmenides:CausativeVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "have"^^xsd:string .
 
 parmenides:he a parmenides:PersonalPronoun,
@@ -1944,16 +2032,20 @@ parmenides:he a parmenides:PersonalPronoun,
 parmenides:head a parmenides:TransitiveVerb ;
     rdfs:label "head"^^xsd:string .
 
-<https://logds.github.io/parmenides#head+for> a parmenides:MovementVerb ;
+<https://logds.github.io/parmenides#head+for> a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "head for"^^xsd:string .
 
-<https://logds.github.io/parmenides#head+to> a parmenides:MovementVerb ;
+<https://logds.github.io/parmenides#head+to> a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "head to"^^xsd:string .
 
-<https://logds.github.io/parmenides#head+towards> a parmenides:MovementVerb ;
+<https://logds.github.io/parmenides#head+towards> a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "head towards"^^xsd:string .
 
-parmenides:hear a parmenides:CausativeVerb ;
+parmenides:hear a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "hear"^^xsd:string .
 
 parmenides:heavenward a parmenides:Preposition ;
@@ -2055,16 +2147,19 @@ parmenides:herself a parmenides:PersonalPronoun,
 parmenides:hide a parmenides:TransitiveVerb ;
     rdfs:label "hide"^^xsd:string .
 
-parmenides:hie a parmenides:MovementVerb ;
+parmenides:hie a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "hie"^^xsd:string .
 
 parmenides:highlight a parmenides:TransitiveVerb ;
     rdfs:label "highlight"^^xsd:string .
 
-parmenides:hightail a parmenides:MovementVerb ;
+parmenides:hightail a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "hightail"^^xsd:string .
 
-parmenides:hike a parmenides:MovementVerb ;
+parmenides:hike a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "hike"^^xsd:string .
 
 parmenides:him a parmenides:PersonalPronoun,
@@ -2089,7 +2184,8 @@ parmenides:hoist a parmenides:TransitiveVerb ;
     rdfs:label "hoist"^^xsd:string .
 
 parmenides:hold a parmenides:StateVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "hold"^^xsd:string .
 
 parmenides:home a parmenides:Preposition ;
@@ -2119,7 +2215,8 @@ parmenides:homewards a parmenides:Preposition ;
 parmenides:honour a parmenides:TransitiveVerb ;
     rdfs:label "honour"^^xsd:string .
 
-parmenides:hop a parmenides:MovementVerb ;
+parmenides:hop a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "hop"^^xsd:string .
 
 parmenides:hug a parmenides:TransitiveVerb ;
@@ -2134,10 +2231,12 @@ parmenides:hurry a parmenides:TransitiveVerb ;
 parmenides:hurt a parmenides:TransitiveVerb ;
     rdfs:label "hurt"^^xsd:string .
 
-parmenides:hurtle a parmenides:MovementVerb ;
+parmenides:hurtle a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "hurtle"^^xsd:string .
 
-parmenides:idle a parmenides:StateVerb ;
+parmenides:idle a parmenides:StateVerb,
+        parmenides:Verb ;
     rdfs:label "idle"^^xsd:string .
 
 parmenides:if a parmenides:DependantPreposition ;
@@ -2148,14 +2247,16 @@ parmenides:if a parmenides:DependantPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:imagine a parmenides:CausativeVerb ;
+parmenides:imagine a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "imagine"^^xsd:string .
 
 parmenides:imitate a parmenides:TransitiveVerb ;
     rdfs:label "imitate"^^xsd:string .
 
 parmenides:impress a parmenides:CausativeVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "impress"^^xsd:string .
 
 parmenides:in a parmenides:PrototypicalPreposition ;
@@ -2435,7 +2536,8 @@ parmenides:in a parmenides:PrototypicalPreposition ;
     parmenides:superlative false .
 
 parmenides:include a parmenides:CausativeVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "include"^^xsd:string .
 
 parmenides:including a parmenides:PrototypicalPreposition ;
@@ -2513,7 +2615,8 @@ parmenides:invest a parmenides:TransitiveVerb ;
     rdfs:label "invest"^^xsd:string .
 
 parmenides:involve a parmenides:CausativeVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "involve"^^xsd:string .
 
 parmenides:inward a parmenides:Preposition ;
@@ -2532,7 +2635,8 @@ parmenides:inwards a parmenides:Preposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:iobj a parmenides:dependency ;
+parmenides:iobj a
+        parmenides:dependency ;
     rdfs:label "iobj"^^xsd:string .
 
 parmenides:irritate a parmenides:TransitiveVerb ;
@@ -2542,7 +2646,8 @@ parmenides:isMaterializationVerb a owl:ObjectProperty .
 
 parmenides:isSymmetricalIfComparedToNMod a owl:ObjectProperty .
 
-<https://logds.github.io/parmenides#issue+from> a parmenides:MovementVerb ;
+<https://logds.github.io/parmenides#issue+from> a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "issue from"^^xsd:string .
 
 parmenides:it a parmenides:PersonalPronoun,
@@ -2557,10 +2662,12 @@ parmenides:itself a parmenides:PersonalPronoun,
         parmenides:Pronoun ;
     rdfs:label "itself"^^xsd:string .
 
-parmenides:jaunt a parmenides:MovementVerb ;
+parmenides:jaunt a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "jaunt"^^xsd:string .
 
-parmenides:jog a parmenides:MovementVerb ;
+parmenides:jog a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "jog"^^xsd:string .
 
 parmenides:join a parmenides:TransitiveVerb ;
@@ -2569,13 +2676,15 @@ parmenides:join a parmenides:TransitiveVerb ;
 parmenides:jolt a parmenides:TransitiveVerb ;
     rdfs:label "jolt"^^xsd:string .
 
-parmenides:journey a parmenides:MovementVerb ;
+parmenides:journey a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "journey"^^xsd:string .
 
 parmenides:judge a parmenides:TransitiveVerb ;
     rdfs:label "judge"^^xsd:string .
 
-parmenides:jump a parmenides:MovementVerb ;
+parmenides:jump a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "jump"^^xsd:string .
 
 parmenides:keep a parmenides:TransitiveVerb ;
@@ -2618,13 +2727,16 @@ parmenides:knock a parmenides:TransitiveVerb ;
     rdfs:label "knock"^^xsd:string .
 
 parmenides:know a parmenides:CausativeVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "know"^^xsd:string .
 
-parmenides:labour a parmenides:MovementVerb ;
+parmenides:labour a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "labour"^^xsd:string .
 
-parmenides:lack a parmenides:CausativeVerb ;
+parmenides:lack a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "lack"^^xsd:string .
 
 parmenides:lag a parmenides:TransitiveVerb ;
@@ -2637,7 +2749,8 @@ parmenides:latter a parmenides:DemonstrativePronoun,
 parmenides:lay a parmenides:TransitiveVerb ;
     rdfs:label "lay"^^xsd:string .
 
-parmenides:laze a parmenides:StateVerb ;
+parmenides:laze a parmenides:StateVerb,
+        parmenides:Verb ;
     rdfs:label "laze"^^xsd:string .
 
 parmenides:lead a parmenides:CausativeVerb,
@@ -2647,7 +2760,8 @@ parmenides:lead a parmenides:CausativeVerb,
 parmenides:lean a parmenides:TransitiveVerb ;
     rdfs:label "lean"^^xsd:string .
 
-parmenides:leap a parmenides:MovementVerb ;
+parmenides:leap a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "leap"^^xsd:string .
 
 parmenides:learn a parmenides:TransitiveVerb ;
@@ -2672,10 +2786,12 @@ parmenides:leftwards a parmenides:Preposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:leg a parmenides:MovementVerb ;
+parmenides:leg a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "leg"^^xsd:string .
 
-<https://logds.github.io/parmenides#leg+it> a parmenides:MovementVerb ;
+<https://logds.github.io/parmenides#leg+it> a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "leg it"^^xsd:string .
 
 parmenides:less a parmenides:PrototypicalPreposition ;
@@ -2701,7 +2817,8 @@ parmenides:let a parmenides:CausativeVerb,
 parmenides:lick a parmenides:TransitiveVerb ;
     rdfs:label "lick"^^xsd:string .
 
-parmenides:lie a parmenides:StateVerb ;
+parmenides:lie a parmenides:StateVerb,
+        parmenides:Verb ;
     rdfs:label "lie"^^xsd:string .
 
 parmenides:lift a parmenides:TransitiveVerb ;
@@ -2716,7 +2833,8 @@ parmenides:lighten a parmenides:TransitiveVerb ;
 parmenides:like a parmenides:CausativeVerb,
         parmenides:DependantPreposition,
         parmenides:PrototypicalPreposition,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "like"^^xsd:string ;
     parmenides:alwaysOmit false ;
     parmenides:alwaysTakeInfinitive false ;
@@ -2727,16 +2845,19 @@ parmenides:like a parmenides:CausativeVerb,
 parmenides:limit a parmenides:TransitiveVerb ;
     rdfs:label "limit"^^xsd:string .
 
-parmenides:limp a parmenides:MovementVerb ;
+parmenides:limp a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "limp"^^xsd:string .
 
-parmenides:linger a parmenides:StateVerb ;
+parmenides:linger a parmenides:StateVerb,
+        parmenides:Verb ;
     rdfs:label "linger"^^xsd:string .
 
 parmenides:link a parmenides:TransitiveVerb ;
     rdfs:label "link"^^xsd:string .
 
-parmenides:list a parmenides:TransitiveVerb,
+parmenides:list a
+        parmenides:TransitiveVerb,
         parmenides:dependency ;
     rdfs:label "list"^^xsd:string .
 
@@ -3260,7 +3381,8 @@ parmenides:logrule%2F4 a parmenides:LogicalRewritingRule ;
     parmenides:abstract_entity false ;
     parmenides:logicalConstructName "space"^^xsd:string ;
     parmenides:logicalConstructProperty "motion to place"^^xsd:string ;
-    parmenides:not [ parmenides:SingletonHasBeenMatchedBy "SUTime"^^xsd:string ] ;
+    parmenides:not [ parmenides:SingletonHasBeenMatchedBy "SUTime"^^xsd:string ],
+        [ parmenides:SingletonHasBeenMatchedBy "SUTime"^^xsd:string ] ;
     parmenides:preposition "at"^^xsd:string,
         "for"^^xsd:string,
         "to"^^xsd:string ;
@@ -3277,7 +3399,8 @@ parmenides:logrule%2F5 a parmenides:LogicalRewritingRule ;
 parmenides:logrule%2F6 a parmenides:LogicalRewritingRule ;
     rdfs:label "logrule/6"^^xsd:string ;
     parmenides:logicalConstructName "ofTerm"^^xsd:string ;
-    parmenides:not [ parmenides:SingletonHasBeenMatchedBy "SUTime"^^xsd:string ] ;
+    parmenides:not [ parmenides:SingletonHasBeenMatchedBy "SUTime"^^xsd:string ],
+        [ parmenides:SingletonHasBeenMatchedBy "SUTime"^^xsd:string ] ;
     parmenides:preposition "at"^^xsd:string,
         "to"^^xsd:string ;
     parmenides:rule_order 6 .
@@ -3303,30 +3426,36 @@ parmenides:logrule%2F9 a parmenides:LogicalRewritingRule ;
     parmenides:preposition "from"^^xsd:string ;
     parmenides:rule_order 9 .
 
-parmenides:lollop a parmenides:MovementVerb ;
+parmenides:lollop a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "lollop"^^xsd:string .
 
-parmenides:look a parmenides:CausativeVerb ;
+parmenides:look a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "look"^^xsd:string .
 
-parmenides:lope a parmenides:MovementVerb ;
+parmenides:lope a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "lope"^^xsd:string .
 
 parmenides:lose a parmenides:TransitiveVerb ;
     rdfs:label "lose"^^xsd:string .
 
-parmenides:lounge a parmenides:StateVerb ;
+parmenides:lounge a parmenides:StateVerb,
+        parmenides:Verb ;
     rdfs:label "lounge"^^xsd:string .
 
 parmenides:love a parmenides:AbstractEntity,
         parmenides:CausativeVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "love"^^xsd:string .
 
 parmenides:lower a parmenides:TransitiveVerb ;
     rdfs:label "lower"^^xsd:string .
 
-parmenides:lunge a parmenides:MovementVerb ;
+parmenides:lunge a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "lunge"^^xsd:string .
 
 parmenides:maintain a parmenides:TransitiveVerb ;
@@ -3334,13 +3463,16 @@ parmenides:maintain a parmenides:TransitiveVerb ;
 
 parmenides:make a parmenides:CausativeVerb,
         parmenides:MaterialisationVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "make"^^xsd:string .
 
-parmenides:march a parmenides:MovementVerb ;
+parmenides:march a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "march"^^xsd:string .
 
-parmenides:mark a parmenides:TransitiveVerb,
+parmenides:mark a
+        parmenides:TransitiveVerb,
         parmenides:dependency ;
     rdfs:label "mark"^^xsd:string .
 
@@ -3350,20 +3482,24 @@ parmenides:marry a parmenides:TransitiveVerb ;
 parmenides:massage a parmenides:TransitiveVerb ;
     rdfs:label "massage"^^xsd:string .
 
-parmenides:matter a parmenides:CausativeVerb ;
+parmenides:matter a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "matter"^^xsd:string .
 
 parmenides:me a parmenides:PersonalPronoun,
         parmenides:Pronoun ;
     rdfs:label "me"^^xsd:string .
 
-parmenides:mean a parmenides:CausativeVerb ;
+parmenides:mean a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "mean"^^xsd:string .
 
-parmenides:meander a parmenides:MovementVerb ;
+parmenides:meander a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "meander"^^xsd:string .
 
-parmenides:measure a parmenides:CausativeVerb ;
+parmenides:measure a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "measure"^^xsd:string .
 
 parmenides:melt a parmenides:TransitiveVerb ;
@@ -3399,7 +3535,8 @@ parmenides:midst a parmenides:PrototypicalPreposition ;
 <https://logds.github.io/parmenides#miles+per+second> a parmenides:UnitOfMeasure ;
     rdfs:label "miles per second"^^xsd:string .
 
-parmenides:mind a parmenides:CausativeVerb ;
+parmenides:mind a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "mind"^^xsd:string .
 
 parmenides:mine a parmenides:PersonalPronoun,
@@ -3437,14 +3574,17 @@ parmenides:modulo a parmenides:PrototypicalPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:mooch a parmenides:MovementVerb ;
+parmenides:mooch a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "mooch"^^xsd:string .
 
-parmenides:mosey a parmenides:MovementVerb ;
+parmenides:mosey a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "mosey"^^xsd:string .
 
 parmenides:move a parmenides:MovementVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "move"^^xsd:string .
 
 parmenides:munch a parmenides:TransitiveVerb ;
@@ -3453,7 +3593,8 @@ parmenides:munch a parmenides:TransitiveVerb ;
 parmenides:murder a parmenides:TransitiveVerb ;
     rdfs:label "murder"^^xsd:string .
 
-parmenides:mwe a parmenides:dependency ;
+parmenides:mwe a
+        parmenides:dependency ;
     rdfs:label "mwe"^^xsd:string .
 
 parmenides:my a parmenides:PersonalPronoun,
@@ -3464,7 +3605,8 @@ parmenides:myself a parmenides:PersonalPronoun,
         parmenides:Pronoun ;
     rdfs:label "myself"^^xsd:string .
 
-parmenides:name a parmenides:TransitiveVerb,
+parmenides:name a
+        parmenides:TransitiveVerb,
         parmenides:dependency ;
     rdfs:label "name"^^xsd:string .
 
@@ -3515,7 +3657,8 @@ parmenides:need a parmenides:CausativeVerb,
         parmenides:Verb ;
     rdfs:label "need"^^xsd:string .
 
-parmenides:neg a parmenides:dependency ;
+parmenides:neg a
+        parmenides:dependency ;
     rdfs:label "neg"^^xsd:string .
 
 parmenides:next a parmenides:PrototypicalPreposition ;
@@ -3534,25 +3677,32 @@ parmenides:next a parmenides:PrototypicalPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-<https://logds.github.io/parmenides#nip+across> a parmenides:MovementVerb ;
+<https://logds.github.io/parmenides#nip+across> a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "nip across"^^xsd:string .
 
-<https://logds.github.io/parmenides#nip+into> a parmenides:MovementVerb ;
+<https://logds.github.io/parmenides#nip+into> a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "nip into"^^xsd:string .
 
-<https://logds.github.io/parmenides#nip+over> a parmenides:MovementVerb ;
+<https://logds.github.io/parmenides#nip+over> a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "nip over"^^xsd:string .
 
-parmenides:nmod a parmenides:dependency ;
+parmenides:nmod a
+        parmenides:dependency ;
     rdfs:label "nmod"^^xsd:string .
 
-parmenides:nmod_npmod a parmenides:dependency ;
+parmenides:nmod_npmod a
+        parmenides:dependency ;
     rdfs:label "nmod_npmod"^^xsd:string .
 
-parmenides:nmod_poss a parmenides:dependency ;
+parmenides:nmod_poss a
+        parmenides:dependency ;
     rdfs:label "nmod_poss"^^xsd:string .
 
-parmenides:nmod_tmod a parmenides:dependency ;
+parmenides:nmod_tmod a
+        parmenides:dependency ;
     rdfs:label "nmod_tmod"^^xsd:string .
 
 <https://logds.github.io/parmenides#no+one> a parmenides:IndefinitePronoun,
@@ -3563,7 +3713,8 @@ parmenides:nobody a parmenides:IndefinitePronoun,
         parmenides:Pronoun ;
     rdfs:label "nobody"^^xsd:string .
 
-parmenides:none a parmenides:dependency ;
+parmenides:none a
+        parmenides:dependency ;
     rdfs:label "none"^^xsd:string .
 
 parmenides:north a parmenides:Preposition ;
@@ -3632,16 +3783,19 @@ parmenides:now a parmenides:DependantPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:nsubj a parmenides:dependency ;
+parmenides:nsubj a
+        parmenides:dependency ;
     rdfs:label "nsubj"^^xsd:string .
 
-parmenides:nsubjpass a parmenides:dependency ;
+parmenides:nsubjpass a
+        parmenides:dependency ;
     rdfs:label "nsubjpass"^^xsd:string .
 
 parmenides:number a parmenides:TransitiveVerb ;
     rdfs:label "number"^^xsd:string .
 
-parmenides:nummod a parmenides:dependency ;
+parmenides:nummod a
+        parmenides:dependency ;
     rdfs:label "nummod"^^xsd:string .
 
 parmenides:nurse a parmenides:TransitiveVerb ;
@@ -3666,10 +3820,12 @@ parmenides:o%27er a parmenides:PrototypicalPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:obj a parmenides:dependency ;
+parmenides:obj a
+        parmenides:dependency ;
     rdfs:label "obj"^^xsd:string .
 
-parmenides:obl a parmenides:dependency ;
+parmenides:obl a
+        parmenides:dependency ;
     rdfs:label "obl"^^xsd:string .
 
 parmenides:of a parmenides:DependantPreposition,
@@ -3970,7 +4126,8 @@ parmenides:overseas a parmenides:Preposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:owe a parmenides:CausativeVerb ;
+parmenides:owe a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "owe"^^xsd:string .
 
 <https://logds.github.io/parmenides#owing+to> a parmenides:ComplexPreposition ;
@@ -3982,11 +4139,13 @@ parmenides:owe a parmenides:CausativeVerb ;
     parmenides:superlative false .
 
 parmenides:own a parmenides:CausativeVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "own"^^xsd:string .
 
 parmenides:pace a parmenides:MovementVerb,
-        parmenides:PrototypicalPreposition ;
+        parmenides:PrototypicalPreposition,
+        parmenides:Verb ;
     rdfs:label "pace"^^xsd:string ;
     parmenides:alwaysOmit false ;
     parmenides:alwaysTakeInfinitive false ;
@@ -3997,26 +4156,30 @@ parmenides:pace a parmenides:MovementVerb,
 parmenides:pack a parmenides:TransitiveVerb ;
     rdfs:label "pack"^^xsd:string .
 
-parmenides:pad a parmenides:MovementVerb ;
+parmenides:pad a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "pad"^^xsd:string .
 
 parmenides:page a parmenides:TransitiveVerb ;
     rdfs:label "page"^^xsd:string .
 
-parmenides:parade a parmenides:MovementVerb ;
+parmenides:parade a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "parade"^^xsd:string .
 
 parmenides:paralyze a parmenides:TransitiveVerb ;
     rdfs:label "paralyze"^^xsd:string .
 
-parmenides:parataxis a parmenides:dependency ;
+parmenides:parataxis a
+        parmenides:dependency ;
     rdfs:label "parataxis"^^xsd:string .
 
 parmenides:park a parmenides:TransitiveVerb ;
     rdfs:label "park"^^xsd:string .
 
 parmenides:pass a parmenides:MovementVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "pass"^^xsd:string .
 
 parmenides:past a parmenides:PrototypicalPreposition ;
@@ -4027,20 +4190,24 @@ parmenides:past a parmenides:PrototypicalPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:patrol a parmenides:MovementVerb ;
+parmenides:patrol a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "patrol"^^xsd:string .
 
-parmenides:patter a parmenides:MovementVerb ;
+parmenides:patter a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "patter"^^xsd:string .
 
-parmenides:pause a parmenides:StateVerb ;
+parmenides:pause a parmenides:StateVerb,
+        parmenides:Verb ;
     rdfs:label "pause"^^xsd:string .
 
 parmenides:pay a parmenides:CausativeVerb,
         parmenides:TransitiveVerb ;
     rdfs:label "pay"^^xsd:string .
 
-parmenides:pelt a parmenides:MovementVerb ;
+parmenides:pelt a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "pelt"^^xsd:string .
 
 parmenides:pending a parmenides:PrototypicalPreposition ;
@@ -4067,13 +4234,15 @@ parmenides:per a parmenides:PrototypicalPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:perambulate a parmenides:MovementVerb ;
+parmenides:perambulate a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "perambulate"^^xsd:string .
 
 parmenides:permit a parmenides:CausativeVerb ;
     rdfs:label "permit"^^xsd:string .
 
-parmenides:persist a parmenides:StateVerb ;
+parmenides:persist a parmenides:StateVerb,
+        parmenides:Verb ;
     rdfs:label "persist"^^xsd:string .
 
 parmenides:persuade a parmenides:CausativeVerb,
@@ -4113,10 +4282,12 @@ parmenides:play a parmenides:TransitiveVerb ;
     rdfs:label "play"^^xsd:string .
 
 parmenides:please a parmenides:CausativeVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "please"^^xsd:string .
 
-parmenides:plod a parmenides:MovementVerb ;
+parmenides:plod a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "plod"^^xsd:string .
 
 parmenides:plus a parmenides:PrototypicalPreposition ;
@@ -4133,20 +4304,25 @@ parmenides:poison a parmenides:TransitiveVerb ;
 parmenides:poke a parmenides:TransitiveVerb ;
     rdfs:label "poke"^^xsd:string .
 
-parmenides:pootle a parmenides:MovementVerb ;
+parmenides:pootle a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "pootle"^^xsd:string .
 
-<https://logds.github.io/parmenides#pop+in> a parmenides:MovementVerb ;
+<https://logds.github.io/parmenides#pop+in> a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "pop in"^^xsd:string .
 
-<https://logds.github.io/parmenides#pop+over> a parmenides:MovementVerb ;
+<https://logds.github.io/parmenides#pop+over> a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "pop over"^^xsd:string .
 
-<https://logds.github.io/parmenides#pop+to> a parmenides:MovementVerb ;
+<https://logds.github.io/parmenides#pop+to> a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "pop to"^^xsd:string .
 
 parmenides:possess a parmenides:CausativeVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "possess"^^xsd:string .
 
 parmenides:post a parmenides:PrototypicalPreposition,
@@ -4158,16 +4334,19 @@ parmenides:post a parmenides:PrototypicalPreposition,
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:potter a parmenides:MovementVerb ;
+parmenides:potter a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "potter"^^xsd:string .
 
-parmenides:pound a parmenides:MovementVerb ;
+parmenides:pound a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "pound"^^xsd:string .
 
 parmenides:pour a parmenides:TransitiveVerb ;
     rdfs:label "pour"^^xsd:string .
 
-parmenides:prance a parmenides:MovementVerb ;
+parmenides:prance a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "prance"^^xsd:string .
 
 parmenides:pre a parmenides:PrototypicalPreposition ;
@@ -4178,7 +4357,8 @@ parmenides:pre a parmenides:PrototypicalPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:prefer a parmenides:CausativeVerb ;
+parmenides:prefer a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "prefer"^^xsd:string .
 
 parmenides:prepare a parmenides:TransitiveVerb ;
@@ -4208,17 +4388,21 @@ parmenides:pro a parmenides:PrototypicalPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:proceed a parmenides:MovementVerb ;
+parmenides:proceed a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "proceed"^^xsd:string .
 
-parmenides:progress a parmenides:MovementVerb ;
+parmenides:progress a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "progress"^^xsd:string .
 
-parmenides:promenade a parmenides:MovementVerb ;
+parmenides:promenade a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "promenade"^^xsd:string .
 
 parmenides:promise a parmenides:CausativeVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "promise"^^xsd:string .
 
 parmenides:propulsion a parmenides:AbstractEntity ;
@@ -4249,7 +4433,8 @@ parmenides:providing a parmenides:DependantPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:prowl a parmenides:MovementVerb ;
+parmenides:prowl a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "prowl"^^xsd:string .
 
 parmenides:pull a parmenides:TransitiveVerb ;
@@ -4258,7 +4443,8 @@ parmenides:pull a parmenides:TransitiveVerb ;
 parmenides:punch a parmenides:TransitiveVerb ;
     rdfs:label "punch"^^xsd:string .
 
-parmenides:punct a parmenides:dependency ;
+parmenides:punct a
+        parmenides:dependency ;
     rdfs:label "punct"^^xsd:string .
 
 parmenides:punish a parmenides:TransitiveVerb ;
@@ -4298,7 +4484,8 @@ parmenides:question a parmenides:TransitiveVerb ;
 parmenides:quit a parmenides:TransitiveVerb ;
     rdfs:label "quit"^^xsd:string .
 
-parmenides:race a parmenides:MovementVerb ;
+parmenides:race a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "race"^^xsd:string .
 
 parmenides:raid a parmenides:TransitiveVerb ;
@@ -4307,7 +4494,8 @@ parmenides:raid a parmenides:TransitiveVerb ;
 parmenides:raise a parmenides:TransitiveVerb ;
     rdfs:label "raise"^^xsd:string .
 
-parmenides:ramble a parmenides:MovementVerb ;
+parmenides:ramble a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "ramble"^^xsd:string .
 
 <https://logds.github.io/parmenides#rather+than> a parmenides:ComplexPreposition ;
@@ -4329,13 +4517,15 @@ parmenides:re a parmenides:PrototypicalPreposition ;
 parmenides:read a parmenides:TransitiveVerb ;
     rdfs:label "read"^^xsd:string .
 
-parmenides:realise a parmenides:CausativeVerb ;
+parmenides:realise a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "realise"^^xsd:string .
 
 parmenides:reassure a parmenides:TransitiveVerb ;
     rdfs:label "reassure"^^xsd:string .
 
-parmenides:recognise a parmenides:CausativeVerb ;
+parmenides:recognise a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "recognise"^^xsd:string .
 
 parmenides:recognize a parmenides:TransitiveVerb ;
@@ -4366,7 +4556,8 @@ parmenides:regarding a parmenides:PrototypicalPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:regress a parmenides:MovementVerb ;
+parmenides:regress a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "regress"^^xsd:string .
 
 parmenides:reinforce a parmenides:TransitiveVerb ;
@@ -4375,22 +4566,26 @@ parmenides:reinforce a parmenides:TransitiveVerb ;
 parmenides:relax a parmenides:TransitiveVerb ;
     rdfs:label "relax"^^xsd:string .
 
-parmenides:remain a parmenides:StateVerb ;
+parmenides:remain a parmenides:StateVerb,
+        parmenides:Verb ;
     rdfs:label "remain"^^xsd:string .
 
-parmenides:remember a parmenides:CausativeVerb ;
+parmenides:remember a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "remember"^^xsd:string .
 
 parmenides:remind a parmenides:TransitiveVerb ;
     rdfs:label "remind"^^xsd:string .
 
-parmenides:remnant a parmenides:dependency ;
+parmenides:remnant a
+        parmenides:dependency ;
     rdfs:label "remnant"^^xsd:string .
 
 parmenides:remove a parmenides:TransitiveVerb ;
     rdfs:label "remove"^^xsd:string .
 
-parmenides:reparandum a parmenides:dependency ;
+parmenides:reparandum a
+        parmenides:dependency ;
     rdfs:label "reparandum"^^xsd:string .
 
 parmenides:repel a parmenides:TransitiveVerb ;
@@ -4408,7 +4603,8 @@ parmenides:research a parmenides:TransitiveVerb ;
 parmenides:resemble a parmenides:TransitiveVerb ;
     rdfs:label "resemble"^^xsd:string .
 
-parmenides:reside a parmenides:StateVerb ;
+parmenides:reside a parmenides:StateVerb,
+        parmenides:Verb ;
     rdfs:label "reside"^^xsd:string .
 
 parmenides:respecting a parmenides:PrototypicalPreposition ;
@@ -4419,7 +4615,8 @@ parmenides:respecting a parmenides:PrototypicalPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:rest a parmenides:StateVerb ;
+parmenides:rest a parmenides:StateVerb,
+        parmenides:Verb ;
     rdfs:label "rest"^^xsd:string .
 
 parmenides:retard a parmenides:TransitiveVerb ;
@@ -4428,7 +4625,8 @@ parmenides:retard a parmenides:TransitiveVerb ;
 parmenides:retire a parmenides:TransitiveVerb ;
     rdfs:label "retire"^^xsd:string .
 
-parmenides:return a parmenides:MovementVerb ;
+parmenides:return a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "return"^^xsd:string .
 
 parmenides:reveal a parmenides:TransitiveVerb ;
@@ -4462,16 +4660,19 @@ parmenides:ring a parmenides:TransitiveVerb ;
 parmenides:rip a parmenides:TransitiveVerb ;
     rdfs:label "rip"^^xsd:string .
 
-parmenides:roam a parmenides:MovementVerb ;
+parmenides:roam a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "roam"^^xsd:string .
 
 parmenides:rob a parmenides:TransitiveVerb ;
     rdfs:label "rob"^^xsd:string .
 
-parmenides:roll a parmenides:MovementVerb ;
+parmenides:roll a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "roll"^^xsd:string .
 
-parmenides:root a parmenides:dependency ;
+parmenides:root a
+        parmenides:dependency ;
     rdfs:label "root"^^xsd:string .
 
 parmenides:round a parmenides:PrototypicalPreposition ;
@@ -4491,7 +4692,8 @@ parmenides:round a parmenides:PrototypicalPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:rove a parmenides:MovementVerb ;
+parmenides:rove a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "rove"^^xsd:string .
 
 parmenides:rub a parmenides:TransitiveVerb ;
@@ -4500,10 +4702,12 @@ parmenides:rub a parmenides:TransitiveVerb ;
 parmenides:rule_order a owl:ObjectProperty .
 
 parmenides:run a parmenides:MovementVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "run"^^xsd:string .
 
-parmenides:rush a parmenides:MovementVerb ;
+parmenides:rush a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "rush"^^xsd:string .
 
 parmenides:sans a parmenides:PrototypicalPreposition ;
@@ -4514,14 +4718,17 @@ parmenides:sans a parmenides:PrototypicalPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:sashay a parmenides:MovementVerb ;
+parmenides:sashay a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "sashay"^^xsd:string .
 
 parmenides:satisfy a parmenides:CausativeVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "satisfy"^^xsd:string .
 
-parmenides:saunter a parmenides:MovementVerb ;
+parmenides:saunter a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "saunter"^^xsd:string .
 
 parmenides:save a parmenides:DependantPreposition,
@@ -4542,7 +4749,8 @@ parmenides:saving a parmenides:PrototypicalPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:scamper a parmenides:MovementVerb ;
+parmenides:scamper a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "scamper"^^xsd:string .
 
 parmenides:scan a parmenides:TransitiveVerb ;
@@ -4551,7 +4759,8 @@ parmenides:scan a parmenides:TransitiveVerb ;
 parmenides:scare a parmenides:TransitiveVerb ;
     rdfs:label "scare"^^xsd:string .
 
-parmenides:scarper a parmenides:MovementVerb ;
+parmenides:scarper a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "scarper"^^xsd:string .
 
 parmenides:scold a parmenides:TransitiveVerb ;
@@ -4560,7 +4769,8 @@ parmenides:scold a parmenides:TransitiveVerb ;
 parmenides:scoop a parmenides:TransitiveVerb ;
     rdfs:label "scoop"^^xsd:string .
 
-parmenides:scoot a parmenides:MovementVerb ;
+parmenides:scoot a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "scoot"^^xsd:string .
 
 parmenides:score a parmenides:TransitiveVerb ;
@@ -4569,16 +4779,20 @@ parmenides:score a parmenides:TransitiveVerb ;
 parmenides:scrub a parmenides:TransitiveVerb ;
     rdfs:label "scrub"^^xsd:string .
 
-parmenides:scud a parmenides:MovementVerb ;
+parmenides:scud a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "scud"^^xsd:string .
 
-parmenides:scuff a parmenides:MovementVerb ;
+parmenides:scuff a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "scuff"^^xsd:string .
 
-parmenides:scurry a parmenides:MovementVerb ;
+parmenides:scurry a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "scurry"^^xsd:string .
 
-parmenides:scuttle a parmenides:MovementVerb ;
+parmenides:scuttle a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "scuttle"^^xsd:string .
 
 parmenides:seat a parmenides:TransitiveVerb ;
@@ -4601,7 +4815,8 @@ parmenides:seawards a parmenides:Preposition ;
     parmenides:superlative false .
 
 parmenides:see a parmenides:CausativeVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "see"^^xsd:string .
 
 parmenides:seeing a parmenides:DependantPreposition ;
@@ -4612,10 +4827,12 @@ parmenides:seeing a parmenides:DependantPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:seem a parmenides:CausativeVerb ;
+parmenides:seem a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "seem"^^xsd:string .
 
-parmenides:seethe a parmenides:MovementVerb ;
+parmenides:seethe a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "seethe"^^xsd:string .
 
 parmenides:select a parmenides:TransitiveVerb ;
@@ -4633,7 +4850,8 @@ parmenides:sense a parmenides:AbstractEntity ;
 parmenides:set a parmenides:TransitiveVerb ;
     rdfs:label "set"^^xsd:string .
 
-parmenides:settle a parmenides:StateVerb ;
+parmenides:settle a parmenides:StateVerb,
+        parmenides:Verb ;
     rdfs:label "settle"^^xsd:string .
 
 parmenides:sew a parmenides:TransitiveVerb ;
@@ -4666,7 +4884,8 @@ parmenides:short a parmenides:PrototypicalPreposition ;
 parmenides:shove a parmenides:TransitiveVerb ;
     rdfs:label "shove"^^xsd:string .
 
-parmenides:shuffle a parmenides:MovementVerb ;
+parmenides:shuffle a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "shuffle"^^xsd:string .
 
 parmenides:shut a parmenides:TransitiveVerb ;
@@ -4684,19 +4903,24 @@ parmenides:since a parmenides:DependantPreposition,
 parmenides:sink a parmenides:TransitiveVerb ;
     rdfs:label "sink"^^xsd:string .
 
-parmenides:sit a parmenides:StateVerb ;
+parmenides:sit a parmenides:StateVerb,
+        parmenides:Verb ;
     rdfs:label "sit"^^xsd:string .
 
-parmenides:sitting a parmenides:StateVerb ;
+parmenides:sitting a parmenides:StateVerb,
+        parmenides:Verb ;
     rdfs:label "sitting"^^xsd:string .
 
-parmenides:skedaddle a parmenides:MovementVerb ;
+parmenides:skedaddle a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "skedaddle"^^xsd:string .
 
-parmenides:skip a parmenides:MovementVerb ;
+parmenides:skip a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "skip"^^xsd:string .
 
-parmenides:skitter a parmenides:MovementVerb ;
+parmenides:skitter a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "skitter"^^xsd:string .
 
 parmenides:skyward a parmenides:Preposition ;
@@ -4724,23 +4948,29 @@ parmenides:slap a parmenides:TransitiveVerb ;
 parmenides:slice a parmenides:TransitiveVerb ;
     rdfs:label "slice"^^xsd:string .
 
-parmenides:slide a parmenides:MovementVerb ;
+parmenides:slide a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "slide"^^xsd:string .
 
-parmenides:slink a parmenides:MovementVerb ;
+parmenides:slink a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "slink"^^xsd:string .
 
-parmenides:slip a parmenides:MovementVerb ;
+parmenides:slip a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "slip"^^xsd:string .
 
-parmenides:slither a parmenides:MovementVerb ;
+parmenides:slither a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "slither"^^xsd:string .
 
-parmenides:slope a parmenides:MovementVerb ;
+parmenides:slope a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "slope"^^xsd:string .
 
 parmenides:smell a parmenides:CausativeVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "smell"^^xsd:string .
 
 parmenides:smoke a parmenides:TransitiveVerb ;
@@ -4749,7 +4979,8 @@ parmenides:smoke a parmenides:TransitiveVerb ;
 parmenides:snap a parmenides:TransitiveVerb ;
     rdfs:label "snap"^^xsd:string .
 
-parmenides:sneak a parmenides:MovementVerb ;
+parmenides:sneak a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "sneak"^^xsd:string .
 
 parmenides:so a parmenides:DependantPreposition ;
@@ -4782,7 +5013,8 @@ parmenides:something a parmenides:IndefinitePronoun,
     rdfs:label "something"^^xsd:string .
 
 parmenides:sound a parmenides:CausativeVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "sound"^^xsd:string .
 
 parmenides:south a parmenides:Preposition ;
@@ -4829,7 +5061,8 @@ parmenides:specify a parmenides:TransitiveVerb ;
     rdfs:label "specify"^^xsd:string .
 
 parmenides:speed a parmenides:MovementVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "speed"^^xsd:string .
 
 parmenides:spell a parmenides:TransitiveVerb ;
@@ -4855,7 +5088,8 @@ parmenides:spite a parmenides:DependantPreposition,
     parmenides:superlative false .
 
 parmenides:split a parmenides:MovementVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "split"^^xsd:string .
 
 parmenides:spoon a parmenides:TransitiveVerb ;
@@ -4864,7 +5098,8 @@ parmenides:spoon a parmenides:TransitiveVerb ;
 parmenides:spread a parmenides:TransitiveVerb ;
     rdfs:label "spread"^^xsd:string .
 
-parmenides:sprint a parmenides:MovementVerb ;
+parmenides:sprint a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "sprint"^^xsd:string .
 
 parmenides:squash a parmenides:TransitiveVerb ;
@@ -4873,7 +5108,8 @@ parmenides:squash a parmenides:TransitiveVerb ;
 parmenides:stab a parmenides:TransitiveVerb ;
     rdfs:label "stab"^^xsd:string .
 
-parmenides:stagger a parmenides:MovementVerb ;
+parmenides:stagger a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "stagger"^^xsd:string .
 
 parmenides:stain a parmenides:TransitiveVerb ;
@@ -4882,16 +5118,20 @@ parmenides:stain a parmenides:TransitiveVerb ;
 parmenides:stake a parmenides:TransitiveVerb ;
     rdfs:label "stake"^^xsd:string .
 
-parmenides:stalk a parmenides:MovementVerb ;
+parmenides:stalk a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "stalk"^^xsd:string .
 
-parmenides:stampede a parmenides:MovementVerb ;
+parmenides:stampede a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "stampede"^^xsd:string .
 
-parmenides:stand a parmenides:StateVerb ;
+parmenides:stand a parmenides:StateVerb,
+        parmenides:Verb ;
     rdfs:label "stand"^^xsd:string .
 
-<https://logds.github.io/parmenides#stand+up> a parmenides:MovementVerb ;
+<https://logds.github.io/parmenides#stand+up> a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "stand up"^^xsd:string .
 
 parmenides:start a parmenides:TransitiveVerb ;
@@ -4906,41 +5146,49 @@ parmenides:stay a parmenides:TransitiveVerb ;
 parmenides:steal a parmenides:TransitiveVerb ;
     rdfs:label "steal"^^xsd:string .
 
-parmenides:steam a parmenides:MovementVerb ;
+parmenides:steam a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "steam"^^xsd:string .
 
 parmenides:steer a parmenides:TransitiveVerb ;
     rdfs:label "steer"^^xsd:string .
 
-parmenides:step a parmenides:MovementVerb ;
+parmenides:step a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "step"^^xsd:string .
 
-parmenides:stick a parmenides:StateVerb ;
+parmenides:stick a parmenides:StateVerb,
+        parmenides:Verb ;
     rdfs:label "stick"^^xsd:string .
 
 parmenides:stir a parmenides:TransitiveVerb ;
     rdfs:label "stir"^^xsd:string .
 
 parmenides:stop a parmenides:StateVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "stop"^^xsd:string .
 
 parmenides:store a parmenides:TransitiveVerb ;
     rdfs:label "store"^^xsd:string .
 
-parmenides:streak a parmenides:MovementVerb ;
+parmenides:streak a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "streak"^^xsd:string .
 
-parmenides:stride a parmenides:MovementVerb ;
+parmenides:stride a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "stride"^^xsd:string .
 
 parmenides:strike a parmenides:TransitiveVerb ;
     rdfs:label "strike"^^xsd:string .
 
-parmenides:stroll a parmenides:MovementVerb ;
+parmenides:stroll a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "stroll"^^xsd:string .
 
-parmenides:strut a parmenides:MovementVerb ;
+parmenides:strut a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "strut"^^xsd:string .
 
 parmenides:study a parmenides:TransitiveVerb ;
@@ -4980,7 +5228,8 @@ parmenides:suck a parmenides:TransitiveVerb ;
 
 parmenides:superlative a owl:ObjectProperty .
 
-parmenides:suppose a parmenides:CausativeVerb ;
+parmenides:suppose a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "suppose"^^xsd:string .
 
 parmenides:supposing a parmenides:DependantPreposition ;
@@ -4992,19 +5241,22 @@ parmenides:supposing a parmenides:DependantPreposition ;
     parmenides:superlative false .
 
 parmenides:surprise a parmenides:CausativeVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "surprise"^^xsd:string .
 
 parmenides:survey a parmenides:TransitiveVerb ;
     rdfs:label "survey"^^xsd:string .
 
-parmenides:swagger a parmenides:MovementVerb ;
+parmenides:swagger a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "swagger"^^xsd:string .
 
 parmenides:swallow a parmenides:TransitiveVerb ;
     rdfs:label "swallow"^^xsd:string .
 
-parmenides:sweep a parmenides:MovementVerb ;
+parmenides:sweep a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "sweep"^^xsd:string .
 
 parmenides:switch a parmenides:TransitiveVerb ;
@@ -5025,14 +5277,16 @@ parmenides:tackle a parmenides:TransitiveVerb ;
 parmenides:take a parmenides:TransitiveVerb ;
     rdfs:label "take"^^xsd:string .
 
-parmenides:tank a parmenides:MovementVerb ;
+parmenides:tank a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "tank"^^xsd:string .
 
 parmenides:tape a parmenides:TransitiveVerb ;
     rdfs:label "tape"^^xsd:string .
 
 parmenides:taste a parmenides:CausativeVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "taste"^^xsd:string .
 
 parmenides:teach a parmenides:TransitiveVerb ;
@@ -5172,7 +5426,8 @@ parmenides:they a parmenides:PersonalPronoun,
         parmenides:Pronoun ;
     rdfs:label "they"^^xsd:string .
 
-parmenides:think a parmenides:CausativeVerb ;
+parmenides:think a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "think"^^xsd:string .
 
 parmenides:this a parmenides:DemonstrativePronoun,
@@ -5254,7 +5509,8 @@ parmenides:times a parmenides:PrototypicalPreposition ;
 parmenides:tip a parmenides:TransitiveVerb ;
     rdfs:label "tip"^^xsd:string .
 
-parmenides:tiptoe a parmenides:MovementVerb ;
+parmenides:tiptoe a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "tiptoe"^^xsd:string .
 
 parmenides:tire a parmenides:TransitiveVerb ;
@@ -5314,50 +5570,63 @@ parmenides:traffic a parmenides:TransitiveVerb ;
 parmenides:traffick a parmenides:TransitiveVerb ;
     rdfs:label "traffick"^^xsd:string .
 
-parmenides:traipse a parmenides:MovementVerb ;
+parmenides:traipse a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "traipse"^^xsd:string .
 
-parmenides:tramp a parmenides:MovementVerb ;
+parmenides:tramp a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "tramp"^^xsd:string .
 
-parmenides:trample a parmenides:MovementVerb ;
+parmenides:trample a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "trample"^^xsd:string .
 
 parmenides:transform a parmenides:TransitiveVerb ;
     rdfs:label "transform"^^xsd:string .
 
-parmenides:travel a parmenides:MovementVerb ;
+parmenides:travel a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "travel"^^xsd:string .
 
-parmenides:tread a parmenides:MovementVerb ;
+parmenides:tread a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "tread"^^xsd:string .
 
-parmenides:trek a parmenides:MovementVerb ;
+parmenides:trek a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "trek"^^xsd:string .
 
-parmenides:trip a parmenides:MovementVerb ;
+parmenides:trip a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "trip"^^xsd:string .
 
-parmenides:tromp a parmenides:MovementVerb ;
+parmenides:tromp a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "tromp"^^xsd:string .
 
-parmenides:troop a parmenides:MovementVerb ;
+parmenides:troop a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "troop"^^xsd:string .
 
-parmenides:trot a parmenides:MovementVerb ;
+parmenides:trot a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "trot"^^xsd:string .
 
-parmenides:trundle a parmenides:MovementVerb ;
+parmenides:trundle a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "trundle"^^xsd:string .
 
 parmenides:try a parmenides:TransitiveVerb ;
     rdfs:label "try"^^xsd:string .
 
-parmenides:tumble a parmenides:MovementVerb ;
+parmenides:tumble a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "tumble"^^xsd:string .
 
 parmenides:turn a parmenides:MaterialisationVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "turn"^^xsd:string .
 
 <https://logds.github.io/parmenides#turn+in> a parmenides:TransitiveVerb ;
@@ -5405,10 +5674,12 @@ parmenides:underneath a parmenides:PrototypicalPreposition ;
     parmenides:superlative false .
 
 parmenides:understand a parmenides:CausativeVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "understand"^^xsd:string .
 
-parmenides:undulate a parmenides:MovementVerb ;
+parmenides:undulate a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "undulate"^^xsd:string .
 
 parmenides:unless a parmenides:DependantPreposition ;
@@ -5550,7 +5821,8 @@ parmenides:us a parmenides:PersonalPronoun,
     rdfs:label "us"^^xsd:string .
 
 parmenides:use a parmenides:MeansVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "use"^^xsd:string .
 
 parmenides:used a parmenides:SemiModalVerb,
@@ -5558,7 +5830,8 @@ parmenides:used a parmenides:SemiModalVerb,
     rdfs:label "used"^^xsd:string .
 
 parmenides:utilize a parmenides:MeansVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "utilize"^^xsd:string .
 
 <https://logds.github.io/parmenides#v.> a parmenides:PrototypicalPreposition ;
@@ -5623,7 +5896,8 @@ parmenides:vis-%C3%A0-vis a parmenides:PrototypicalPreposition ;
 parmenides:visit a parmenides:TransitiveVerb ;
     rdfs:label "visit"^^xsd:string .
 
-parmenides:vocative a parmenides:dependency ;
+parmenides:vocative a
+        parmenides:dependency ;
     rdfs:label "vocative"^^xsd:string .
 
 <https://logds.github.io/parmenides#vs.> a parmenides:PrototypicalPreposition ;
@@ -5674,23 +5948,28 @@ parmenides:w%2Fo a parmenides:DependantPreposition,
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:waddle a parmenides:MovementVerb ;
+parmenides:waddle a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "waddle"^^xsd:string .
 
-parmenides:wait a parmenides:StateVerb ;
+parmenides:wait a parmenides:StateVerb,
+        parmenides:Verb ;
     rdfs:label "wait"^^xsd:string .
 
 parmenides:wake a parmenides:TransitiveVerb ;
     rdfs:label "wake"^^xsd:string .
 
-parmenides:walk a parmenides:MovementVerb ;
+parmenides:walk a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "walk"^^xsd:string .
 
-parmenides:wander a parmenides:MovementVerb ;
+parmenides:wander a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "wander"^^xsd:string .
 
 parmenides:want a parmenides:CausativeVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "want"^^xsd:string .
 
 parmenides:wanting a parmenides:PrototypicalPreposition ;
@@ -5724,10 +6003,12 @@ parmenides:wear a parmenides:TransitiveVerb ;
     rdfs:label "wear"^^xsd:string .
 
 parmenides:weigh a parmenides:CausativeVerb,
-        parmenides:TransitiveVerb ;
+        parmenides:TransitiveVerb,
+        parmenides:Verb ;
     rdfs:label "weigh"^^xsd:string .
 
-parmenides:wend a parmenides:MovementVerb ;
+parmenides:wend a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "wend"^^xsd:string .
 
 parmenides:west a parmenides:Preposition ;
@@ -5860,7 +6141,8 @@ parmenides:whilst a parmenides:DependantPreposition ;
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:whizz a parmenides:MovementVerb ;
+parmenides:whizz a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "whizz"^^xsd:string .
 
 parmenides:who a parmenides:InterrogativePronoun,
@@ -5887,7 +6169,8 @@ parmenides:win a parmenides:TransitiveVerb ;
 parmenides:wipe a parmenides:TransitiveVerb ;
     rdfs:label "wipe"^^xsd:string .
 
-parmenides:wish a parmenides:CausativeVerb ;
+parmenides:wish a parmenides:CausativeVerb,
+        parmenides:Verb ;
     rdfs:label "wish"^^xsd:string .
 
 parmenides:with a parmenides:DependantPreposition,
@@ -5951,7 +6234,8 @@ parmenides:without a parmenides:DependantPreposition,
     parmenides:comparative false ;
     parmenides:superlative false .
 
-parmenides:wobble a parmenides:MovementVerb ;
+parmenides:wobble a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "wobble"^^xsd:string .
 
 parmenides:work a parmenides:TransitiveVerb ;
@@ -5974,7 +6258,8 @@ parmenides:wrap a parmenides:TransitiveVerb ;
 parmenides:wreck a parmenides:TransitiveVerb ;
     rdfs:label "wreck"^^xsd:string .
 
-parmenides:xcomp a parmenides:dependency ;
+parmenides:xcomp a
+        parmenides:dependency ;
     rdfs:label "xcomp"^^xsd:string .
 
 parmenides:you a parmenides:PersonalPronoun,
@@ -6000,10 +6285,12 @@ parmenides:yourselves a parmenides:PersonalPronoun,
 <https://logds.github.io/parmenides#zero+out> a parmenides:TransitiveVerb ;
     rdfs:label "zero out"^^xsd:string .
 
-parmenides:zip a parmenides:MovementVerb ;
+parmenides:zip a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "zip"^^xsd:string .
 
-parmenides:zoom a parmenides:MovementVerb ;
+parmenides:zoom a parmenides:MovementVerb,
+        parmenides:Verb ;
     rdfs:label "zoom"^^xsd:string .
 
 parmenides:Concept a owl:Class ;
@@ -6022,10 +6309,6 @@ parmenides:Newcastle a parmenides:GPE ;
     rdfs:label "Newcastle"^^xsd:string ;
     parmenides:entryPoint parmenides:Newcastle ;
     parmenides:isA parmenides:city .
-
-parmenides:Rejectable a owl:Class ;
-    rdfs:comment "Whether the edge shall be rejected in the internal rewriting pipeline" ;
-    rdfs:subClassOf parmenides:GraphParse .
 
 parmenides:beautiful a parmenides:Adjective ;
     rdfs:label "beautiful"^^xsd:string ;
@@ -6302,9 +6585,6 @@ parmenides:city a parmenides:LOC ;
     parmenides:entryPoint parmenides:city ;
     parmenides:hasProperty parmenides:busy .
 
-parmenides:Verb a owl:Class ;
-    rdfs:subClassOf parmenides:GrammaticalFunction .
-
 parmenides:Noun a owl:Class ;
     rdfs:subClassOf parmenides:GrammaticalFunction .
 
@@ -6317,6 +6597,10 @@ parmenides:PersonalPronoun a owl:Class ;
 parmenides:LogicalRewritingRule a owl:Class ;
     rdfs:comment "Defines how to capture the elements within the sentence structure and rewriting them in the most appropriate way as properties of the kernel/singleton they refer to" ;
     rdfs:subClassOf parmenides:MetaGrammaticalFunction .
+
+parmenides:Rejectable a owl:Class ;
+    rdfs:comment "Whether the edge shall be rejected in the internal rewriting pipeline" ;
+    rdfs:subClassOf parmenides:GraphParse .
 
 parmenides:LogicalFunction a owl:Class ;
     rdfs:comment "The sentence constructs at the logical level, similarly to English' Adverbial Phrases and Indirect Objects (https://it.wikipedia.org/wiki/Analisi_logica_della_proposizione vs. https://en.wikipedia.org/wiki/Adverbial_phrase)" ;
@@ -6347,6 +6631,9 @@ parmenides:PrototypicalPreposition a owl:Class ;
 
 parmenides:MovementVerb a owl:Class ;
     rdfs:subClassOf parmenides:Verb .
+
+parmenides:Verb a owl:Class ;
+    rdfs:subClassOf parmenides:GrammaticalFunction .
 
 parmenides:TransitiveVerb a owl:Class ;
     rdfs:subClassOf parmenides:Verb .

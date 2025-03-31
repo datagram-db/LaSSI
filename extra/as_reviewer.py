@@ -53,5 +53,5 @@ def load_and_html_print(yaml_file, json_file):
 
 
 if __name__ == "__main__":
-    load_and_html_print("/home/giacomo/projects/LaSSI/test_sentences/debug_concept.yaml",
-                        "/home/giacomo/projects/LaSSI/catabolites/debug_concept/logical_rewriting.json")
+    load_and_html_print("/home/giacomo/projects/LaSSI/test_sentences/benchmarking/200.yaml",
+                        "/home/giacomo/projects/LaSSI/catabolites/200/logical_rewriting.json")

@@ -41,6 +41,7 @@ def property_write(key, val: NodeEntryPoint) -> str:
 
 
 def make_and(entities):
+    assert all(map(lambda x: isinstance(x, Formula), entities))
     return FAnd(args=tuple(entities))
 
 
@@ -65,7 +66,7 @@ def has_prop_just_one_negated_constituent(prop):
     if (len(prop) != 1):
         return False, prop
     k, x = next(iter(prop))
-    if k in Grouping.__members__.keys():
+    if k in Grouping.__members__.keys() or k == "SPECIFICATION":
         return False, prop
     assert isinstance(x, tuple) and len(x) == 1
     v = x[0]
@@ -111,18 +112,32 @@ class RewriteKernels:
         ls = []
         for node, mappa in collection:
             for k, v in mappa.items() if isinstance(mappa, dict) else mappa:
+                if k == "SENTENCE":
+                    for x in v:
+                        if isinstance(x, Formula):
+                            ls.append(x)
+                        else:
+                            result = self.rewrite_kernels(x)
+                            ls.append(result)
+        return ls
+
+    def derive_kernel_properties(self, collection, properties):
+        final_properties = defaultdict(list)
+        for k,v in properties.items() if isinstance(properties, dict) else properties:
+            for x in v:
+                    final_properties[k].append(x)
+        for node, mappa in collection:
+            for k, v in mappa.items() if isinstance(mappa, dict) else mappa:
                 if k == "nmod_poss":
                     if isinstance(v, str):
-                        ls.append(FBinaryPredicate("belongsTo", node,FVariable(name=v, type="ENTITY"),  1.0, frozenset()))
+                        final_properties["SPECIFICATION"].append(node.add_specification(v))
                     elif isinstance(v, tuple):
                         for x in v:
                             if isinstance(x, str):
-                                ls.append(FBinaryPredicate("belongsTo",  node, FVariable(name=x, type="ENTITY"),1.0, frozenset()))
-                            else:
-                                ls.append(FBinaryPredicate("belongsTo",  node,x, 1.0, frozenset()))
-                    else:
-                        ls.append(FBinaryPredicate("belongsTo", node,v,  1.0, frozenset()))
-        return ls
+                                final_properties["SPECIFICATION"].append(node.add_specification(x))
+                    elif hasattr(v, "name"):
+                        final_properties["SPECIFICATION"].append(node.add_specification(v.name))
+        return final_properties
 
     def make_properties(self, p):
         result = defaultdict(set)
@@ -236,7 +251,13 @@ class RewriteKernels:
         return FNot(result) if test else result
 
     def make_binary(self, rel, src, dst, score, prop):
-        if (rel == "be" and (dst is None or (not isinstance(dst, FBinaryPredicate) and not isinstance(dst,
+        if isinstance(dst, FAnd):
+            return make_and([self.make_binary(rel, src, x, score, prop) for x in dst.args])
+        elif isinstance(dst, FOr):
+            return make_or([self.make_binary(rel, src, x, score, prop) for x in dst.args])
+        elif isinstance(dst, FNot):
+            return make_not(self.make_binary(rel, src, dst.arg, score, prop))
+        elif (rel == "be" and (dst is None or (not isinstance(dst, FBinaryPredicate) and not isinstance(dst,
                                                                                                       FUnaryPredicate) and dst.type == "existential"))) or dst is None:
             from LaSSI.ner.MergeSetOfSingletons import merge_multiway_static_properties
             return self.make_unary(rel, src, score, merge_multiway_static_properties(prop, dst.properties))
@@ -325,6 +346,9 @@ class RewriteKernels:
                             props_to_merge.append((src, src.properties))
                     dst_old_props = dst.get_props() if dst is not None else None
                     dst = self.make_arg(dst)
+                    if "ENTITY" in p and len(p["ENTITY"])==1:
+                        dst = dst.instantiate_variable_with_entity(p["ENTITY"][0])
+                        del p["ENTITY"]
                     if dst is not None:
                         p["dst"].append(dst)
                         if dst_old_props is not None:
@@ -334,6 +358,11 @@ class RewriteKernels:
                     prop = self.make_properties(p)
                     del prop["src"]
                     del prop["dst"]
+                    prop = self.derive_kernel_properties(props_to_merge, prop)
+                    props_to_merge.append((None, prop))
+                    prop = deepcopy(prop)
+                    if "SENTENCE" in prop:
+                        del prop["SENTENCE"]
                     if src.name.lower() in bogus_src and rel.lower() == "be":
                         if src.cop is None:
                             result = self.make_unary(rel, dst, score, prop)
@@ -344,6 +373,7 @@ class RewriteKernels:
                             result = self.make_unary(rel, src, score, prop)
                         else:
                             result = self.make_binary(rel, src, dst, score, prop)
+
                     other_props = self.derive_external_relationships(props_to_merge)
                     if len(other_props) > 0:
                         other_props.append(result)
@@ -402,7 +432,7 @@ class RewriteKernels:
         for k, v in prop.items():
             if k in discard_properties or len(k) == 0:
                 continue
-            if len(v)==1 or k in Grouping.__members__.keys():
+            if len(v)==1 or k in Grouping.__members__.keys() or k == "SPECIFICATION":
                 d[k] = tuple(set(v))
             else:
                 assert len(v)==2
