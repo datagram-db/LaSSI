@@ -298,7 +298,7 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
                 else:
                     val = compare_variable(d, x.arg, y.arg)
                 keyComparisonOutcome = compare_variable(d, x.arg, y.arg)
-                copKeyComparisonOutcome = compare_variable(d, x.arg.cop if hasattr(x.arg, "cop") else None, y.arg.cop if hasattr(x.arg, "cop") else None)
+                copKeyComparisonOutcome = compare_variable(d, x.arg.cop if hasattr(x.arg, "cop") else None, y.arg.cop if hasattr(y.arg, "cop") else None)
             else:
                 raise ValueError("Unexpected comparison between " + str(x) + " and" + str(y))
             if val != CasusHappening.INDIFFERENT:

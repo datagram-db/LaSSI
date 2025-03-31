@@ -242,6 +242,16 @@ def generate_extra_singleton(extra_name, extra_min, extra_max, extra_props):
     )
 
 
+def merge_multiway_static_properties(orig_props, new_props):
+    d = defaultdict(list)
+    for k,v in orig_props.items() if isinstance(orig_props, dict) else orig_props:
+        for x in v:
+            d[k].append(x)
+    for k,v in new_props:
+        for x in v:
+            d[k].append(x)
+    return dict(d)
+
 def merge_properties(orig_props, new_props, ignore_values=None):
     for key, new_value in new_props.items():
         if ignore_values is None or key not in ignore_values:

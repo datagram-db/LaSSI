@@ -89,7 +89,8 @@ class FVariable: ## TODO: rename to FTerm or FConstant
         return self.__str__()
 
     def __str__(self):
-        name = ("\\forall" if self.asAll else "\\exists") + self.name
+        quant = ("\\forall " if self.asAll else "\\exists ")
+        name = self.name
         if name is None:
             name = "?"
         else:
@@ -101,7 +102,7 @@ class FVariable: ## TODO: rename to FTerm or FConstant
             name = "\\left[" + name + "\\right]^{\\texttt{" + str(self.id) + "}}"
         else:
             name = "{" + name + "}^{\\texttt{" + str(self.id) + "}}"
-        return name + print_proprieties(self.properties, self.cop)
+        return quant + name + print_proprieties(self.properties, self.cop)
 
     def add_specification(self, value):
         return FVariable(self.name, self.type, value, self.cop, self.id, self.properties)

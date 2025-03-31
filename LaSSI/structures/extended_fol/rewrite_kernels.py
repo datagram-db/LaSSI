@@ -94,9 +94,6 @@ def has_prop_just_one_negated_constituent(prop):
 
 
 
-
-
-
 class RewriteKernels:
 
     def __init__(self, obj, meu_db_row):
@@ -109,6 +106,23 @@ class RewriteKernels:
         self.dmax = None
         self.dpos = None
         self.dmin, self.dmax, self.dpos = obj.update_map(defaultdict(lambda: 10000000), defaultdict(lambda:-1), defaultdict(lambda: 10000000))
+
+    def derive_external_relationships(self, collection):
+        ls = []
+        for node, mappa in collection:
+            for k, v in mappa.items() if isinstance(mappa, dict) else mappa:
+                if k == "nmod_poss":
+                    if isinstance(v, str):
+                        ls.append(FBinaryPredicate("belongsTo", node,FVariable(name=v, type="ENTITY"),  1.0, frozenset()))
+                    elif isinstance(v, tuple):
+                        for x in v:
+                            if isinstance(x, str):
+                                ls.append(FBinaryPredicate("belongsTo",  node, FVariable(name=x, type="ENTITY"),1.0, frozenset()))
+                            else:
+                                ls.append(FBinaryPredicate("belongsTo",  node,x, 1.0, frozenset()))
+                    else:
+                        ls.append(FBinaryPredicate("belongsTo", node,v,  1.0, frozenset()))
+        return ls
 
     def make_properties(self, p):
         result = defaultdict(set)
@@ -224,7 +238,8 @@ class RewriteKernels:
     def make_binary(self, rel, src, dst, score, prop):
         if (rel == "be" and (dst is None or (not isinstance(dst, FBinaryPredicate) and not isinstance(dst,
                                                                                                       FUnaryPredicate) and dst.type == "existential"))) or dst is None:
-            return self.make_unary(rel, src, score, prop)
+            from LaSSI.ner.MergeSetOfSingletons import merge_multiway_static_properties
+            return self.make_unary(rel, src, score, merge_multiway_static_properties(prop, dst.properties))
         if rel == "have":  # TODO: generalise
             if src is not None and (
                     src.type == "DATE" or src.type == "GPE" or src.type == "LOC" or src.type == "SPACE") and src.cop is None:  # TODO: generalise
@@ -297,14 +312,25 @@ class RewriteKernels:
                                     p[k] = tuple(j)
                             else:
                                 p[k] = v
+                    props_to_merge = []
+                    src_old_props = src.get_props() if src is not None else None
                     src = self.make_arg(src)
                     p["src"] = []
                     p["dst"] = []
                     if src is not None:
                         p["src"].append(src)
+                        if src_old_props is not None:
+                            props_to_merge.append((src, src_old_props))
+                        if hasattr(src, "properties"):
+                            props_to_merge.append((src, src.properties))
+                    dst_old_props = dst.get_props() if dst is not None else None
                     dst = self.make_arg(dst)
                     if dst is not None:
                         p["dst"].append(dst)
+                        if dst_old_props is not None:
+                            props_to_merge.append((dst, dst_old_props))
+                        if hasattr(dst, "properties"):
+                            props_to_merge.append((dst, dst.properties))
                     prop = self.make_properties(p)
                     del prop["src"]
                     del prop["dst"]
@@ -318,6 +344,10 @@ class RewriteKernels:
                             result = self.make_unary(rel, src, score, prop)
                         else:
                             result = self.make_binary(rel, src, dst, score, prop)
+                    other_props = self.derive_external_relationships(props_to_merge)
+                    if len(other_props) > 0:
+                        other_props.append(result)
+                        result = make_and(other_props)
                     if foundSingleton == Grouping.NONE:
                         return result
                     else:
@@ -424,4 +454,5 @@ class RewriteKernels:
 
 def rewrite_kernels(obj, meudb):
     r = RewriteKernels(obj, meudb)
-    return r.rewrite_kernels()
+    tmp = r.rewrite_kernels()
+    return tmp
