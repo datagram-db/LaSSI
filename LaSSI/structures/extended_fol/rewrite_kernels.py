@@ -33,7 +33,7 @@ def is_existential(obj):
 
 bogus_dst = FVariable(name="there", type="non_verb", specification=None, cop=None, id=None)
 bogus_src = {"it"}
-discard_properties = {"end", "lemma", "begin", "kernel", "expl", "pos", "root", "common", "number", "adv", "conj"}
+discard_properties = {"end", "lemma", "begin", "kernel", "expl", "pos", "root", "common", "number", "adv", "conj", "mark", "specification"}
 relative_pronouns = {"which","that", "who", "whom" }
 interrogative_pronouns = {"what", "which", "who", "whom", "whose"}
 demonstrative_pronouns = {"this", "these", "that", "those"}
@@ -179,7 +179,7 @@ class RewriteKernels:
         for k, v in p.items():
             if str(k) == "\u2203" or str(k).lower() == "in" or str(k).lower() == "not":
                 continue
-            else:
+            elif k not in discard_properties:
                 for single_val in v:
                     tmp = self.make_arg(single_val)
                     neg_tmp = make_not(tmp)
@@ -221,11 +221,11 @@ class RewriteKernels:
                 cop = self.make_cop(props.pop("JJ"))
             for k in props:
                 if k.endswith("mod"):
-                    coplist.append(self.make_cop(props[k]))
+                    coplist.append(props[k])
         if len(coplist) == 1:
-            cop = coplist[0]
+            cop = self.make_cop(coplist[0])
         elif len(coplist) > 1:
-            cop = tuple(coplist)
+            cop = self.make_cop(" ".join(sorted(coplist, key=lambda x: self.meu_db_row.first_sentence.find(x))))
         named_entity = props.pop("named_entity", None) if isinstance(entity,
                                                                      dict) else entity.get_name()  # TODO: Is this okay for getting the name of SetOfSingletons?
         type = props.pop("type", None) if isinstance(entity, dict) else entity.type
@@ -237,7 +237,7 @@ class RewriteKernels:
             if k == 'det' and isinstance(v, str):
                 if v.lower() == "all":
                     asAll = True
-            if k not in discard_properties and k not in {} and ((not isinstance(v, str)) or len(v) == 0):
+            if k not in discard_properties and k not in {} and ((not isinstance(v, str)) or len(v) > 0):
                 if isinstance(v, tuple):
                     props2[k] = tuple([self.make_arg(x) if isinstance(x, Singleton) else x for x in v])
                 else:
@@ -373,8 +373,10 @@ class RewriteKernels:
                     dst_old_props = dst.get_props() if dst is not None else None
                     dst = self.make_arg(dst)
                     if "ENTITY" in p and len(p["ENTITY"])==1:
+                        orig_dst = dst
                         dst = dst.instantiate_variable_with_entity(p["ENTITY"][0])
-                        del p["ENTITY"]
+                        if dst != orig_dst:
+                            del p["ENTITY"]
                     if dst is not None:
                         p["dst"].append(dst)
                         if dst_old_props is not None:
@@ -513,7 +515,9 @@ class RewriteKernels:
         for k, v in prop.items():
             if k in discard_properties or len(k) == 0:
                 continue
-            if len(v)==1 or k in Grouping.__members__.keys() or k == "SPECIFICATION":
+            if isinstance(v, str):
+                d[k] = (FVariable(v, "ENTITY"), )
+            elif len(v)==1 or k in Grouping.__members__.keys() or k == "SPECIFICATION":
                 d[k] = tuple(set(v))
             else:
                 assert len(v)==2
@@ -550,6 +554,9 @@ class RewriteKernels:
             obj = self.obj
         main_pop = obj.kernel
         properties = obj.properties
+        from LaSSI.ner.MergeSetOfSingletons import merge_multiway_static_properties
+        if main_pop.edgeLabel is not None:
+            properties = merge_multiway_static_properties(properties, main_pop.edgeLabel.properties)
         rel = main_pop.edgeLabel.named_entity if main_pop.edgeLabel is not None else "None"  # TODO: Do we want string "None" or None? (e.g. when we have no verb?)
         negated = main_pop.isNegated
 
@@ -559,10 +566,13 @@ class RewriteKernels:
         if main_pop.target is not None:
             score *= main_pop.target.confidence
 
+        source = main_pop.source
         target = main_pop.target
         if rel == "be" and is_existential(target):
+            if len(target.properties) > 0:
+                source = source.update_node_props(merge_multiway_static_properties(main_pop.source.properties, target.properties))
             target = None
-        return self.src_make_prop(main_pop.source, rel, negated, score, dict(properties), target)
+        return self.src_make_prop(source, rel, negated, score, dict(properties), target)
 
     def onFoundSingleton(self, foundSingleton, result, prop, forKey, argument, src, rel, negated, score, dst):
         if foundSingleton == Grouping.NONE:

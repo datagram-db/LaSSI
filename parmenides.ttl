@@ -164,6 +164,9 @@ parmenides:abstract_entity a owl:ObjectProperty .
 parmenides:accept a parmenides:TransitiveVerb ;
     rdfs:label "accept"^^xsd:string .
 
+parmenides:choose a parmenides:TransitiveVerb ;
+    rdfs:label "choose"^^xsd:string .
+
 <https://logds.github.io/parmenides#according+to> a parmenides:ComplexPreposition ;
     rdfs:label "according to"^^xsd:string ;
     parmenides:alwaysOmit false ;
@@ -2032,6 +2035,12 @@ parmenides:he a parmenides:PersonalPronoun,
 parmenides:head a parmenides:TransitiveVerb ;
     rdfs:label "head"^^xsd:string .
 
+parmenides:inform a parmenides:TransitiveVerb ;
+    rdfs:label "inform"^^xsd:string .
+
+parmenides:applaud a parmenides:TransitiveVerb ;
+    rdfs:label "applaud"^^xsd:string .
+
 <https://logds.github.io/parmenides#head+for> a parmenides:MovementVerb,
         parmenides:Verb ;
     rdfs:label "head for"^^xsd:string .
@@ -2558,9 +2567,6 @@ parmenides:indoors a parmenides:Preposition ;
 
 parmenides:indulge a parmenides:TransitiveVerb ;
     rdfs:label "indulge"^^xsd:string .
-
-parmenides:choose a parmenides:TransitiveVerb ;
-    rdfs:label "choose"^^xsd:string .
 
 parmenides:inform a parmenides:TransitiveVerb ;
     rdfs:label "inform"^^xsd:string .

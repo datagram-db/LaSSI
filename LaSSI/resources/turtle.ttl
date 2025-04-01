@@ -2032,6 +2032,12 @@ parmenides:he a parmenides:PersonalPronoun,
 parmenides:head a parmenides:TransitiveVerb ;
     rdfs:label "head"^^xsd:string .
 
+parmenides:inform a parmenides:TransitiveVerb ;
+    rdfs:label "inform"^^xsd:string .
+
+parmenides:applaud a parmenides:TransitiveVerb ;
+    rdfs:label "applaud"^^xsd:string .
+
 <https://logds.github.io/parmenides#head+for> a parmenides:MovementVerb,
         parmenides:Verb ;
     rdfs:label "head for"^^xsd:string .

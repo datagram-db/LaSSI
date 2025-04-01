@@ -170,6 +170,9 @@ class FUnaryPredicate:
     meta: str = field(default_factory=lambda: "FUnaryPredicate")
     # matched: bool = field(default_factory=lambda: False)
 
+    def instantiate_variable_with_entity(self, arg):
+        return self
+
     def add_property(self, key, value):
         # d = {k:v for k,v in self.properties} if self.properties is not None else {}
         # if key in d:
@@ -211,6 +214,9 @@ class FBinaryPredicate:
     properties: frozenset
     meta: str = field(default_factory=lambda: "FBinaryPredicate")
     # matched: bool = field(default_factory=lambda: False)
+
+    def instantiate_variable_with_entity(self, arg):
+        return self
 
     def add_property(self, key, value):
         # d = {k:v for k,v in self.properties} if self.properties is not None else {}
@@ -263,6 +269,9 @@ class FAnd:
     meta: str = field(default_factory=lambda: "FAnd")
     # matched: bool = field(default_factory=lambda: False)
 
+    def instantiate_variable_with_entity(self, external_entity):
+        return FAnd(args=tuple([x.instantiate_variable_with_entity(external_entity) for x in self.args]))
+
     def __repr__(self):
         return self.__str__()
 
@@ -283,6 +292,9 @@ class FOr:
     args: Tuple['Formula']
     meta: str = field(default_factory=lambda: "FOr")
     # matched: bool = field(default_factory=lambda: False)
+
+    def instantiate_variable_with_entity(self, external_entity):
+        return FOr(args=tuple([x.instantiate_variable_with_entity(external_entity) for x in self.args]))
 
     def __repr__(self):
         return self.__str__()
@@ -425,7 +437,13 @@ def formula_from_dict(f: Union[dict, str]):
         id = None #int(f["id"]) if "id" in f and f["id"] is not None else -1
         specification = formula_from_dict(f["specification"]) if "specification" in f and f["specification"] is not None else None
         cop = formula_from_dict(f["cop"]) if "cop" in f else None
-        return FVariable(name=name, type=type, specification=specification, cop=cop, id=id, spec_negation=spec_negation)
+        properties = defaultdict(set)
+        if "properties" in f:
+            for k, v in f["properties"].items():
+                for x in v:
+                    properties[k].add(formula_from_dict(x))
+        properties = frozenset({k: tuple(v) for k, v in properties.items()}.items())
+        return FVariable(name=name, type=type, specification=specification, cop=cop, id=id, spec_negation=spec_negation, properties=properties)
     if meta == "FUnaryPredicate":
         rel = str(f["rel"]) if "rel" in f and f["rel"] is not None else ""
         arg = formula_from_dict(f["arg"]) if "arg" in f and f["arg"] is not None else None
