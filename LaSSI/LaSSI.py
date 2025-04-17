@@ -32,6 +32,7 @@ from LaSSI.structures.extended_fol.Formulae import formula_from_dict
 from LaSSI.structures.internal_graph.Graph import Graph
 from LaSSI.structures.internal_graph.InternalData import InternalRepresentation
 from LaSSI.structures.meuDB.meuDB import MeuDB
+from LaSSI.tests.benchmark import Benchmark
 from LaSSI.utils.configurations import LegacySemanticConfiguration
 
 
@@ -115,6 +116,7 @@ class LaSSI():
         self.query_file = pkg_resources.resource_filename("LaSSI.resources", "gsm_query.txt")
         self.sc = None
         self.meu_dbs = None
+        self.sentences_benchmark = Benchmark()
 
 
         from LaSSI.Parmenides.Parmenides import ParmenidesSingleton
@@ -165,6 +167,7 @@ class LaSSI():
             with open(result_graph_file, "r") as f:
                 raw_json_graph = json.load(f)
                 L.append(raw_json_graph)
+
         if self.web_dir is not None:
             import shutil
             dataset_folder = os.path.join(self.web_dir, "dataset", "data")  # f"{self.web_dir}/dataset/data"
@@ -183,7 +186,8 @@ class LaSSI():
 
     def _internal_graph(self, gsm_list):
         internal_representations = []
-        for graph, meu_db in zip(gsm_list, self.meu_dbs):
+        for idx, (graph, meu_db) in enumerate(zip(gsm_list, self.meu_dbs)):
+            start = time.time()
             from LaSSI.structures.provenance.GraphProvenance import GraphProvenance
             g = GraphProvenance(graph, meu_db, self.transformation == SentenceRepresentation.SimpleGraph)
             self.logger(f"{meu_db.first_sentence}")
@@ -194,6 +198,9 @@ class LaSSI():
                 final_form = g.sentence()
                 self.write_variable_to_file(self.string_rep_dir, f" ⇒ {final_form.to_string()}\n")
             internal_representations.append(final_form)
+            end = time.time()
+            self.sentences_benchmark.add_row(idx, "Sentence length", len(graph))
+            self.sentences_benchmark.add_row(idx, "Internal representation", end - start)
         return internal_representations
 
     def _logical_rewriting(self, intermediate_representations):
@@ -204,7 +211,15 @@ class LaSSI():
         #     for sentence in intermediate_representation.sentences:
         #     logical_representations.append(rewrite_kernels(intermediate_representation))
         from LaSSI.structures.extended_fol.rewrite_kernels import rewrite_kernels
-        return [rewrite_kernels(x, self.meu_dbs[idx]) for idx, x in enumerate(intermediate_representations)]
+
+        rewritten_kernels = []
+        for idx, x in enumerate(intermediate_representations):
+            start = time.time()
+            rewritten_kernels.append(rewrite_kernels(x, self.meu_dbs[idx]))
+            end = time.time()
+            self.sentences_benchmark.add_row(idx, "Logical rewriting", end - start)
+        return rewritten_kernels
+        # return [rewrite_kernels(x, self.meu_dbs[idx]) for idx, x in enumerate(intermediate_representations)]
 
     def graph_with_logic_similarity(self, x: Graph, y: Graph) -> float:
         if self.sc is None:
@@ -243,10 +258,15 @@ class LaSSI():
 
         matrices = []
         for i, x in enumerate(obj_list):
+            start = time.time()
+
             ls = []
             for j, y in enumerate(obj_list):
                 ls.append(f(x, y))
             matrices.append(ls)
+
+            end = time.time()
+            self.sentences_benchmark.add_row(i, "Ex post", end - start)
         # matrices = np.array(matrices)
 
         return matrices
@@ -268,6 +288,7 @@ class LaSSI():
                 clusters = json.load(f)
             test_with_maximal_matching(clusters, self.catabolites_dir,
                                        experiment_name, confusion_matrices)
+            # calculate_silhouette_score(confusion_matrices, clusters)
 
     def sentence_transform(self, sentences):
         if self.transformation == SentenceRepresentation.FullText:
@@ -288,7 +309,7 @@ class LaSSI():
         gsm_db, gsm_execution_time = target_file_dump(
             self.gsmDB,
             lambda x: x.read(),
-            lambda: GetGSMString(self, sentences),
+            lambda: GetGSMString(self, sentences), # TODO: How to benchmark for each sentence when in separate library?
             lambda x: x,
             self.force, self.should_benchmark
         )
@@ -298,7 +319,7 @@ class LaSSI():
         rewritten_graphs, rewritten_execution_time = target_file_dump(
             self.datagramdb_output,
             json.load,
-            lambda: ApplyGraphGrammars(self, n),
+            lambda: ApplyGraphGrammars(self, n), # TODO: This is not done on per sentence basis?
             json_dumps, self.force, self.should_benchmark
         )
         print(f"Generating rewritten graphs time: {rewritten_execution_time} seconds")
@@ -314,7 +335,6 @@ class LaSSI():
         print(f"Generating intermediate representations time: {intermediate_execution_time} seconds")
         self.write_variable_to_file(self.benchmarking_file,
                                     f"{self.get_execution_time_string(meu_execution_time)},{gsm_execution_time[0]},{rewritten_execution_time[0]},{intermediate_execution_time[0]},")
-
         if self.transformation == SentenceRepresentation.Logical:  # LogicalGraph
             #<<<<<<< HEAD
             # intermediate_representations = target_file_dump(self.logical_rewriting,
@@ -360,6 +380,7 @@ class LaSSI():
 
         result = self.sentence_transform(sentences)
 
+        # TODO: Still not working for 200 sentences, will this be fixed by next week (or still ignoring for this paper)?
         if self.run_ex_post:
             start_time = time.time()
             self.ex_post_explain(result)
@@ -371,6 +392,8 @@ class LaSSI():
         else:
             self.write_variable_to_file(self.benchmarking_file,
                                         f"\n")
+
+        self.sentences_benchmark.to_csv()
 
 
     def close(self):

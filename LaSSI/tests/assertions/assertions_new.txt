@@ -275,7 +275,7 @@ reflect sounds ⇒ reflect(?22, sounds)
 not getting your utilities cut off ⇒ NOT(get(?25, utilities[(action:cut), (nmod_poss:your)])[(SENTENCE:cut off(utilities[(action:cut), (nmod_poss:your)], ?24))])
 the front of a letter ⇒ be(front[(det:the)], ?27)[(SPECIFICATION:letter[(det:a), (extra:front[(det:the)])])]
 you buy a new graphics card ⇒ buy(you, graphics card[(det:a), (amod:new)])
-angry need to cool down ⇒ be(need[(amod:angry)], ?29)[(SENTENCE:cool down[(mark:to)](?28, None))]
+angry need to cool down ⇒ need[(amod:angry)](?194, cool down[(mark:to)](?193, None))
 that you will get wet ⇒ that get(you, wet)
 a desire for justice ⇒ be(desire[(det:a)], ?30)[(AIM_OBJECTIVE:justice[(3:for)])]
 be frightful and/or learning ⇒ be(?32, None)[(SENTENCE:be(and[(punct:/)], ?31)[(ENTITY:learning)]), (ENTITY:learning)]

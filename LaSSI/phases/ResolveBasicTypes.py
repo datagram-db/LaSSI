@@ -9,6 +9,8 @@ __status__ = "Production"
 
 from LaSSI.external_services.Services import Services
 from LaSSI.structures.meuDB.meuDB import MeuDBEntry, MeuDB
+from LaSSI.tests.benchmark import Benchmark
+import time as ti
 
 
 class ResolveBasicTypes:
@@ -17,10 +19,12 @@ class ResolveBasicTypes:
         self.precision_threshold = precision_threshold
         self.services = Services.getInstance()
         self.stanza_service = self.services.getStanzaNLP()
+        self.sentences_benchmark = Benchmark()
 
     def resolve_basic_types(self, list_sentences):
         db = list()
         for idx, (sentence, withTime) in enumerate(zip(list_sentences, self.services.resolveTimeUnits(list_sentences))):
+            start_time = ti.time()
             entities = []
             multi_entity_unit = []
             for x in self.services.getFuzzyParmenides().resolve_u(self.recall_threshold, self.precision_threshold,
@@ -60,6 +64,8 @@ class ResolveBasicTypes:
                 sentence = sentence.replace(entity[0], entity[1])
 
             db.append(MeuDB(sentence, multi_entity_unit))
+            end_time = ti.time()
+            self.sentences_benchmark.add_row(idx, "Generating meuDB", end_time - start_time)
         return db
 
 

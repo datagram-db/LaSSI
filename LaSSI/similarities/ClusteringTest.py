@@ -10,12 +10,15 @@ __status__ = "Production"
 import json
 import os
 import numpy
+import numpy as np
+from sklearn import metrics
 from sklearn.cluster import AgglomerativeClustering
 from scipy.sparse import csr_matrix
 import markov_clustering as mc
 import networkx as nx
 import matplotlib
 import matplotlib.pyplot
+from sklearn.metrics import silhouette_score, adjusted_rand_score
 
 
 def graph_plot(matrix, clusters, filename="graph.png"):
@@ -277,7 +280,7 @@ def test_with_maximal_matching(expected_clusters, experiment_name, transformer, 
     print("Agglomerative clustering")
     n_expected_clusters = len(expected_clusters)
     agg_cluster_assignment, agg_model, distances = agglomerative_clustering(similarity_matrix, n_expected_clusters)
-    plot_dendogram(agg_model, distances, f"catabolites/{experiment_name}/{transformer}_dend.png")
+    plot_dendogram(agg_model, distances, f"/home/campus.ncl.ac.uk/b9063849/PycharmProjects/LaSSI/catabolites/{experiment_name}/{transformer}_dend.png")
 
     print("Markov clustering")
     mkv_cluster_assignment, matrix, mkv_clusters = knn(similarity_matrix, n_expected_clusters)
@@ -290,6 +293,35 @@ def test_with_maximal_matching(expected_clusters, experiment_name, transformer, 
     mkv_score = best_clustering_match(mkv_cluster_assignment, expected_clusters)
     mkv_similarity = 1 - mkv_score
     print(f"Best Clustering Match (k-Medoids): {mkv_similarity}. {mkv_cluster_assignment}")
+
+    expected_clusters_labels = get_labels(expected_clusters)
+    print(f"silhouette_score: expected_clusters: {silhouette_score(as_distance_matrix(similarity_matrix), expected_clusters_labels, metric='precomputed')}")
+
+    agg_clusters_labels = get_labels(agg_cluster_assignment)
+    print(f"silhouette_score: agg_cluster_assignment: {silhouette_score(as_distance_matrix(similarity_matrix), agg_clusters_labels, metric='precomputed')}")
+    print(f"rnd score: {adjusted_rand_score(expected_clusters_labels, agg_clusters_labels)}")
+    print(f"purity: {purity_score(expected_clusters_labels, agg_clusters_labels)}")
+
+    knn_clusters_labels = get_labels(mkv_cluster_assignment)
+    print(f"silhouette_score: mkv_cluster_assignment: {silhouette_score(as_distance_matrix(similarity_matrix), knn_clusters_labels, metric='precomputed')}")
+    print(f"rnd score: {adjusted_rand_score(expected_clusters_labels, knn_clusters_labels)}")
+    print(f"purity: {purity_score(expected_clusters_labels, knn_clusters_labels)}")
+
+def get_labels(expected_clusters):
+    N = 0
+    d = dict()
+    for idx, cl in enumerate(expected_clusters):
+        for x in cl:
+            d[x] = idx
+            N += 1
+    L = [d[x] for x in range(N)]
+    return L
+
+def purity_score(y_true, y_pred):
+    # compute contingency matrix (also called confusion matrix)
+    contingency_matrix = metrics.cluster.contingency_matrix(y_true, y_pred)
+    # return purity
+    return np.sum(np.amax(contingency_matrix, axis=0)) / np.sum(contingency_matrix)
 
 
 def read_json_array(filepath):
