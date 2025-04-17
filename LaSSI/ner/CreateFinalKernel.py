@@ -685,7 +685,7 @@ class CreateFinalKernel:
                                     or
                                     (
                                             (
-                                                    kernel_nodes is not None and node.kernel.target.type != 'existential' and node.kernel.target in kernel_nodes)
+                                                    kernel_nodes is not None and node.kernel.target is not None and node.kernel.target.type != 'existential' and node.kernel.target in kernel_nodes)
                                             and (
                                                     node.kernel.source is not None and node.kernel.source.type == 'existential')
                                     )

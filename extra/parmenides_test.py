@@ -5,6 +5,9 @@ from LaSSI.structures.extended_fol.TabularCWASemantics import TabularCWASemantic
 from LaSSI.structures.extended_fol.Formulae import FUnaryPredicate, FVariable, FBinaryPredicate, formula_from_dict
 from FunctionalMatch.language.LanguageMainPoint import parse_query
 
+from LaSSI.structures.extended_fol.rewrite_kernels import make_and
+
+
 def build_mock_test_sentences():
     traffic = FVariable("traffic", "Noun", None, None, 1)
     city_center = FVariable("city center", "Noun", None, None, 1)
@@ -19,6 +22,7 @@ def build_mock_test_sentences():
     datum5 = FUnaryPredicate("be", fast_traffic, 1.0, frozenset({"ciao": "giacomo"}.items()))
     datum6 = FBinaryPredicate("have", ncl, traffic, -1, frozenset())
     datum7 = FUnaryPredicate("be", adj2, -1, frozenset({"SPACE": ncl}.items()))
+
 
     sentences = [datum, datum2, datum3, datum4, datum5, datum6, datum7]
 
@@ -137,6 +141,12 @@ def simpler_test():
 
 
 if __name__ == '__main__':
+    var = FVariable("?1", "existential", None, None, 1)
+    cable = FVariable("cable", "ENTITY", None, None, 1)
+    he = FVariable("equipment", "ENTITY", "home entertainment", None, 1)
+    q1 = FBinaryPredicate("isA", var, he, -1, frozenset())
+    q2 = FBinaryPredicate("require", var, cable, -1, frozenset())
+    what_home_entertainment = print(make_and([q1, q2]))
     # formulae_rewriting_test()
-    tst_query()
+    # tst_query()
     # simpler_test()

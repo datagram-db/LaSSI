@@ -33,7 +33,7 @@ def is_existential(obj):
 
 bogus_dst = FVariable(name="there", type="non_verb", specification=None, cop=None, id=None)
 bogus_src = {"it"}
-discard_properties = {"end", "lemma", "begin", "kernel", "expl", "pos", "root", "common", "number", "adv", "conj", "mark", "specification"}
+discard_properties = {"end", "lemma", "begin", "kernel", "expl", "pos", "root", "common", "number", "adv", "conj", "mark", "specification", "nmod_poss", "amod"}
 relative_pronouns = {"which","that", "who", "whom" }
 interrogative_pronouns = {"what", "which", "who", "whom", "whose"}
 demonstrative_pronouns = {"this", "these", "that", "those"}
@@ -181,10 +181,11 @@ class RewriteKernels:
                 continue
             elif k not in discard_properties:
                 for single_val in v:
-                    tmp = self.make_arg(single_val)
-                    neg_tmp = make_not(tmp)
-                    if neg_tmp not in result[k]:
-                        result[k].add(tmp)
+                    if not isinstance(single_val, str):
+                        tmp = self.make_arg(single_val)
+                        neg_tmp = make_not(tmp)
+                        if neg_tmp not in result[k]:
+                            result[k].add(tmp)
         result2 = dict()
         for k, v in result.items():
             result2[k] = list(v)
@@ -513,11 +514,9 @@ class RewriteKernels:
     def props_as_unique_itemset(self, prop):
         d = dict()
         for k, v in prop.items():
-            if k in discard_properties or len(k) == 0:
+            if k in discard_properties or len(k) == 0 or isinstance(v, str):
                 continue
-            if isinstance(v, str):
-                d[k] = (FVariable(v, "ENTITY"), )
-            elif len(v)==1 or k in Grouping.__members__.keys() or k == "SPECIFICATION":
+            if len(v)==1 or k in Grouping.__members__.keys() or k == "SPECIFICATION":
                 d[k] = tuple(set(v))
             else:
                 assert len(v)==2
