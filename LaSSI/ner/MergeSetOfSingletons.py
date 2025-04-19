@@ -44,8 +44,11 @@ def GraphNER_withProperties(node, is_simplistic_rewriting, meu_db_row, parmenide
     resolved_d = []
 
     layered_alternatives = defaultdict(list)
+    maxN = -1
     for x in allChunks(list(d.keys())):
+        maxN = max(maxN, len(len(x)))
         layered_alternatives[len(x)].append(x)
+    assert len(layered_alternatives[maxN])==1
 
     for layer in layered_alternatives.values():
         max_score = -1

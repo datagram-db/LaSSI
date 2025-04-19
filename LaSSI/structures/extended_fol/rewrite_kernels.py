@@ -45,8 +45,14 @@ def property_write(key, val: NodeEntryPoint) -> str:
     # if isinstance(val, Singleton):
     return f'{key} : {value}'
 
-
-
+def get_props(src):
+    src_old_props = None
+    if src is not None:
+        if hasattr(src, "get_props"):
+            src_old_props = src.get_props()
+        elif hasattr(src, "properties"):
+            src_old_props = src.properties
+    return src_old_props
 
 def make_and(entities):
     entities = tuple(entities)
@@ -361,7 +367,7 @@ class RewriteKernels:
                             else:
                                 p[k] = v
                     props_to_merge = []
-                    src_old_props = src.get_props() if src is not None else None
+                    src_old_props = get_props(src)
                     src = self.make_arg(src)
                     p["src"] = []
                     p["dst"] = []
@@ -371,7 +377,8 @@ class RewriteKernels:
                             props_to_merge.append((src, src_old_props))
                         if hasattr(src, "properties"):
                             props_to_merge.append((src, src.properties))
-                    dst_old_props = dst.get_props() if dst is not None else None
+                    dst_old_props = get_props(dst)
+                    # dst_old_props = dst.get_props() if dst is not None else None
                     dst = self.make_arg(dst)
                     if "ENTITY" in p and len(p["ENTITY"])==1:
                         orig_dst = dst
@@ -459,7 +466,7 @@ class RewriteKernels:
                 p["src"] = []
                 p["dst"] = []
                 props_to_merge = []
-                src_old_props = src.get_props() if src is not None else None
+                src_old_props = get_props(src)
                 src = self.make_arg(src)
                 if src is not None:
                     p["src"].append(src)

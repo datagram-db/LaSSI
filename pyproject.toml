@@ -59,7 +59,9 @@ dependencies = [
     "dash_bootstrap_components",
     "flask",
     "latextools",
-    "scikit-learn-extra"
+    "scikit-learn-extra",
+    "ragatouille",
+    "psutil"
 ]
 
 #[tool.scikit-build]

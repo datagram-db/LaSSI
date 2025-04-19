@@ -4,13 +4,13 @@ from LaSSI.Configuration import SentenceRepresentation
 from LaSSI.LaSSI import LaSSI
 
 if __name__ == '__main__':
-    dataset_name = "test_sentences/extended_benchmarking/200.yaml"
+    dataset_name = "test_sentences/orig/cat_mouse.yaml"
     fuzzyDBs = "connection_giacomo.yaml"
     if len(sys.argv) > 1:
         dataset_name = sys.argv[1]
     if len(sys.argv) > 2:
         fuzzyDBs = sys.argv[2]
 
-    pipeline = LaSSI(dataset_name, fuzzyDBs, SentenceRepresentation.Logical)
+    pipeline = LaSSI(dataset_name, fuzzyDBs, SentenceRepresentation.FullText, "RAG#colbert-ir/colbertv2.0")
     pipeline.run()
     pipeline.close()

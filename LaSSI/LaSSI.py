@@ -39,7 +39,7 @@ class LaSSI():
     def __init__(self, dataset_name: str,
                  fuzzyDBs: str | DatabaseConfiguration,
                  transformation: SentenceRepresentation = SentenceRepresentation.Logical,
-                 transformer='sentence-transformers/all-MiniLM-L6-v2',  # all-MiniLM-L6-v2 / all-MiniLM-L12-v2 / all-mpnet-base-v2 / all-roberta-large-v1
+                 transformer='sentence-transformers/all-MiniLM-L6-v2',  # all-MiniLM-L6-v2 / all-MiniLM-L12-v2 / all-mpnet-base-v2 / all-roberta-large-v1 / RAG#colbert-ir/colbertv2.0"
                  sentences: ScraperConfiguration | str | collections.abc.Iterable = None,
                  logger=None,
                  web_dir=None,
@@ -218,35 +218,40 @@ class LaSSI():
         return self.sc.string_similarity(x, y)
 
     def _calculate_matrix(self, obj_list):
-        if self.transformation == SentenceRepresentation.FullText:
-            f = self.fulltext_similarity
-        if self.transformation == SentenceRepresentation.Logical:
-            # from LaSSI.Parmenides.TBox.CrossMatch import DoExpand  # LogicalGraph
-            # doexp = DoExpand()
-            # f = SentenceExpansion(obj_list, doexp, self.catabolites_of_dataset)
+        matrices = None
+        if self.transformation == SentenceRepresentation.FullText and self.legacy_conf.HuggingFace.startswith("RAG#"):
+            from LaSSI.ir.RAG import rag
+            matrices = rag(self.legacy_conf.HuggingFace, self.catabolites_dir, obj_list)
+        else:
+            if self.transformation == SentenceRepresentation.FullText:
+                f = self.fulltext_similarity
+            if self.transformation == SentenceRepresentation.Logical:
+                # from LaSSI.Parmenides.TBox.CrossMatch import DoExpand  # LogicalGraph
+                # doexp = DoExpand()
+                # f = SentenceExpansion(obj_list, doexp, self.catabolites_of_dataset)
 
-            self.logger("Starting the TBox Reasoning service")
-            from LaSSI.structures.extended_fol.TBoxReasoning import TBoxReasoningSingleton
-            TBoxReasoningSingleton.instance()
-            # TODO: move the txt files to the resources
-            kexp_pickle = os.path.join(self.catabolites_of_dataset, "_kexp.pickle")
-            TBoxReasoningSingleton.init("query_impl.txt",
-                                        "query_eq.txt",
-                                        kexp_pickle)
+                self.logger("Starting the TBox Reasoning service")
+                from LaSSI.structures.extended_fol.TBoxReasoning import TBoxReasoningSingleton
+                TBoxReasoningSingleton.instance()
+                # TODO: move the txt files to the resources
+                kexp_pickle = os.path.join(self.catabolites_of_dataset, "_kexp.pickle")
+                TBoxReasoningSingleton.init("query_impl.txt",
+                                            "query_eq.txt",
+                                            kexp_pickle)
 
-            from LaSSI.structures.extended_fol.TabularCWASemantics import TabularCWASemantics
-            f = TabularCWASemantics(obj_list, self.catabolites_of_dataset)
-            TBoxReasoningSingleton.instance().dump()
-        elif (self.transformation == SentenceRepresentation.LogicalGraph or
-              self.transformation == SentenceRepresentation.SimpleGraph):
-            f = self.graph_with_logic_similarity
+                from LaSSI.structures.extended_fol.TabularCWASemantics import TabularCWASemantics
+                f = TabularCWASemantics(obj_list, self.catabolites_of_dataset)
+                TBoxReasoningSingleton.instance().dump()
+            elif (self.transformation == SentenceRepresentation.LogicalGraph or
+                  self.transformation == SentenceRepresentation.SimpleGraph):
+                f = self.graph_with_logic_similarity
 
-        matrices = []
-        for i, x in enumerate(obj_list):
-            ls = []
-            for j, y in enumerate(obj_list):
-                ls.append(f(x, y))
-            matrices.append(ls)
+            matrices = []
+            for i, x in enumerate(obj_list):
+                ls = []
+                for j, y in enumerate(obj_list):
+                    ls.append(f(x, y))
+                matrices.append(ls)
         # matrices = np.array(matrices)
 
         return matrices

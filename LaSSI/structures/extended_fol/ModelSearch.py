@@ -54,8 +54,9 @@ class ModelSearch:
             from LaSSI.Parmenides.TBox.ExpandConstituents import isImplication
             if isImplication(val):
                 # val = test_pairwise_sentence_similarity(dict(), lhs, rhs, kb=self.kb)
-                foundImplication = True
-        return CasusHappening.GENERAL_IMPLICATION if foundImplication else CasusHappening.INDIFFERENT
+                test_pairwise_sentence_similarity({}, lhs, rhs, shift=False)
+                return CasusHappening.GENERAL_IMPLICATION
+        return CasusHappening.INDIFFERENT
 
     def compare(self, objLHS:ModelSearchBasis, objRHS:ModelSearchBasis)->'CasusHappening':
         cp = (objLHS.original, objRHS.original)
