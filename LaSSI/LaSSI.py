@@ -47,8 +47,10 @@ class LaSSI():
                  precision_threshold=0.8,
                  force=False,
                  should_benchmark=True,
-                 legacy_conf: LegacySemanticConfiguration = None
+                 legacy_conf: LegacySemanticConfiguration = None,
+                 disable_ad_hoc: bool = False
                  ):
+        self.disable_ad_hoc = disable_ad_hoc
         if legacy_conf is None:
             self.legacy_conf = LegacySemanticConfiguration()
         else:
@@ -98,6 +100,23 @@ class LaSSI():
         self.recall_threshold = recall_threshold
         self.precision_threshold = precision_threshold
         self.transformation = transformation
+        self.full_transformation = transformation
+        if self.disable_ad_hoc:
+            if self.transformation == SentenceRepresentation.Logical:
+                self.full_transformation = SentenceRepresentation.LogicalDisabledAdHoc
+            elif self.transformation == SentenceRepresentation.LogicalGraph:
+                self.full_transformation = SentenceRepresentation.LogicalGraphDisabledAdHoc
+            elif self.transformation == SentenceRepresentation.SimpleGraph:
+                self.full_transformation = SentenceRepresentation.SimpleGraphDisabledAdHoc
+        if self.transformation == SentenceRepresentation.LogicalDisabledAdHoc:
+            self.disable_ad_hoc = True
+            self.transformation = SentenceRepresentation.Logical
+        elif self.transformation == SentenceRepresentation.SimpleGraphDisabledAdHoc:
+            self.disable_ad_hoc = True
+            self.transformation = SentenceRepresentation.SimpleGraph
+        elif self.transformation == SentenceRepresentation.LogicalGraphDisabledAdHoc:
+            self.disable_ad_hoc = True
+            self.transformation = SentenceRepresentation.LogicalGraph
         self.force = force
         self.should_benchmark = should_benchmark
         self.logger("init file structure")
@@ -259,7 +278,7 @@ class LaSSI():
     def ex_post_explain(self, lists):
         from LaSSI.files.FileDumpUtilities import target_file_dump
         self.logger("computing similarities")
-        experiment_name = self.transformation.name + (f"_{self.legacy_conf.HuggingFace.split('/')[-1]}" if self.transformation == SentenceRepresentation.FullText else "")
+        experiment_name = self.full_transformation.name + (f"_{self.legacy_conf.HuggingFace.split('/')[-1]}" if self.transformation == SentenceRepresentation.FullText else "")
         confusion_matrices = target_file_dump(self.confusion_matrices + experiment_name + ".json",
                                               json.load,
                                               lambda: CalculateMatrix(self, lists),
@@ -281,12 +300,16 @@ class LaSSI():
         from LaSSI.files.FileDumpUtilities import target_file_dump
         n = len(sentences)
         self.logger("generating meuDB")
-        self.meu_dbs, meu_execution_time = target_file_dump(
-            self.meuDB,
-            lambda x: [MeuDB.from_dict(k) for k in json.load(x)],
-            lambda: ExplainTextWithNER(self, sentences),
-            json_dumps, self.force, self.should_benchmark
-        )
+        if self.disable_ad_hoc:
+            self.meu_dbs =ExplainTextWithNER(self, sentences)
+            meu_execution_time = [0.0, 'r']
+        else:
+            self.meu_dbs, meu_execution_time = target_file_dump(
+                self.meuDB,
+                lambda x: [MeuDB.from_dict(k) for k in json.load(x)],
+                lambda: ExplainTextWithNER(self, sentences),
+                json_dumps, self.force, self.should_benchmark
+            )
         self.logger(f"Generating meuDB time: {meu_execution_time} seconds")
 
         self.logger("generating gsmDB")
