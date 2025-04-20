@@ -66,6 +66,14 @@ class LaSSI():
             self.clusters_file = tmp
         else:
             self.clusters_file = None
+        import pathlib
+        p = pathlib.Path(self.dataset_name)
+        tmp = os.path.join(p.parent.absolute(), f"{p.stem}_matrix.json")
+        # tmp = f"{self.dataset_name}_matrix.json"
+        if os.path.isfile(tmp):
+            self.matrix_file = tmp
+        else:
+            self.matrix_file = None
         self.web_dir = web_dir
         if logger is None:
             logger = lambda x: print(x)
@@ -253,13 +261,16 @@ class LaSSI():
                 from LaSSI.structures.extended_fol.TBoxReasoning import TBoxReasoningSingleton
                 TBoxReasoningSingleton.instance()
                 # TODO: move the txt files to the resources
-                kexp_pickle = os.path.join(self.catabolites_of_dataset, "_kexp.pickle")
+                if not os.path.exists(os.path.join(self.catabolites_of_dataset, str(self.full_transformation))):
+                    from pathlib import Path
+                    Path(os.path.join(self.catabolites_of_dataset, str(self.full_transformation))).mkdir(parents=True, exist_ok=True)
+                kexp_pickle = os.path.join(self.catabolites_of_dataset, str(self.full_transformation), "_kexp.pickle")
                 TBoxReasoningSingleton.init("query_impl.txt",
                                             "query_eq.txt",
                                             kexp_pickle)
 
                 from LaSSI.structures.extended_fol.TabularCWASemantics import TabularCWASemantics
-                f = TabularCWASemantics(obj_list, self.catabolites_of_dataset)
+                f = TabularCWASemantics(obj_list, os.path.join(self.catabolites_of_dataset, str(self.full_transformation)))
                 TBoxReasoningSingleton.instance().dump()
             elif (self.transformation == SentenceRepresentation.LogicalGraph or
                   self.transformation == SentenceRepresentation.SimpleGraph):
@@ -290,8 +301,12 @@ class LaSSI():
             clusters = []
             with open(self.clusters_file, "r") as f:
                 clusters = json.load(f)
+            matrix = None
+            if self.matrix_file is not None:
+                with open(self.matrix_file, "r") as f:
+                    matrix = json.load(f)
             test_with_maximal_matching(clusters, self.catabolites_dir,
-                                       experiment_name, confusion_matrices)
+                                       experiment_name, confusion_matrices, implication_matrix=matrix)
 
     def sentence_transform(self, sentences):
         if self.transformation == SentenceRepresentation.FullText:
@@ -344,16 +359,6 @@ class LaSSI():
                                     f"{self.get_execution_time_string(meu_execution_time)},{gsm_execution_time[0]},{rewritten_execution_time[0]},{intermediate_execution_time[0]},")
 
         if self.transformation == SentenceRepresentation.Logical:  # LogicalGraph
-            #<<<<<<< HEAD
-            # intermediate_representations = target_file_dump(self.logical_rewriting,
-            #                                           lambda x: formula_from_dict(json.load(x)),
-            #                                           lambda: LogicalRewriting(self, intermediate_representations),
-            #                                           json_dumps,
-            #                                           self.force)
-            # for x in intermediate_representations:
-            #     print(str(x))
-            # return intermediate_representations
-            #=======
             logical_representations, logical_rewriting_execution_time = target_file_dump(
                 self.logical_rewriting,
                 lambda x: formula_from_dict(json.load(x)),

@@ -451,19 +451,19 @@ class ExpandConstituents:
         assert j < len(self.constituents)
         if (i, j) in self.result_cache:
             return self.result_cache[(i, j)]
-        val = PairwiseCases.NonImplying
+        val = PairwiseCases.Indifferent
 
         lhsOrig = self.lhsOrigDict[i]
         rhsOrig = self.rhsOrigDict[j]
         tmp = self.ms.compare(lhsOrig, rhsOrig)
         if tmp == CasusHappening.EXCLUSIVES:
-            val = PairwiseCases.MutuallyExclusive
+            val = PairwiseCases.ConflictingImplication
         elif tmp == CasusHappening.EQUIVALENT:
             val = PairwiseCases.Equivalent
         elif isImplication(tmp):
             val = PairwiseCases.Implying
         else:
-            val = PairwiseCases.NonImplying
+            val = PairwiseCases.Indifferent
 
         self.result_cache[(i, j)] = val
         return val

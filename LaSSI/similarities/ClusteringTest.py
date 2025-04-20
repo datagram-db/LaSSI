@@ -9,7 +9,10 @@ __status__ = "Production"
 
 import json
 import os
+import sys
+
 import numpy
+import sklearn
 from sklearn.cluster import AgglomerativeClustering
 from scipy.sparse import csr_matrix
 import markov_clustering as mc
@@ -264,12 +267,39 @@ def matrix_exp2(matrix):
     return numpy.multiply(matrix, matrix)
 
 
-def test_with_maximal_matching(expected_clusters, experiment_name, transformer, similarity_matrix=None):
+def test_with_maximal_matching(expected_clusters, experiment_name, transformer, similarity_matrix=None, implication_matrix=None):
     if similarity_matrix is None:
         similarity_matrix = read_json_array(
             f"catabolites/{experiment_name}/confusion_matrices_{transformer}.json")
         if similarity_matrix is None:
             return
+
+    not_implying_score = 0.0
+    N = len(similarity_matrix)
+    expected_labels = None
+    roc_expected = None
+    if implication_matrix is not None:
+        expected_labels = []
+        roc_expected = []
+        for i in range(N):
+            row = similarity_matrix[i]
+            for j in range(N):
+                cell = row[j]
+                if cell == 1.0:
+                    expected_labels.append(1)
+                    roc_expected.append([1.0,0.0,0.0])
+                elif cell == 0.0:
+                    expected_labels.append(-1)
+                    roc_expected.append([0.0,0.0,1.0])
+                else:
+                    expected_labels.append(0)
+                    roc_expected.append([0.0,1.0,0.0])
+        import itertools
+        scores = list(itertools.chain.from_iterable(implication_matrix))
+        n_not_implying = sum(1 for x in scores if x == 0.0)
+        scores = list(itertools.chain.from_iterable(similarity_matrix))
+        scores.sort()
+        not_implying_score = max(scores[: n_not_implying])
 
     if not os.path.exists(experiment_name):
         os.makedirs(experiment_name)
@@ -277,19 +307,79 @@ def test_with_maximal_matching(expected_clusters, experiment_name, transformer, 
     print("Agglomerative clustering")
     n_expected_clusters = len(expected_clusters)
     agg_cluster_assignment, agg_model, distances = agglomerative_clustering(similarity_matrix, n_expected_clusters)
+    implying_vs_indifferent = sys.float_info.max
+    for cluster in agg_cluster_assignment:
+        for j in cluster:
+            for i in cluster:
+                implying_vs_indifferent = min([implying_vs_indifferent, similarity_matrix[i][j]])
+    assert implying_vs_indifferent > not_implying_score
+    agg_scores = []
+    roc_scores = []
+    idx = 0
+    for i in range(N):
+        row = similarity_matrix[i]
+        for j in range(N):
+            cell = row[j]
+            implying_score = 0.0
+            indifferent_score = 1.0
+            wrong_score = 0.0
+            if cell >= implying_vs_indifferent:
+                agg_scores.append(1)
+                implying_score = 1.0
+                indifferent_score = 0.0 if (implying_vs_indifferent == cell) else 1.0 - (implying_vs_indifferent-cell)
+                wrong_score = 0.0 if (not_implying_score == cell) else 1.0 - abs(cell-not_implying_score)
+                roc_scores.append([implying_score, indifferent_score, wrong_score])
+            elif cell <= not_implying_score:
+                agg_scores.append(-1)
+                implying_score = 0.0 if (implying_vs_indifferent == cell) else 1.0 - (implying_vs_indifferent - cell)
+                indifferent_score = 0.0 if (not_implying_score == cell) else 1.0 - abs(cell - not_implying_score)
+                wrong_score = 1.0
+                roc_scores.append([implying_score, indifferent_score, wrong_score])
+            else:
+                agg_scores.append(0)
+                implying_score = 0.0 if (implying_vs_indifferent == cell) else 1.0 - (implying_vs_indifferent - cell)
+                indifferent_score = 1.0
+                wrong_score = 0.0 if (not_implying_score == cell) else 1.0 - (cell - not_implying_score)
+                roc_scores.append([implying_score, indifferent_score, wrong_score])
+
+            idx += 1
+    print(f"Accuracy Score (Agglomerative): {sklearn.metrics.accuracy_score(expected_labels, agg_scores)}")
+    print(f"Macro-F1 Score (Agglomerative): {sklearn.metrics.f1_score(expected_labels, agg_scores, average='macro')}")
+    # print(f"Micro-F1 Score (Agglomerative): {sklearn.metrics.f1_score(expected_labels, agg_scores, average='micro')}")
+    print(f"Macro-Precision Score (Agglomerative): {sklearn.metrics.precision_score(expected_labels, agg_scores, average='macro')}")
+    # print(f"Micro-Precision Score (Agglomerative): {sklearn.metrics.precision_score(expected_labels, agg_scores, average='micro')}")
+    print(f"Macro-Recall Score (Agglomerative): {sklearn.metrics.recall_score(expected_labels, agg_scores, average='macro')}")
+    # print(f"Micro-Recall Score (Agglomerative): {sklearn.metrics.recall_score(expected_labels, agg_scores, average='micro')}")
+    print(f"Area Under ROC Curve One-Versus-Rest (Agglomerative): {sklearn.metrics.roc_auc_score(numpy.asarray(roc_expected), numpy.asarray(roc_scores), multi_class='ovr')}")
+
+    print(f"Threshold value (Agglomerative clustering): {implying_vs_indifferent}")
     plot_dendogram(agg_model, distances, f"catabolites/{experiment_name}/{transformer}_dend.png")
 
     print("Markov clustering")
     mkv_cluster_assignment, matrix, mkv_clusters = knn(similarity_matrix, n_expected_clusters)
+    implying_vs_indifferent = sys.float_info.max
+    for cluster in mkv_cluster_assignment:
+        for j in cluster:
+            for i in cluster:
+                implying_vs_indifferent = min([implying_vs_indifferent, similarity_matrix[i][j]])
+    print(f"Threshold value (K-Medoids): {implying_vs_indifferent}")
+    print(f"Accuracy Score (K-Medoids): {sklearn.metrics.accuracy_score(expected_labels, agg_scores)}")
+    print(f"Macro-F1 Score (K-Medoids): {sklearn.metrics.f1_score(expected_labels, agg_scores, average='macro')}")
+    # print(f"Micro-F1 Score (K-Medoids): {sklearn.metrics.f1_score(expected_labels, agg_scores, average='micro')}")
+    print(f"Macro-Precision Score (K-Medoids): {sklearn.metrics.precision_score(expected_labels, agg_scores, average='macro')}")
+    # print(f"Micro-Precision Score (K-Medoids): {sklearn.metrics.precision_score(expected_labels, agg_scores, average='micro')}")
+    print(f"Macro-Recall Score (K-Medoids): {sklearn.metrics.recall_score(expected_labels, agg_scores, average='macro')}")
+    # print(f"Micro-Recall Score (K-Medoids): {sklearn.metrics.recall_score(expected_labels, agg_scores, average='micro')}")
+    print(f"Area Under ROC Curve One-Versus-Rest (Agglomerative): {sklearn.metrics.roc_auc_score(numpy.asarray(roc_expected), numpy.asarray(roc_scores), multi_class='ovr')}")
     # graph_plot(matrix, mkv_clusters, f"{experiment_name}/{transformer}_mkv.png")
 
     agg_score = best_clustering_match(agg_cluster_assignment, expected_clusters)
     agg_similarity = 1 - agg_score
-    print(f"Best Clustering Match (Agglomerative Clustering): {agg_similarity}. {agg_cluster_assignment}")
+    print(f"Best Clustering Match (Agglomerative Clustering) Alignment Score: {agg_similarity}. {agg_cluster_assignment}")
 
     mkv_score = best_clustering_match(mkv_cluster_assignment, expected_clusters)
     mkv_similarity = 1 - mkv_score
-    print(f"Best Clustering Match (k-Medoids): {mkv_similarity}. {mkv_cluster_assignment}")
+    print(f"Best Clustering Match (k-Medoids) Alignment Score: {mkv_similarity}. {mkv_cluster_assignment}")
 
 
 def read_json_array(filepath):

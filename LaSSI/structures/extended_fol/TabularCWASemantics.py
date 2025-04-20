@@ -105,13 +105,13 @@ class TabularCWASemantics:
         # relation = Relation()
         # relation.add_attributes([str(i), str(j)])
         from LaSSI.structures.extended_fol.Enums import PairwiseCases
-        if (test == PairwiseCases.NonImplying):
+        if (test == PairwiseCases.Indifferent):
             return pandas.DataFrame({str(i): [0,0,1,1],
                      str(j): [0,1,0,1]})
         elif (test == PairwiseCases.Implying):
             return pandas.DataFrame({str(i): [0, 0, 1],
                             str(j): [0, 1, 1]  })
-        elif (test == PairwiseCases.MutuallyExclusive):
+        elif (test == PairwiseCases.ConflictingImplication):
             return pandas.DataFrame({str(i): [0, 1],
                            str(j): [1,0]})
         elif (test == PairwiseCases.Equivalent):
@@ -144,6 +144,17 @@ class TabularCWASemantics:
         total = result.sum(axis=0)/Rj_holding if Rj_holding>0.0 else 0.0
         # print(f"{i}~{j} := {total}")
         return total
+
+    def get_implication(self, i, j):
+        from LaSSI.structures.extended_fol.Enums import PairwiseCases
+        val = self.get_straightforward_id_similarity(i, j)
+        if val == 1.0:
+            return PairwiseCases.Implying
+        elif val == 0.0:
+            return PairwiseCases.ConflictingImplication
+        else:
+            return PairwiseCases.Indifferent
+
 
     def buildReport(self, file, mathJax = True):
         from bs4 import Tag, BeautifulSoup
