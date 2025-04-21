@@ -14,7 +14,13 @@ class Services:
         """ Static access method. """
         if Services.__instance == None:
             Services(logger)
-        return Services.__instance
+        if hasattr(Services, '__instance'):
+            assert Services.__instance is not None
+            return Services.__instance
+        elif hasattr(Services, '_Services__instance'):
+            assert Services._Services__instance is not None
+            return Services._Services__instance
+        raise RuntimeError("ERROR: cannot found instantiated field")
 
     def setParmenides(self, parmenides):
         self.parmenides = parmenides

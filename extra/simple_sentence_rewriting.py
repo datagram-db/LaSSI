@@ -8,12 +8,9 @@ from StanfordNLPExtractor.OldWrapper import OldWrapper
 
 from extra.generate_triplets_from_json import make_output_as_triplets
 
-if __name__ == "__main__":
-    file = "/home/giacomo/projects/LaSSI/test_sentences/orig/alice_bob.yaml"
+def as_set_of_triplets(file):
     visualizer = "/home/giacomo/projects/LaSSI/catabolites/tmp"
-    graph = file[:-5] + ".graph"
-    with open(graph, "rb") as f:
-        expected = pickle.load(f)
+
     # sentences = "Newcastle city center does not have traffic but Newcastle has traffic"
     with open(file, "r") as sentences_f:
         sentences = yaml.safe_load(sentences_f)
@@ -26,7 +23,7 @@ if __name__ == "__main__":
     from PyDatagramDB import DatagramDB
     d = DatagramDB(data,
                    "/home/giacomo/projects/LaSSI/LaSSI/resources/gsm_query.txt",
-                   visualizer ,
+                   visualizer,
                    isSerializationFull=True,
                    opt_data_schema="pos\nSizeTAtt\nbegin\nSizeTAtt\nend\nSizeTAtt")
     d.run()
@@ -38,8 +35,14 @@ if __name__ == "__main__":
             L.append(raw_json_graph)
 
     LL = make_output_as_triplets(L)
+
+def test(file):
+    LL = as_set_of_triplets(file)
+    graph = file[:-5] + ".graph"
+    with open(graph, "rb") as f:
+        expected = pickle.load(f)
     count = 1
-    for (x,y) in zip(expected, LL):
+    for (x, y) in zip(expected, LL):
         for x_item in x:
             if (not x_item[1].startswith("does ")):
                 if not x_item in y:
@@ -49,3 +52,9 @@ if __name__ == "__main__":
                     raise RuntimeError(f"Error: {x_item} not contained in {y}")
         print(f"Sentence #{count}: OK!")
         count += 1
+
+if __name__ == "__main__":
+    file = "/home/giacomo/projects/LaSSI/test_sentences/real_data/glue-rte_answers50.yaml"
+    LL = as_set_of_triplets(file)
+    with open("triplets.json", "w") as f:
+        f.write(json.dumps(LL, indent=4))

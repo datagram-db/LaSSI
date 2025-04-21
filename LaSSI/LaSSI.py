@@ -27,6 +27,7 @@ from LaSSI.phases.GetGSMString import GetGSMString
 from LaSSI.phases.LogicalRewriting import LogicalRewriting
 from LaSSI.phases.ResolveBasicTypes import ExplainTextWithNER
 from LaSSI.phases.SemanticGraphRewriting import SemanticGraphRewriting
+from LaSSI.similarities.Classifier import Classifier
 from LaSSI.similarities.graph_similarity import SimilarityScore
 from LaSSI.structures.extended_fol.Formulae import formula_from_dict
 from LaSSI.structures.internal_graph.Graph import Graph
@@ -34,6 +35,13 @@ from LaSSI.structures.internal_graph.InternalData import InternalRepresentation
 from LaSSI.structures.meuDB.meuDB import MeuDB
 from LaSSI.utils.configurations import LegacySemanticConfiguration
 
+
+def write_variable_to_file(dir, text):
+    try:
+        with open(dir, 'a') as file:
+            file.write(str(text))
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 class LaSSI():
     def __init__(self, dataset_name: str,
@@ -165,19 +173,19 @@ class LaSSI():
         if os.path.exists(self.string_rep_dir):
             os.remove(self.string_rep_dir)
         if not os.path.exists(self.benchmarking_file):
-            self.write_variable_to_file(self.benchmarking_file, "Dataset,Loading sentences,Generating meuDB,"
+            write_variable_to_file(self.benchmarking_file, "Dataset,Loading sentences,Generating meuDB,"
                                                                 "Loading meuDB,Generating gsmDB,Generating "
                                                                 "rewritten graphs,Generating intermediate "
                                                                 "representation,Generating logical representation")
             if self.run_ex_post:
-                self.write_variable_to_file(self.benchmarking_file, ",Ex Post Explanation\n")
+                write_variable_to_file(self.benchmarking_file, ",Ex Post Explanation\n")
             else:
-                self.write_variable_to_file(self.benchmarking_file, "\n")
+                write_variable_to_file(self.benchmarking_file, "\n")
         else:
             # If last line is not finished, add new line to ensure next benchmark is written to file correctly
             with open(self.benchmarking_file, 'r') as file:
                 if file.readlines()[-1].rstrip('\n').endswith(','):
-                    self.write_variable_to_file(self.benchmarking_file, "\n")
+                    write_variable_to_file(self.benchmarking_file, "\n")
 
     def apply_graph_grammars(self, n):
         from PyDatagramDB import DatagramDB
@@ -201,12 +209,7 @@ class LaSSI():
 
         return L
 
-    def write_variable_to_file(self, dir, text):
-        try:
-            with open(dir, 'a') as file:
-                file.write(str(text))
-        except Exception as e:
-            print(f"An error occurred: {e}")
+
 
     def _internal_graph(self, gsm_list):
         internal_representations = []
@@ -214,12 +217,12 @@ class LaSSI():
             from LaSSI.structures.provenance.GraphProvenance import GraphProvenance
             g = GraphProvenance(graph, meu_db, self.transformation == SentenceRepresentation.SimpleGraph)
             self.logger(f"{meu_db.first_sentence}")
-            self.write_variable_to_file(self.string_rep_dir, meu_db.first_sentence)
+            write_variable_to_file(self.string_rep_dir, meu_db.first_sentence)
             internal_graph = g.internal_graph()
             final_form = internal_graph
             if self.transformation == SentenceRepresentation.Logical:
                 final_form = g.sentence()
-                self.write_variable_to_file(self.string_rep_dir, f" ⇒ {final_form.to_string()}\n")
+                write_variable_to_file(self.string_rep_dir, f" ⇒ {final_form.to_string()}\n")
             internal_representations.append(final_form)
         return internal_representations
 
@@ -249,6 +252,14 @@ class LaSSI():
         if self.transformation == SentenceRepresentation.FullText and self.legacy_conf.HuggingFace.startswith("RAG#"):
             from LaSSI.ir.RAG import rag
             matrices = rag(self.legacy_conf.HuggingFace, self.catabolites_dir, obj_list)
+        elif self.transformation == SentenceRepresentation.FullText and self.legacy_conf.HuggingFace.startswith("Log#"):
+            f = Classifier(self.legacy_conf.HuggingFace[4:])
+            matrices = []
+            for i, x in enumerate(obj_list):
+                ls = []
+                for j, y in enumerate(obj_list):
+                    ls.append(f(x, y))
+                matrices.append(ls)
         else:
             if self.transformation == SentenceRepresentation.FullText:
                 f = self.fulltext_similarity
@@ -355,7 +366,7 @@ class LaSSI():
             obj_pickle if is_binary else json_dumps, not is_binary, self.should_benchmark, is_binary
         )
         print(f"Generating intermediate representations time: {intermediate_execution_time} seconds")
-        self.write_variable_to_file(self.benchmarking_file,
+        write_variable_to_file(self.benchmarking_file,
                                     f"{self.get_execution_time_string(meu_execution_time)},{gsm_execution_time[0]},{rewritten_execution_time[0]},{intermediate_execution_time[0]},")
 
         if self.transformation == SentenceRepresentation.Logical:  # LogicalGraph
@@ -364,13 +375,11 @@ class LaSSI():
                 lambda x: formula_from_dict(json.load(x)),
                 lambda: LogicalRewriting(self, intermediate_representations),
                 json_dumps, self.force, self.should_benchmark)
-            self.write_variable_to_file(self.benchmarking_file,f"{logical_rewriting_execution_time[0]}")
+            write_variable_to_file(self.benchmarking_file,f"{logical_rewriting_execution_time[0]}")
             print(f"Generating logical representations time: {logical_rewriting_execution_time} seconds")
         else:
             logical_representations = intermediate_representations
-            self.write_variable_to_file(self.benchmarking_file, f"{None}")
-        # for x in intermediate_representations:
-        #     print(str(x))
+            write_variable_to_file(self.benchmarking_file, f"{None}")
         return logical_representations
 
     def get_execution_time_string(self, execution_time):
@@ -388,7 +397,7 @@ class LaSSI():
         end_time = time.time()
         loading_sentences_execution_time = end_time - start_time
         self.logger(f"Loading sentences time: {loading_sentences_execution_time} seconds")
-        self.write_variable_to_file(self.benchmarking_file,
+        write_variable_to_file(self.benchmarking_file,
                                     f"{self.dataset_name.split('/')[-1].split('.yaml')[0]},{loading_sentences_execution_time},")
 
         result = self.sentence_transform(sentences)
@@ -399,10 +408,10 @@ class LaSSI():
             end_time = time.time()
             ex_post_execution_time = end_time - start_time
             self.logger(f"Ex Post Time: {loading_sentences_execution_time} seconds")
-            self.write_variable_to_file(self.benchmarking_file,
+            write_variable_to_file(self.benchmarking_file,
                                         f",{ex_post_execution_time}\n")
         else:
-            self.write_variable_to_file(self.benchmarking_file,
+            write_variable_to_file(self.benchmarking_file,
                                         f"\n")
 
 
