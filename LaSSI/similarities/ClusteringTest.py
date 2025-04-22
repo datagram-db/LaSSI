@@ -316,12 +316,11 @@ def test_with_maximal_matching(expected_clusters, experiment_name, transformer, 
         print(f"Threshold value (Agglomerative): {implying_vs_indifferent}")
         print(f"Accuracy Score (Agglomerative): {sklearn.metrics.accuracy_score(expected_labels, agg_scores)}")
         print(f"Macro-F1 Score (Agglomerative): {sklearn.metrics.f1_score(expected_labels, agg_scores, average='macro')}")
-        # print(f"Micro-F1 Score (Agglomerative): {sklearn.metrics.f1_score(expected_labels, agg_scores, average='micro')}")
+        print(f"Weighted-F1 Score (Agglomerative): {sklearn.metrics.f1_score(expected_labels, agg_scores, average='weighted')}")
         print(f"Macro-Precision Score (Agglomerative): {sklearn.metrics.precision_score(expected_labels, agg_scores, average='macro')}")
-        # print(f"Micro-Precision Score (Agglomerative): {sklearn.metrics.precision_score(expected_labels, agg_scores, average='micro')}")
+        print(f"Weighted-Precision Score (Agglomerative): {sklearn.metrics.precision_score(expected_labels, agg_scores, average='weighted')}")
         print(f"Macro-Recall Score (Agglomerative): {sklearn.metrics.recall_score(expected_labels, agg_scores, average='macro')}")
-        # print(f"Micro-Recall Score (Agglomerative): {sklearn.metrics.recall_score(expected_labels, agg_scores, average='micro')}")
-        print(f"Area Under ROC Curve One-Versus-Rest (Agglomerative): {sklearn.metrics.roc_auc_score(numpy.asarray(roc_expected), numpy.asarray(roc_scores), multi_class='ovr')}")
+        print(f"Weighted-Recall Score (Agglomerative): {sklearn.metrics.recall_score(expected_labels, agg_scores, average='weighted')}")
 
     print(f"Threshold value (Agglomerative clustering): {implying_vs_indifferent}")
     plot_dendogram(agg_model, distances, f"catabolites/{experiment_name}/{transformer}_dend.png")
@@ -336,20 +335,19 @@ def test_with_maximal_matching(expected_clusters, experiment_name, transformer, 
         print(f"Threshold value (K-Medoids): {implying_vs_indifferent}")
         print(f"Accuracy Score (K-Medoids): {sklearn.metrics.accuracy_score(expected_labels, agg_scores)}")
         print(f"Macro-F1 Score (K-Medoids): {sklearn.metrics.f1_score(expected_labels, agg_scores, average='macro')}")
-        # print(f"Micro-F1 Score (K-Medoids): {sklearn.metrics.f1_score(expected_labels, agg_scores, average='micro')}")
+        print(f"Weighted-F1 Score (K-Medoids): {sklearn.metrics.f1_score(expected_labels, agg_scores, average='weighted')}")
         print(f"Macro-Precision Score (K-Medoids): {sklearn.metrics.precision_score(expected_labels, agg_scores, average='macro')}")
-        # print(f"Micro-Precision Score (K-Medoids): {sklearn.metrics.precision_score(expected_labels, agg_scores, average='micro')}")
+        print(f"Weighted-Precision Score (K-Medoids): {sklearn.metrics.precision_score(expected_labels, agg_scores, average='weighted')}")
         print(f"Macro-Recall Score (Agglomerative): {sklearn.metrics.recall_score(expected_labels, agg_scores, average='macro')}")
-        # print(f"Micro-Recall Score (K-Medoids): {sklearn.metrics.recall_score(expected_labels, agg_scores, average='micro')}")
-        print(f"Area Under ROC Curve One-Versus-Rest (K-Medoids): {sklearn.metrics.roc_auc_score(numpy.asarray(roc_expected), numpy.asarray(roc_scores), multi_class='ovr')}")
+        print(f"Weighted-Recall Score (Agglomerative): {sklearn.metrics.recall_score(expected_labels, agg_scores, average='weighted')}")
 
     agg_score = best_clustering_match(agg_cluster_assignment, expected_clusters)
     agg_similarity = 1 - agg_score
-    print(f"Best Clustering Match (Agglomerative Clustering) Alignment Score: {agg_similarity}. {agg_cluster_assignment}")
+    print(f"Best Clustering Match (Agglomerative Clustering) [Proposed] Alignment Score: {agg_similarity}. {agg_cluster_assignment}")
 
     mkv_score = best_clustering_match(mkv_cluster_assignment, expected_clusters)
     mkv_similarity = 1 - mkv_score
-    print(f"Best Clustering Match (k-Medoids) Alignment Score: {mkv_similarity}. {mkv_cluster_assignment}")
+    print(f"Best Clustering Match (k-Medoids) [Proposed] Alignment Score: {mkv_similarity}. {mkv_cluster_assignment}")
 
 
 def prepare_for_classical_clustering_metrics(N, agg_cluster_assignment, not_implying_score, similarity_matrix):

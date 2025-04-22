@@ -1,4 +1,4 @@
-## Prallelized version:
+# # Prallelized version:
 # __author__ = "Oliver R. Fox, Giacomo Bergami"
 # __copyright__ = "Copyright 2024, Oliver R. Fox, Giacomo Bergami"
 # __credits__ = ["Oliver R. Fox, Giacomo Bergami"]

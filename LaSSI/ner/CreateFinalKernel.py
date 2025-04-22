@@ -461,7 +461,7 @@ class CreateFinalKernel:
                             properties_to_keep[key].append(new_prop)
                         else:
                             for prop_node in properties_key_:
-                                if prop_node.kernel.target is not None and prop_node.kernel.target.id in acl_relcl_map.keys():
+                                if prop_node.kernel is None or (prop_node.kernel.target is not None and prop_node.kernel.target.id in acl_relcl_map.keys()):
                                     continue
 
                                 if prop_node.type == 'SENTENCE':

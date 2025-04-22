@@ -240,13 +240,23 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
             keyCmp, keyCmpInv = defaultdict(set), defaultdict(set)
             keys = set(map(lambda z: z[0], xprop)).union(map(lambda z: z[0], yprop))
             hasDirectSubset = False
-            if is_direct_subset(yprop, xprop):
+            dLHS = dict(xprop)
+            dRHS = dict(yprop)
+            if is_direct_subset(xprop, yprop):
                 keyCmpElements = CasusHappening.GENERAL_IMPLICATION
                 keyCmpElementsInv = CasusHappening.INDIFFERENT
                 hasDirectSubset = True
+            elif set(dLHS.keys()).issubset(set(dRHS.keys())):
+                keyCmpElements = CasusHappening.INDIFFERENT
+                keyCmpElementsInv = CasusHappening.INDIFFERENT
             else:
-                dLHS = dict(xprop)
-                dRHS = dict(yprop)
+            # if is_direct_subset(yprop, xprop):
+            #     keyCmpElements = CasusHappening.GENERAL_IMPLICATION
+            #     keyCmpElementsInv = CasusHappening.INDIFFERENT
+            #     hasDirectSubset = True
+            # else:
+                # dLHS = dict(xprop)
+                # dRHS = dict(yprop)
                 for key in keys:
                     if key in dLHS and key in dRHS:
                         for xx in dLHS[key]:

@@ -379,7 +379,10 @@ class AssignTypeToSingleton:
             is_current_edge_relationship = edge['containment'] in edge_relationship_label
             if is_current_edge_relationship:
                 has_relationship = True
-                child_node = self.nodes[edge['score']['child']]
+                # TODO: Patch: skipping if missing (but this has to be fixed)
+                if not edge['score']['child'] in self.nodes:
+                    continue
+                child_node = self.nodes[edge['score']['child']]  ## Giacomo: BUG, child node might be missing.
                 grouped_nodes.append(child_node)
                 norm_confidence *= child_node.confidence
 

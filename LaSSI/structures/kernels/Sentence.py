@@ -249,6 +249,7 @@ def create_sentence(edges, nodes, negations, root_sentence_id, found_preposition
         returned_kernel_id_to_check = get_kernel_top_id(prev_loop_settings.previousKernel.kernel, top_node_id_positions)
 
         if (
+                # TODO: PATCH kernel_id_to_check is None or returned_kernel_id_to_check is None or  ## GIACOMO: This is a patch. TODO: handle the case
                 returned_kernel_id_to_check is None or
                 top_node_id_positions[kernel_id_to_check] < top_node_id_positions[returned_kernel_id_to_check]
         ):

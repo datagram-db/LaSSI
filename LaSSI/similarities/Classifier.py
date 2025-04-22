@@ -15,12 +15,13 @@ class Classifier:
             score = (1-result["score"])/2.0
         else:
             raise RuntimeError("ERROR: unexpected label {}".format(result["label"]))
-        print(f"Prompt: '{prompt}'. Score: {score}. Label: {result['label']}")
+        print(f"Prompt: '{prompt}'. Score: {result['score']}. Label: {result['label']}")
         return score
 
 
 if __name__ == "__main__":
     pipe = Classifier()
-    print(pipe("Alice skates", "Bob skates"))# class , score 0
-    print(pipe("Alice Skates", "Alice does skate"))
-    print(pipe("Alice skates","Alice does not skate"))
+    print(pipe("Alice skates", "Bob skates"))             # Inferred Indifference? Class 0, Score 0.99 -> >0.01 score after normalization ~ Still, this merges with conflicting information
+    print(pipe("Alice Skates", "Alice does skate"))       # Correct implication    Class 1, Score 0.77 -> 0.88 after normalization
+    print(pipe("Alice Skates", "Alice does play sports")) # Inferred semantics?   Class 1, Score 0.76  -> 0.88 after normalization
+    print(pipe("Alice skates","Alice does not skate"))    # Wrong classification! Class 1, Score 0.97  -> 0.98 after normalization

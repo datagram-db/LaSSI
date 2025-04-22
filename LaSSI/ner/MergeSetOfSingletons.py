@@ -2,7 +2,7 @@ from collections import defaultdict
 from itertools import repeat
 
 from LaSSI.ner.node_functions import create_props_for_singleton
-from LaSSI.structures.internal_graph.EntityRelationship import Singleton
+from LaSSI.structures.internal_graph.EntityRelationship import Singleton, SetOfSingletons
 
 
 def score_from_meu(min_value, max_value, node_type, meu_db_row, parmenides):
@@ -35,6 +35,13 @@ def GraphNER_withProperties(node, is_simplistic_rewriting, meu_db_row, parmenide
     chosen_entity = None
     norm_confidence = 1
     fusion_properties = dict()
+
+    # ### PATCH: skipping SetOfSingletons that might be within the collection. TODO: these should be included
+    # resulting_entities = list(filter(lambda x: not isinstance(x, SetOfSingletons), node.entities))
+    #
+    # # Sort entities based on word position to keep correct order
+    # ## GIACOMO: BUG: SetOfSingletons do not have properties. It might happen that this is provided as part of the GraphNerWithProperties.
+    # sorted_entities = sorted(resulting_entities, key=lambda x: float(dict(x.properties)['pos']))
 
     # Sort entities based on word position to keep correct order
     sorted_entities = sorted(node.entities, key=lambda x: float(dict(x.properties)['pos']))

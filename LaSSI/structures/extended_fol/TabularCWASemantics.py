@@ -11,6 +11,9 @@ from LaSSI.structures.extended_fol.Formulae import Formula
 from LaSSI.Parmenides.formula_utils import latex_rendering, latex_rendering_to_raster_file
 from FunctionalMatch.utils import CountingDictionary
 
+from LaSSI.structures.extended_fol.TBoxReasoning import non_redundant_constituents
+
+
 def png_node(obj, key, dir, nodes_map,fillColor=None):
     import pydot
     local_file = os.path.join(dir, key + ".svg")
@@ -132,6 +135,15 @@ class TabularCWASemantics:
                     if i != j:
                         L.append(self._mutual_truth(i, j))
             return reduce(lambda x, y: x.merge(y), L)
+            # # if len(S)>1:
+            # #     S = set(filter(lambda i: non_redundant_constituents(self.ec.lhsOrigDict[i].original, False), S))
+            # for i in S:
+            #     # if not non_redundant_constituents(self.ec.lhsOrigDict[i].original, False):
+            #     #     continue
+            #     for j in T:
+            #         if i != j:
+            #             L.append(self._mutual_truth(i, j))
+            # return reduce(lambda x, y: x.merge(y), L) if len(L)>0 else pandas.DataFrame({})
 
     def get_straightforward_id_similarity(self, i, j):
         ## Obtaining the constituents' combination where Ri always holds (premise)

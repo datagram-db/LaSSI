@@ -1,4 +1,4 @@
-## Supporting parallelized version
+# # Supporting parallelized version
 # __author__ = "Oliver Robert Fox, Giacomo Bergami"
 # __copyright__ = "Copyright 2020, Giacomo Bergami"
 # __credits__ = ["Oliver Robert Fox", "Giacomo Bergami"]
@@ -11,6 +11,7 @@
 # import itertools
 #
 # from LaSSI.external_services.Services import Services
+# from LaSSI.similarities.levenshtein import lev
 # from LaSSI.structures.meuDB.meuDB import MeuDBEntry, MeuDB
 #
 #
@@ -42,36 +43,33 @@
 #                 self.services.log(f"#{idx}: fuzzy conceptnet...")
 #                 concepts = self.services.getConcepts().resolve_u(self.recall_threshold, self.precision_threshold, sentence, "ENTITY")
 #                 self.services.log(f"#{idx}: merging iterators together...")
-#                 multi_entity_unit = list(itertools.chain.from_iterable([fuzzy_parmenides, geo_names, concepts]))
+#                 multi_entity_unit = list()
 #
 #                 ## 1) Time Parsing
 #                 self.services.log(f"#{idx}: finalising time parsing...")
-#                 for time in withTime:
-#                     time = MeuDBEntry.from_dict_with_src(time, "SUTime")
-#                     multi_entity_unit.append(time)
-#
-#                 # for x in self.services.getGeoNames().resolve_u(self.recall_threshold, self.precision_threshold, sentence, "GPE"):
-#                 #     multi_entity_unit.append(x)
-#
-#                 # for x in self.services.getConcepts().resolve_u(self.recall_threshold, self.precision_threshold, sentence, "ENTITY"):
-#                 #     multi_entity_unit.append(x)
+#                 time_stream = map(lambda time: MeuDBEntry.from_dict_with_src(time, "SUTime"), withTime)
 #
 #                 ## 2) Typed entity parsing
 #
 #                 self.services.log(f"#{idx}: stanza parsing...")
 #                 results = self.stanza_service(sentence)
+#                 self.services.log(f"#{idx}: verbs")
+#                 verbs = [MeuDBEntry(word.text, word.pos.lower(), word.start_char, word.end_char, word.lemma, 1.0, word.lemma, "Stanza") for result_sentence in results.sentences for word in result_sentence.words if word.pos.lower() == 'verb']
+#
+#                 self.services.log(f"#{idx}: verbs")
 #                 for result_sentence in results.sentences:
 #                     for word in result_sentence.words:
 #                         if word.pos.lower() == 'verb':
 #                             multi_entity_unit.append(MeuDBEntry(word.text, word.pos.lower(), word.start_char, word.end_char, word.lemma, 1.0, word.lemma, "Stanza"))
-#                 for ent in results.ents:
-#                     # monad = ""
-#                     entity = ent.text
-#                     monad = entity.replace(" ", "")
-#                     if ent.type == "ORG":  # Remove spaces to create one word 'ORG' entities
-#                         entities.append([entity, monad])
-#                     from LaSSI.similarities.levenshtein import lev
-#                     multi_entity_unit.append(MeuDBEntry(ent.text, ent.type, ent.start_char, ent.end_char, monad, lev(monad.lower(), ent.text.lower()), monad, "Stanza"))
+#
+#                 self.services.log(f"#{idx}: entities")
+#                 entities = [[ent.text, ent.text.replace(" ", "")] for ent in results.ents if ent.type == "ORG"]
+#
+#                 self.services.log(f"#{idx}: levs")
+#                 levs = map(lambda ent: MeuDBEntry(ent.text, ent.type, ent.start_char, ent.end_char, ent.text.replace(" ", ""), lev(ent.text.replace(" ", "").lower(), ent.text.lower()), ent.text.replace(" ", ""), "Stanza"), results.ents)
+#
+#                 self.services.log(f"#{idx}: merging...")
+#                 multi_entity_unit = list(itertools.chain(fuzzy_parmenides, geo_names, concepts, time_stream, verbs, levs, multi_entity_unit))
 #
 #                 # Loop through all entities and replace in sentence before passing to NLP server
 #                 for entity in entities:
@@ -152,7 +150,7 @@ class ResolveBasicTypes:
 
             db.append(MeuDB(sentence, multi_entity_unit))
             end_time = ti.time()
-            self.sentences_benchmark.add_row(idx, "Generating meuDB", end_time - start_time)
+            # self.sentences_benchmark.add_row(idx, "Generating meuDB", end_time - start_time)
         return db
 
 

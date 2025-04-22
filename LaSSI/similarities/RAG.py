@@ -3,6 +3,8 @@ import sys
 
 from ragatouille import RAGPretrainedModel
 
+#
+
 def rag(name_model, experiment_name, sentences):
     sentences = sentences
     assert name_model.startswith("RAG#")

@@ -129,8 +129,8 @@ class ModelSearch:
                     if firstConst is None:
                         firstConst = val
                     # return val
-            from LaSSI.Parmenides.TBox.ExpandConstituents import simplifyConstituents
-            result = simplifyConstituents(elems)
-            # assert (firstConst is None) or (result == firstConst)
+            # from LaSSI.Parmenides.TBox.ExpandConstituents import simplifyConstituents
+            # result = simplifyConstituents(elems)
+            # # assert (firstConst is None) or (result == firstConst)
             self.main_cache[cp] = result
             return self.main_cache[cp]

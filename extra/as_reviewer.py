@@ -44,7 +44,7 @@ def load_and_html_print(yaml_file, json_file):
         ol.append(li)
     body.append(ol)
     html.append(body)
-    with open("resultNCL.html", "w") as f:
+    with open("resultNCL2.html", "w") as f:
         f.write(html.prettify())
 
 
@@ -54,4 +54,4 @@ def load_and_html_print(yaml_file, json_file):
 
 if __name__ == "__main__":
     load_and_html_print("/home/giacomo/projects/LaSSI/test_sentences/orig/newcastle_mdpi.yaml",
-                        "/home/giacomo/projects/LaSSI/catabolites/newcastle_mdpi/logical_rewriting.json")
+                        "../catabolites/newcastle_mdpi/logical_rewriting.json")

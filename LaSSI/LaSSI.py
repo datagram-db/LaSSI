@@ -56,7 +56,8 @@ class LaSSI():
                  force=False,
                  should_benchmark=True,
                  legacy_conf: LegacySemanticConfiguration = None,
-                 disable_ad_hoc: bool = False
+                 disable_ad_hoc: bool = False,
+                 run_ex_post: bool = True,
                  ):
         self.disable_ad_hoc = disable_ad_hoc
         if legacy_conf is None:
@@ -66,7 +67,7 @@ class LaSSI():
         self.legacy_conf.HuggingFace = transformer
         self.string_rep_dir = None
         self.benchmarking_file = None
-        self.run_ex_post = True
+        self.run_ex_post = run_ex_post
         self.create_catabolites_dir(dataset_name)
         self.dataset_name = dataset_name
         tmp = f"{self.dataset_name}_clusters.txt"
@@ -213,6 +214,7 @@ class LaSSI():
 
     def _internal_graph(self, gsm_list):
         internal_representations = []
+        # counting = 0
         for graph, meu_db in zip(gsm_list, self.meu_dbs):
             from LaSSI.structures.provenance.GraphProvenance import GraphProvenance
             g = GraphProvenance(graph, meu_db, self.transformation == SentenceRepresentation.SimpleGraph)
@@ -224,6 +226,7 @@ class LaSSI():
                 final_form = g.sentence()
                 write_variable_to_file(self.string_rep_dir, f" ⇒ {final_form.to_string()}\n")
             internal_representations.append(final_form)
+            # counting += 1
         return internal_representations
 
     def _logical_rewriting(self, intermediate_representations):
@@ -250,7 +253,7 @@ class LaSSI():
     def _calculate_matrix(self, obj_list):
         matrices = None
         if self.transformation == SentenceRepresentation.FullText and self.legacy_conf.HuggingFace.startswith("RAG#"):
-            from LaSSI.ir.RAG import rag
+            from LaSSI.similarities.RAG import rag
             matrices = rag(self.legacy_conf.HuggingFace, self.catabolites_dir, obj_list)
         elif self.transformation == SentenceRepresentation.FullText and self.legacy_conf.HuggingFace.startswith("Log#"):
             f = Classifier(self.legacy_conf.HuggingFace[4:])
@@ -291,7 +294,9 @@ class LaSSI():
             for i, x in enumerate(obj_list):
                 ls = []
                 for j, y in enumerate(obj_list):
-                    ls.append(f(x, y))
+                    eval = f(x,y)
+                    # print(f"score({i},{j}) = {eval}")
+                    ls.append(eval)
                 matrices.append(ls)
         # matrices = np.array(matrices)
 
