@@ -303,18 +303,18 @@ class LaSSI():
                   self.transformation == SentenceRepresentation.SimpleGraph):
                 f = self.graph_with_logic_similarity
 
-        matrices = []
-        for i, x in enumerate(obj_list):
-            start = time.time()
+            matrices = []
+            for i, x in enumerate(obj_list):
+                start = time.time()
 
-            ls = []
-            for j, y in enumerate(obj_list):
-                ls.append(f(x, y))
-            matrices.append(ls)
+                ls = []
+                for j, y in enumerate(obj_list):
+                    ls.append(f(x, y))
+                matrices.append(ls)
 
-            end = time.time()
-            self.sentences_benchmark.add_row(i, "Ex post", end - start)
-        # matrices = np.array(matrices)
+                end = time.time()
+                self.sentences_benchmark.add_row(i, "Ex post", end - start)
+            # matrices = np.array(matrices)
 
         return matrices
 

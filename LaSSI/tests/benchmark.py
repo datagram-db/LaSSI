@@ -2,30 +2,39 @@ import csv
 from typing import Dict, List
 
 class Benchmark:
-    _data: List[Dict[str, float]] = []
-    _phase_names: List[str] = []
+    _data: Dict[str, List[Dict[str, float]]] = {}
+    _phase_names: Dict[str, List[str]] = {}
 
-    def __init__(self):
+    def __init__(self, name: str = "default"):
         self.data = Benchmark._data
         self.phase_names = Benchmark._phase_names
+        self.name = name
+        if name not in Benchmark._data:
+            Benchmark._data[name] = []
+            Benchmark._phase_names[name] = []
+        self.data = Benchmark._data[name]
+        self.phase_names = Benchmark._phase_names[name]
 
-    def add_row(self, sentence_id: int, phase_name: str, time: float) -> None:
+    def add_row(self, id: Dict[int, str], phase_name: str, value: Dict[float, str]) -> None:
+        if self.name == "Metrics":
+            value = f"{round(value, 2) if isinstance(value, float) else value:.2f}" if value != "N/A" else value
+
         if phase_name not in self.phase_names:
             self.phase_names.append(phase_name)
 
         for row in self.data:
-            if row['sentence_id'] == sentence_id:
-                row[phase_name] = time
+            if row['id'] == id:
+                row[phase_name] = value
                 return
 
-        new_row = {'sentence_id': sentence_id, phase_name: time}
+        new_row = {'id': id, phase_name: value}
         if self.data:
             previous_row = self.data[-1]
             for existing_phase in self.phase_names:
                 if existing_phase not in new_row:
                     new_row[existing_phase] = 0.0
             for phase in new_row:
-                if phase != 'sentence_id' and phase not in previous_row:
+                if phase != 'id' and phase not in previous_row:
                     previous_row[phase] = 0.0
         self.data.append(new_row)
 
@@ -38,11 +47,11 @@ class Benchmark:
 
         try:
             with open(filename, 'w', newline='') as csvfile:
-                header = ['sentence_id'] + self.phase_names
+                header = ['id'] + self.phase_names
                 writer = csv.DictWriter(csvfile, fieldnames=header)
                 writer.writeheader()
                 for row in self.data:
-                    full_row = {'sentence_id': row['sentence_id']}
+                    full_row = {'id': row['id']}
                     for phase in self.phase_names:
                         full_row[phase] = row.get(phase, 0.0)
                     writer.writerow(full_row)

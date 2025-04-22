@@ -12,14 +12,17 @@ import os
 import sys
 
 import numpy as np
-from sklearn import metrics
 from sklearn.cluster import AgglomerativeClustering
 from scipy.sparse import csr_matrix
 import markov_clustering as mc
 import networkx as nx
 import matplotlib
 import matplotlib.pyplot
-from sklearn.metrics import silhouette_score, adjusted_rand_score
+from sklearn.metrics import silhouette_score, adjusted_rand_score, recall_score, precision_score, accuracy_score, \
+    f1_score, cluster
+
+from LaSSI.tests.benchmark import Benchmark
+metrics_benchmark = Benchmark("Metrics")
 
 
 def graph_plot(matrix, clusters, filename="graph.png"):
@@ -142,7 +145,7 @@ def plot_dendogram(model, D, filename="dendrogram.png"):
 def as_distance_matrix(similarity_matrix):
     lls = [[1.0 - value for value in row] for row in similarity_matrix]
     lls = np.asarray(lls)
-    return (lls + lls.transpose())/2
+    return (lls + lls.transpose()) / 2
 
 
 def maximal_matching(M):
@@ -183,6 +186,7 @@ def matrix_init_normalize(matrix, normalization):
     else:
         return csr_matrix(matrix)
 
+
 def knn(similarity_matrix, n_expected_clusters):
     distances = as_distance_matrix(similarity_matrix)
     from sklearn_extra.cluster import KMedoids
@@ -191,6 +195,7 @@ def knn(similarity_matrix, n_expected_clusters):
     for i, cluster in zip(range(len(similarity_matrix)), model.labels_):
         cluster_assignment[cluster].add(i)
     return cluster_assignment, model, np.array(similarity_matrix)
+
 
 def mcl_clustering_matches(similarity_matrix, expected_clusters):
     normalization = ["simple_laplacian", "sym_normalized_laplacian", "random_walk_normalized", "none"]
@@ -264,12 +269,35 @@ def matrix_exp2(matrix):
     return np.multiply(matrix, matrix)
 
 
-def test_with_maximal_matching(expected_clusters, experiment_name, transformer, similarity_matrix=None, implication_matrix=None):
+def test_with_maximal_matching(expected_clusters, experiment_name, transformer, similarity_matrix=None,
+                               implication_matrix=None):
+
     if similarity_matrix is None:
         similarity_matrix = read_json_array(
             f"catabolites/{experiment_name}/confusion_matrices_{transformer}.json")
         if similarity_matrix is None:
             return
+
+    if transformer == "FullText_all-MiniLM-L6-v2":
+        transformer = f"T1_{transformer}"
+    elif transformer == "FullText_all-MiniLM-L12-v2":
+        transformer = f"T2_{transformer}"
+    elif transformer == "FullText_all-mpnet-base-v2":
+        transformer = f"T3_{transformer}"
+    elif transformer == "FullText_all-roberta-large-v1":
+        transformer = f"T4_{transformer}"
+    elif transformer == "FullText_AMR-LE-DeBERTa-V2-XXLarge-Contraposition-Double-Negation-Implication-Commutative-Pos-Neg-1-3":
+        transformer = f"T5_{transformer}"
+    elif transformer == "FullText_colbertv2.0":
+        transformer = f"T6_{transformer}"
+    elif transformer == "SimpleGraph":
+        transformer = "1SimpleGraph"
+    elif transformer == "LogicalGraph":
+        transformer = "2LogicalGraph"
+    elif transformer == "Logical":
+        transformer = "3Logical"
+
+    row_name = f"{experiment_name}_{transformer}"
 
     not_implying_score = 0.0
     N = len(similarity_matrix)
@@ -284,13 +312,13 @@ def test_with_maximal_matching(expected_clusters, experiment_name, transformer, 
                 cell = row[j]
                 if cell == 1.0:
                     expected_labels.append(1)
-                    roc_expected.append([1.0,0.0,0.0])
+                    roc_expected.append([1.0, 0.0, 0.0])
                 elif cell == 0.0:
                     expected_labels.append(-1)
-                    roc_expected.append([0.0,0.0,1.0])
+                    roc_expected.append([0.0, 0.0, 1.0])
                 else:
                     expected_labels.append(0)
-                    roc_expected.append([0.0,1.0,0.0])
+                    roc_expected.append([0.0, 1.0, 0.0])
         import itertools
         scores = list(itertools.chain.from_iterable(implication_matrix))
         n_not_implying = sum(1 for x in scores if x == 0.0)
@@ -298,67 +326,103 @@ def test_with_maximal_matching(expected_clusters, experiment_name, transformer, 
         scores.sort()
         not_implying_score = max(scores[: n_not_implying])
 
-    if not os.path.exists(experiment_name):
-        os.makedirs(experiment_name)
+    if not os.path.exists(f"catabolites/{experiment_name}"):
+        os.makedirs(f"catabolites/{experiment_name}")
 
-    print("Agglomerative clustering")
+    print("Metrics (Agglomerative clustering)")
     n_expected_clusters = len(expected_clusters)
     agg_cluster_assignment, agg_model, distances = agglomerative_clustering(similarity_matrix, n_expected_clusters)
-    plot_dendogram(agg_model, distances, f"/home/campus.ncl.ac.uk/b9063849/PycharmProjects/LaSSI/catabolites/{experiment_name}/{transformer}_dend.png")
-    agg_scores, implying_vs_indifferent, roc_scores = prepare_for_classical_clustering_metrics(N,
-                                                                                               agg_cluster_assignment,
-                                                                                               not_implying_score,
-                                                                                               similarity_matrix)
+    agg_scores, implying_vs_indifferent, roc_scores = prepare_for_classical_clustering_metrics(
+        N, agg_cluster_assignment, not_implying_score, similarity_matrix)
+    print_metrics(agg_scores, expected_labels, implying_vs_indifferent, "Agglomerative", row_name)
 
-    if expected_labels is not None and agg_scores is not None:
-        print(f"Threshold value (Agglomerative): {implying_vs_indifferent}")
-        print(f"Accuracy Score (Agglomerative): {metrics.accuracy_score(expected_labels, agg_scores)}")
-        print(f"Macro-F1 Score (Agglomerative): {metrics.f1_score(expected_labels, agg_scores, average='macro')}")
-        print(f"Weighted-F1 Score (Agglomerative): {metrics.f1_score(expected_labels, agg_scores, average='weighted')}")
-        print(f"Macro-Precision Score (Agglomerative): {metrics.precision_score(expected_labels, agg_scores, average='macro')}")
-        print(f"Weighted-Precision Score (Agglomerative): {metrics.precision_score(expected_labels, agg_scores, average='weighted')}")
-        print(f"Macro-Recall Score (Agglomerative): {metrics.recall_score(expected_labels, agg_scores, average='macro')}")
-        print(f"Weighted-Recall Score (Agglomerative): {metrics.recall_score(expected_labels, agg_scores, average='weighted')}")
-
-    print(f"Threshold value (Agglomerative clustering): {implying_vs_indifferent}")
     plot_dendogram(agg_model, distances, f"catabolites/{experiment_name}/{transformer}_dend.png")
 
-    print("Markov clustering")
+    print("Metrics (Markov clustering)")
     mkv_cluster_assignment, matrix, mkv_clusters = knn(similarity_matrix, n_expected_clusters)
-    agg_scores, implying_vs_indifferent, roc_scores = prepare_for_classical_clustering_metrics(N,
-                                                                                               mkv_cluster_assignment,
-                                                                                               not_implying_score,
-                                                                                               similarity_matrix)
-    if expected_labels is not None and agg_scores is not None:
-        print(f"Threshold value (K-Medoids): {implying_vs_indifferent}")
-        print(f"Accuracy Score (K-Medoids): {metrics.accuracy_score(expected_labels, agg_scores)}")
-        print(f"Macro-F1 Score (K-Medoids): {metrics.f1_score(expected_labels, agg_scores, average='macro')}")
-        print(f"Weighted-F1 Score (K-Medoids): {metrics.f1_score(expected_labels, agg_scores, average='weighted')}")
-        print(f"Macro-Precision Score (K-Medoids): {metrics.precision_score(expected_labels, agg_scores, average='macro')}")
-        print(f"Weighted-Precision Score (K-Medoids): {metrics.precision_score(expected_labels, agg_scores, average='weighted')}")
-        print(f"Macro-Recall Score (Agglomerative): {metrics.recall_score(expected_labels, agg_scores, average='macro')}")
-        print(f"Weighted-Recall Score (Agglomerative): {metrics.recall_score(expected_labels, agg_scores, average='weighted')}")
+    agg_scores, implying_vs_indifferent, roc_scores = prepare_for_classical_clustering_metrics(
+        N, mkv_cluster_assignment, not_implying_score, similarity_matrix)
+    print_metrics(agg_scores, expected_labels, implying_vs_indifferent, "k-Medoids", row_name)
 
     agg_score = best_clustering_match(agg_cluster_assignment, expected_clusters)
     agg_similarity = 1 - agg_score
-    print(f"Best Clustering Match (Agglomerative Clustering) [Proposed] Alignment Score: {agg_similarity}. {agg_cluster_assignment}")
+    print(f"Best Clustering Match (Agglomerative Clustering) [Proposed] Alignment Score: "
+          f"{agg_similarity}. {agg_cluster_assignment}")
+    metrics_benchmark.add_row(row_name, f"Best Clustering Match (Agglomerative Clustering) [Proposed] Alignment Score", agg_similarity)
 
     mkv_score = best_clustering_match(mkv_cluster_assignment, expected_clusters)
     mkv_similarity = 1 - mkv_score
     print(f"Best Clustering Match (k-Medoids) [Proposed] Alignment Score: {mkv_similarity}. {mkv_cluster_assignment}")
+    metrics_benchmark.add_row(row_name, f"Best Clustering Match (k-Medoids) [Proposed] Alignment Score", mkv_similarity)
 
     expected_clusters_labels = get_labels(expected_clusters)
-    print(f"silhouette_score: expected_clusters: {silhouette_score(as_distance_matrix(similarity_matrix), expected_clusters_labels, metric='precomputed')}")
+    print_silhouette_score(expected_clusters_labels, similarity_matrix, "Expected", row_name)
 
     agg_clusters_labels = get_labels(agg_cluster_assignment)
-    print(f"silhouette_score: agg_cluster_assignment: {silhouette_score(as_distance_matrix(similarity_matrix), agg_clusters_labels, metric='precomputed')}")
-    print(f"rnd score: {adjusted_rand_score(expected_clusters_labels, agg_clusters_labels)}")
-    print(f"purity: {purity_score(expected_clusters_labels, agg_clusters_labels)}")
+    print_silhouette_score(agg_clusters_labels, similarity_matrix, "Agglomerative Clustering", row_name)
+    print(f"RND score (Agglomerative Clustering): {adjusted_rand_score(expected_clusters_labels, agg_clusters_labels)}")
+    metrics_benchmark.add_row(row_name, f"RND score (Agglomerative Clustering)", adjusted_rand_score(expected_clusters_labels, agg_clusters_labels))
+    print(f"Purity (Agglomerative Clustering): {purity_score(expected_clusters_labels, agg_clusters_labels)}")
+    metrics_benchmark.add_row(row_name, f"Purity (Agglomerative Clustering)", purity_score(expected_clusters_labels, agg_clusters_labels))
 
     knn_clusters_labels = get_labels(mkv_cluster_assignment)
-    print(f"silhouette_score: mkv_cluster_assignment: {silhouette_score(as_distance_matrix(similarity_matrix), knn_clusters_labels, metric='precomputed')}")
-    print(f"rnd score: {adjusted_rand_score(expected_clusters_labels, knn_clusters_labels)}")
-    print(f"purity: {purity_score(expected_clusters_labels, knn_clusters_labels)}")
+    print_silhouette_score(knn_clusters_labels, similarity_matrix, "k-Medoids", row_name)
+    print(f"RND score (k-Medoids): {adjusted_rand_score(expected_clusters_labels, knn_clusters_labels)}")
+    metrics_benchmark.add_row(row_name, f"RND score (k-Medoids)", mkv_similarity)
+    print(f"Purity (k-Medoids): {purity_score(expected_clusters_labels, knn_clusters_labels)}")
+    metrics_benchmark.add_row(row_name, f"Purity (k-Medoids)", mkv_similarity)
+
+
+def print_silhouette_score(cluster_labels, similarity_matrix, type, row_name):
+    try:
+        calculated_silhouette_score = silhouette_score(as_distance_matrix(similarity_matrix), cluster_labels, metric='precomputed') if len(
+            np.unique(cluster_labels)) != len(cluster_labels) else "N/A"
+        print(f"Silhouette score ({type}): "
+          f"{calculated_silhouette_score}")
+        metrics_benchmark.add_row(row_name, f"Silhouette score ({type})", calculated_silhouette_score)
+    except ValueError as e:
+        X = as_distance_matrix(similarity_matrix)
+        np.fill_diagonal(X, 0)  # TODO: Is it okay to do this?
+        calculated_silhouette_score = silhouette_score(X, cluster_labels,
+                                                       metric='precomputed') if len(
+            np.unique(cluster_labels)) != len(cluster_labels) else "N/A"
+        print(f"Silhouette score ({type}): {calculated_silhouette_score}")
+        metrics_benchmark.add_row(row_name, f"Silhouette score ({type})", calculated_silhouette_score)
+
+
+def print_metrics(agg_scores, expected_labels, implying_vs_indifferent, type, row_name):
+    if expected_labels is not None and agg_scores is not None:
+        print(f"Threshold value ({type}): "
+              f"{implying_vs_indifferent}")
+        # metrics_benchmark.add_row(row_name, f"Threshold value ({type})", implying_vs_indifferent)
+
+        print(f"Accuracy Score ({type}): "
+              f"{accuracy_score(expected_labels, agg_scores)}")
+        metrics_benchmark.add_row(row_name, f"Accuracy Score ({type})", accuracy_score(expected_labels, agg_scores))
+
+        print(f"Macro-F1 Score ({type}): "
+              f"{f1_score(expected_labels, agg_scores, average='macro')}")
+        metrics_benchmark.add_row(row_name, f"Macro-F1 Score ({type})", f1_score(expected_labels, agg_scores, average='macro'))
+
+        print(f"Weighted-F1 Score ({type}): "
+              f"{f1_score(expected_labels, agg_scores, average='weighted')}")
+        metrics_benchmark.add_row(row_name, f"Weighted-F1 Score ({type})", f1_score(expected_labels, agg_scores, average='weighted'))
+
+        print(f"Macro-Precision Score ({type}): "
+              f"{precision_score(expected_labels, agg_scores, average='macro')}")
+        metrics_benchmark.add_row(row_name, f"Macro-Precision Score ({type})", precision_score(expected_labels, agg_scores, average='macro'))
+
+        print(f"Weighted-Precision Score ({type}): "
+              f"{precision_score(expected_labels, agg_scores, average='weighted')}")
+        metrics_benchmark.add_row(row_name, f"Weighted-Precision Score ({type})", precision_score(expected_labels, agg_scores, average='weighted'))
+
+        print(f"Macro-Recall Score ({type}): "
+              f"{recall_score(expected_labels, agg_scores, average='macro')}")
+        metrics_benchmark.add_row(row_name, f"Macro-Recall Score ({type})", recall_score(expected_labels, agg_scores, average='macro'))
+
+        print(f"Weighted-Recall Score ({type}): "
+              f"{recall_score(expected_labels, agg_scores, average='weighted')}")
+        metrics_benchmark.add_row(row_name, f"Weighted-Recall Score ({type})", recall_score(expected_labels, agg_scores, average='weighted'))
 
 
 def prepare_for_classical_clustering_metrics(N, agg_cluster_assignment, not_implying_score, similarity_matrix):
@@ -401,6 +465,7 @@ def prepare_for_classical_clustering_metrics(N, agg_cluster_assignment, not_impl
             idx += 1
     return agg_scores, implying_vs_indifferent, roc_scores
 
+
 def get_labels(expected_clusters):
     N = 0
     d = dict()
@@ -411,9 +476,10 @@ def get_labels(expected_clusters):
     L = [d[x] for x in range(N)]
     return L
 
+
 def purity_score(y_true, y_pred):
     # compute contingency matrix (also called confusion matrix)
-    contingency_matrix = metrics.cluster.contingency_matrix(y_true, y_pred)
+    contingency_matrix = cluster.contingency_matrix(y_true, y_pred)
     # return purity
     return np.sum(np.amax(contingency_matrix, axis=0)) / np.sum(contingency_matrix)
 
@@ -443,7 +509,8 @@ if __name__ == '__main__':
         [[[0, 1], [2, 3], [4], [5]], "cat_mouse"],
         [[[0, 1, 9], [2], [3], [4], [5], [6, 7, 8], [10], [11], [12]], "newcastle_mdpi"]
     ]
-    transformers = ["SimpleGraph", "LogicalGraph", "Logical", "FullText_all-MiniLM-L6-v2", "FullText_all-MiniLM-L12-v2", "FullText_all-mpnet-base-v2", "FullText_all-roberta-large-v1"]
+    transformers = ["SimpleGraph", "LogicalGraph", "Logical", "FullText_all-MiniLM-L6-v2", "FullText_all-MiniLM-L12-v2",
+                    "FullText_all-mpnet-base-v2", "FullText_all-roberta-large-v1"]
 
     for test in tests:
         print(test[1])

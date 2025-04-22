@@ -1,9 +1,8 @@
+import matplotlib.font_manager as fm
 import numpy as np
 import pandas as pd
 from plotnine import ggplot, aes, geom_line, labs, theme_minimal, theme, scale_y_log10, scale_color_brewer, \
-    element_rect, ylim, coord_cartesian, scale_x_continuous, geom_point, element_text, geom_hline, \
-    scale_linetype_manual, element_blank, geom_rect, geom_path, scale_x_discrete
-import matplotlib.font_manager as fm
+    element_rect, scale_x_continuous, geom_point, element_text, scale_linetype_manual, element_blank, geom_rect
 
 
 def main():

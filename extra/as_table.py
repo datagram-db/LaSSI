@@ -7,5 +7,5 @@ def from_matrix(file, output):
     pandas.DataFrame(d).to_csv(output, index=False)
 
 if __name__ == "__main__":
-    from_matrix("/home/giacomo/projects/LaSSI/catabolites/newcastle_mdpi/confusion_matrices_Logical.json",
+    from_matrix("../catabolites/newcastle_mdpi/confusion_matrices_Logical.json",
                 "../similarity.csv")

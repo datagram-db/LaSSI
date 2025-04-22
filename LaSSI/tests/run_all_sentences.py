@@ -1,13 +1,14 @@
-import os
 import glob
-import subprocess
+import os
+import re
 import sys
 from pathlib import Path
-import re
+
+from tqdm import tqdm
 
 from LaSSI.Configuration import SentenceRepresentation
 from LaSSI.LaSSI import LaSSI
-from tqdm import tqdm
+from LaSSI.tests.benchmark import Benchmark
 
 
 def sort_by_numeric_value(file_path):
@@ -16,6 +17,7 @@ def sort_by_numeric_value(file_path):
 
 
 def get_and_run_all_sentences(folders, transformation=SentenceRepresentation.Logical, transformer='sentence-transformers/all-MiniLM-L6-v2'):
+    print(f"TRANSFORMATION: {transformation}, TRANSFORMER: {transformer}")
     root_dir = Path(os.path.dirname(os.path.abspath(__file__))).parent.absolute().parent.absolute()
     sentences_dir = os.path.join(root_dir, "test_sentences")
     main_script_path = os.path.join(root_dir, "main.py")
@@ -33,7 +35,7 @@ def get_and_run_all_sentences(folders, transformation=SentenceRepresentation.Log
             pbar.set_description(f"Rewriting sentences: {yaml_file.split('/')[-1]}")
             try:
                 with open(os.devnull, 'w') as devnull:
-                    sys.stdout = devnull
+                    # sys.stdout = devnull
                     pipeline = LaSSI(yaml_file, "/home/campus.ncl.ac.uk/b9063849/PycharmProjects/LaSSI/connection.yaml", transformation, transformer)
                     pipeline.run()
                     pipeline.close()
@@ -50,16 +52,20 @@ if __name__ == '__main__':
         folders = ["orig"]
 
     all_outputs = True
+    metrics_benchmark = Benchmark("Metrics")
 
     if all_outputs:
-        transformations = [SentenceRepresentation.FullText, SentenceRepresentation.SimpleGraph, SentenceRepresentation.LogicalGraph, SentenceRepresentation.Logical]
+        # transformations = [SentenceRepresentation.FullText, SentenceRepresentation.SimpleGraph, SentenceRepresentation.LogicalGraph, SentenceRepresentation.Logical]
+        transformations = [SentenceRepresentation.FullText, SentenceRepresentation.SimpleGraphDisabledAdHoc, SentenceRepresentation.SimpleGraph, SentenceRepresentation.LogicalDisabledAdHoc, SentenceRepresentation.LogicalGraph, SentenceRepresentation.LogicalDisabledAdHoc, SentenceRepresentation.Logical]
 
         for transformation in transformations:
             if transformation == SentenceRepresentation.FullText:
-                transformers = ["all-MiniLM-L6-v2", "all-MiniLM-L12-v2", "all-mpnet-base-v2", "all-roberta-large-v1"]
+                transformers = ["all-MiniLM-L6-v2", "all-MiniLM-L12-v2", "all-mpnet-base-v2", "all-roberta-large-v1", "Log#qbao775/AMR-LE-DeBERTa-V2-XXLarge-Contraposition-Double-Negation-Implication-Commutative-Pos-Neg-1-3", "RAG#colbert-ir/colbertv2.0"]
                 for transformer in transformers:
-                    get_and_run_all_sentences(folders, transformation, f"sentence-transformers/{transformer}")
+                    get_and_run_all_sentences(folders, transformation, f"sentence-transformers/{transformer}" if "#" not in transformer else transformer)
             else:
                 get_and_run_all_sentences(folders, transformation)
     else:
         get_and_run_all_sentences(folders)
+
+    metrics_benchmark.to_csv("metrics_benchmark.csv")
