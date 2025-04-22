@@ -88,7 +88,10 @@ def semantic(self, d: Dict[Formula, bool]):
     elif practicalInstance(self, FOr, "FOr"):
         return max(map(lambda x: semantic(x, d), self.args))
     elif practicalInstance(self, FNot, "FNot"):
-        return 1 - semantic(self.arg, d)
+        if self in d:
+            return d[self]
+        else:
+            return 1 - semantic(self.arg, d)
     else:
         print("WARNING: cannot perform the atomization of a variable")
         return 0

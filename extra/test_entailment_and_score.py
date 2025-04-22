@@ -14,6 +14,8 @@ if __name__ == "__main__":
     # print(s_3)
     val = test_pairwise_sentence_similarity({}, t, n_tcc, shift=False)
     print(val)
+    val = test_pairwise_sentence_similarity({}, tcc, t, shift=False)
+    print(val)
     val = test_pairwise_sentence_similarity({}, n_tcc, t, shift=False)
     print(val)
     val = test_pairwise_sentence_similarity({}, t, tcc, shift=False)
