@@ -9,7 +9,8 @@ __status__ = "Production"
 
 import json
 import os
-import numpy
+import sys
+
 import numpy as np
 from sklearn import metrics
 from sklearn.cluster import AgglomerativeClustering
@@ -58,7 +59,6 @@ def _plot_dendrogram(model, **kwargs):
     https://github.com/scikit-learn/scikit-learn/blob/70cf4a676caa2d2dad2e3f6e4478d64bcb0506f7/examples/cluster/plot_hierarchical_clustering_dendrogram.py
     """
 
-    import numpy as np
     from scipy.cluster.hierarchy import dendrogram
     # Children of hierarchical clustering
     children = model.children_
@@ -141,7 +141,7 @@ def plot_dendogram(model, D, filename="dendrogram.png"):
 
 def as_distance_matrix(similarity_matrix):
     lls = [[1.0 - value for value in row] for row in similarity_matrix]
-    lls = numpy.asarray(lls)
+    lls = np.asarray(lls)
     return (lls + lls.transpose())/2
 
 
@@ -160,7 +160,7 @@ def agglomerative_clustering(similarity_matrix, n_expected_clusters):
     for i, cluster in zip(range(len(similarity_matrix)), model.labels_):
         cluster_assignment[cluster].add(i)
 
-    return cluster_assignment, model, numpy.array(similarity_matrix)
+    return cluster_assignment, model, np.array(similarity_matrix)
 
 
 # K-Means clustering could not be used, as it is impossible to determine the coordinates out from the distance matrix
@@ -168,18 +168,17 @@ def agglomerative_clustering(similarity_matrix, n_expected_clusters):
 # - But this always assumes that distances are valid for triangular inequality, and that similarities are always symmetrical, which is not the case for logical elements
 
 def matrix_init_normalize(matrix, normalization):
-    import numpy
     if normalization == "simple_laplacian":
         return csr_matrix(matrix - laplacian_diag(matrix))
     elif normalization == "sym_normalized_laplacian":
         d = laplacian_diag(matrix)
-        sqrt = numpy.sqrt(d)
-        I = numpy.identity(matrix.shape[0])
+        sqrt = np.sqrt(d)
+        I = np.identity(matrix.shape[0])
         return csr_matrix(I - sqrt * matrix * sqrt)
     elif normalization == "random_walk_normalized":
         d = laplacian_diag(matrix)
-        matrix = numpy.reciprocal(d, where=d != 0) * matrix
-        I = numpy.identity(matrix.shape[0])
+        matrix = np.reciprocal(d, where=d != 0) * matrix
+        I = np.identity(matrix.shape[0])
         return csr_matrix(I - matrix)
     else:
         return csr_matrix(matrix)
@@ -191,7 +190,7 @@ def knn(similarity_matrix, n_expected_clusters):
     cluster_assignment = [set() for _ in range(n_expected_clusters)]
     for i, cluster in zip(range(len(similarity_matrix)), model.labels_):
         cluster_assignment[cluster].add(i)
-    return cluster_assignment, model, numpy.array(similarity_matrix)
+    return cluster_assignment, model, np.array(similarity_matrix)
 
 def mcl_clustering_matches(similarity_matrix, expected_clusters):
     normalization = ["simple_laplacian", "sym_normalized_laplacian", "random_walk_normalized", "none"]
@@ -257,22 +256,47 @@ def dimsum(matrix, row=True):
 
 
 def laplacian_diag(matrix):
-    import numpy
-    return numpy.squeeze(numpy.asarray(dimsum(matrix, row=True)))
+    return np.squeeze(np.asarray(dimsum(matrix, row=True)))
     # return numpy.diag(dimsum(matrix, row=True))
 
 
 def matrix_exp2(matrix):
-    import numpy
-    return numpy.multiply(matrix, matrix)
+    return np.multiply(matrix, matrix)
 
 
-def test_with_maximal_matching(expected_clusters, experiment_name, transformer, similarity_matrix=None):
+def test_with_maximal_matching(expected_clusters, experiment_name, transformer, similarity_matrix=None, implication_matrix=None):
     if similarity_matrix is None:
         similarity_matrix = read_json_array(
             f"catabolites/{experiment_name}/confusion_matrices_{transformer}.json")
         if similarity_matrix is None:
             return
+
+    not_implying_score = 0.0
+    N = len(similarity_matrix)
+    expected_labels = None
+    roc_expected = None
+    if implication_matrix is not None:
+        expected_labels = []
+        roc_expected = []
+        for i in range(N):
+            row = similarity_matrix[i]
+            for j in range(N):
+                cell = row[j]
+                if cell == 1.0:
+                    expected_labels.append(1)
+                    roc_expected.append([1.0,0.0,0.0])
+                elif cell == 0.0:
+                    expected_labels.append(-1)
+                    roc_expected.append([0.0,0.0,1.0])
+                else:
+                    expected_labels.append(0)
+                    roc_expected.append([0.0,1.0,0.0])
+        import itertools
+        scores = list(itertools.chain.from_iterable(implication_matrix))
+        n_not_implying = sum(1 for x in scores if x == 0.0)
+        scores = list(itertools.chain.from_iterable(similarity_matrix))
+        scores.sort()
+        not_implying_score = max(scores[: n_not_implying])
 
     if not os.path.exists(experiment_name):
         os.makedirs(experiment_name)
@@ -281,18 +305,47 @@ def test_with_maximal_matching(expected_clusters, experiment_name, transformer, 
     n_expected_clusters = len(expected_clusters)
     agg_cluster_assignment, agg_model, distances = agglomerative_clustering(similarity_matrix, n_expected_clusters)
     plot_dendogram(agg_model, distances, f"/home/campus.ncl.ac.uk/b9063849/PycharmProjects/LaSSI/catabolites/{experiment_name}/{transformer}_dend.png")
+    agg_scores, implying_vs_indifferent, roc_scores = prepare_for_classical_clustering_metrics(N,
+                                                                                               agg_cluster_assignment,
+                                                                                               not_implying_score,
+                                                                                               similarity_matrix)
+
+    if expected_labels is not None and agg_scores is not None:
+        print(f"Threshold value (Agglomerative): {implying_vs_indifferent}")
+        print(f"Accuracy Score (Agglomerative): {metrics.accuracy_score(expected_labels, agg_scores)}")
+        print(f"Macro-F1 Score (Agglomerative): {metrics.f1_score(expected_labels, agg_scores, average='macro')}")
+        print(f"Weighted-F1 Score (Agglomerative): {metrics.f1_score(expected_labels, agg_scores, average='weighted')}")
+        print(f"Macro-Precision Score (Agglomerative): {metrics.precision_score(expected_labels, agg_scores, average='macro')}")
+        print(f"Weighted-Precision Score (Agglomerative): {metrics.precision_score(expected_labels, agg_scores, average='weighted')}")
+        print(f"Macro-Recall Score (Agglomerative): {metrics.recall_score(expected_labels, agg_scores, average='macro')}")
+        print(f"Weighted-Recall Score (Agglomerative): {metrics.recall_score(expected_labels, agg_scores, average='weighted')}")
+
+    print(f"Threshold value (Agglomerative clustering): {implying_vs_indifferent}")
+    plot_dendogram(agg_model, distances, f"catabolites/{experiment_name}/{transformer}_dend.png")
 
     print("Markov clustering")
     mkv_cluster_assignment, matrix, mkv_clusters = knn(similarity_matrix, n_expected_clusters)
-    # graph_plot(matrix, mkv_clusters, f"{experiment_name}/{transformer}_mkv.png")
+    agg_scores, implying_vs_indifferent, roc_scores = prepare_for_classical_clustering_metrics(N,
+                                                                                               mkv_cluster_assignment,
+                                                                                               not_implying_score,
+                                                                                               similarity_matrix)
+    if expected_labels is not None and agg_scores is not None:
+        print(f"Threshold value (K-Medoids): {implying_vs_indifferent}")
+        print(f"Accuracy Score (K-Medoids): {metrics.accuracy_score(expected_labels, agg_scores)}")
+        print(f"Macro-F1 Score (K-Medoids): {metrics.f1_score(expected_labels, agg_scores, average='macro')}")
+        print(f"Weighted-F1 Score (K-Medoids): {metrics.f1_score(expected_labels, agg_scores, average='weighted')}")
+        print(f"Macro-Precision Score (K-Medoids): {metrics.precision_score(expected_labels, agg_scores, average='macro')}")
+        print(f"Weighted-Precision Score (K-Medoids): {metrics.precision_score(expected_labels, agg_scores, average='weighted')}")
+        print(f"Macro-Recall Score (Agglomerative): {metrics.recall_score(expected_labels, agg_scores, average='macro')}")
+        print(f"Weighted-Recall Score (Agglomerative): {metrics.recall_score(expected_labels, agg_scores, average='weighted')}")
 
     agg_score = best_clustering_match(agg_cluster_assignment, expected_clusters)
     agg_similarity = 1 - agg_score
-    print(f"Best Clustering Match (Agglomerative Clustering): {agg_similarity}. {agg_cluster_assignment}")
+    print(f"Best Clustering Match (Agglomerative Clustering) [Proposed] Alignment Score: {agg_similarity}. {agg_cluster_assignment}")
 
     mkv_score = best_clustering_match(mkv_cluster_assignment, expected_clusters)
     mkv_similarity = 1 - mkv_score
-    print(f"Best Clustering Match (k-Medoids): {mkv_similarity}. {mkv_cluster_assignment}")
+    print(f"Best Clustering Match (k-Medoids) [Proposed] Alignment Score: {mkv_similarity}. {mkv_cluster_assignment}")
 
     expected_clusters_labels = get_labels(expected_clusters)
     print(f"silhouette_score: expected_clusters: {silhouette_score(as_distance_matrix(similarity_matrix), expected_clusters_labels, metric='precomputed')}")
@@ -306,6 +359,47 @@ def test_with_maximal_matching(expected_clusters, experiment_name, transformer, 
     print(f"silhouette_score: mkv_cluster_assignment: {silhouette_score(as_distance_matrix(similarity_matrix), knn_clusters_labels, metric='precomputed')}")
     print(f"rnd score: {adjusted_rand_score(expected_clusters_labels, knn_clusters_labels)}")
     print(f"purity: {purity_score(expected_clusters_labels, knn_clusters_labels)}")
+
+
+def prepare_for_classical_clustering_metrics(N, agg_cluster_assignment, not_implying_score, similarity_matrix):
+    implying_vs_indifferent = sys.float_info.max
+    for cluster in agg_cluster_assignment:
+        for j in cluster:
+            for i in cluster:
+                implying_vs_indifferent = min([implying_vs_indifferent, similarity_matrix[i][j]])
+    if implying_vs_indifferent <= not_implying_score:
+        implying_vs_indifferent = not_implying_score
+    # assert implying_vs_indifferent > not_implying_score
+    agg_scores = []
+    roc_scores = []
+    idx = 0
+    for i in range(N):
+        row = similarity_matrix[i]
+        for j in range(N):
+            cell = row[j]
+            implying_score = 0.0
+            indifferent_score = 1.0
+            wrong_score = 0.0
+            if cell >= implying_vs_indifferent:
+                agg_scores.append(1)
+                implying_score = 1.0
+                indifferent_score = 0.0 if (implying_vs_indifferent == cell) else 1.0 - (implying_vs_indifferent - cell)
+                wrong_score = 0.0 if (not_implying_score == cell) else 1.0 - abs(cell - not_implying_score)
+                roc_scores.append([implying_score, indifferent_score, wrong_score])
+            elif cell <= not_implying_score:
+                agg_scores.append(-1)
+                implying_score = 0.0 if (implying_vs_indifferent == cell) else 1.0 - (implying_vs_indifferent - cell)
+                indifferent_score = 0.0 if (not_implying_score == cell) else 1.0 - abs(cell - not_implying_score)
+                wrong_score = 1.0
+                roc_scores.append([implying_score, indifferent_score, wrong_score])
+            else:
+                agg_scores.append(0)
+                implying_score = 0.0 if (implying_vs_indifferent == cell) else 1.0 - (implying_vs_indifferent - cell)
+                indifferent_score = 1.0
+                wrong_score = 0.0 if (not_implying_score == cell) else 1.0 - (cell - not_implying_score)
+                roc_scores.append([implying_score, indifferent_score, wrong_score])
+            idx += 1
+    return agg_scores, implying_vs_indifferent, roc_scores
 
 def get_labels(expected_clusters):
     N = 0

@@ -222,6 +222,8 @@ class Relationship:  # Representation of an edge
             )
 
 
+
+
 @dataclass(order=True, frozen=True, eq=True)
 class Singleton(NodeEntryPoint):  # Graph node representing just one entity
     id: int
@@ -382,9 +384,9 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
 
     @classmethod
     def from_dict(cls, c):
-        return cls(kernel=Relationship.from_dict(c.get('kernel')),
-                   properties={k: [deserialize_NodeEntryPoint(x) for x in v] for k, v in c.get('properties').items()}
-                   )
+        import dacite
+        c["properties"] = frozenset(c["properties"].items())
+        dacite.from_dict(Singleton, c)
 
     # Rewrite Singleton(kernel) in form edgeLabel[props](source[props], target[props])[props]
     def to_string(self, node=None):

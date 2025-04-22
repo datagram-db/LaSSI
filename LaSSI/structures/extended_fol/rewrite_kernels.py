@@ -23,9 +23,17 @@ from LaSSI.structures.internal_graph.EntityRelationship import NodeEntryPoint, S
 from LaSSI.structures.extended_fol.Formulae import FNot, FOr, FAnd, FUnaryPredicate, FVariable, FBinaryPredicate, \
     Formula, prune_from_cop, type_atom
 
+def is_existential(obj):
+    if (isinstance(obj, Singleton) or type(obj).__name__ == "Singleton") and (
+                (len(obj.named_entity)>= 2) and obj.named_entity[0] == "?" and obj.named_entity[1:].isdigit() and obj.type == "existential"):
+        return True
+    if (not isinstance(obj, FVariable)) or (not type(obj).__name__ == "FVariable"):
+        return False
+    return obj.name[0] == "?" and obj.name[1:].isdigit() and obj.type == "existential"
+
 bogus_dst = FVariable(name="there", type="non_verb", specification=None, cop=None, id=None)
 bogus_src = {"it"}
-discard_properties = {"end", "lemma", "begin", "kernel", "expl", "pos", "root", "common", "number", "adv", "conj"}
+discard_properties = {"end", "lemma", "begin", "kernel", "expl", "pos", "root", "common", "number", "adv", "conj", "mark", "specification", "nmod_poss", "amod"}
 relative_pronouns = {"which","that", "who", "whom" }
 interrogative_pronouns = {"what", "which", "who", "whom", "whose"}
 demonstrative_pronouns = {"this", "these", "that", "those"}
@@ -37,11 +45,19 @@ def property_write(key, val: NodeEntryPoint) -> str:
     # if isinstance(val, Singleton):
     return f'{key} : {value}'
 
-
-
+def get_props(src):
+    src_old_props = None
+    if src is not None:
+        if hasattr(src, "get_props"):
+            src_old_props = src.get_props()
+        elif hasattr(src, "properties"):
+            src_old_props = src.properties
+    return src_old_props
 
 def make_and(entities):
-    return FAnd(args=tuple(entities))
+    entities = tuple(entities)
+    # assert all(map(lambda x: isinstance(x, Formula), entities))
+    return FAnd(args=entities)
 
 
 def make_or(entities):
@@ -65,7 +81,7 @@ def has_prop_just_one_negated_constituent(prop):
     if (len(prop) != 1):
         return False, prop
     k, x = next(iter(prop))
-    if k in Grouping.__members__.keys():
+    if k in Grouping.__members__.keys() or k == "SPECIFICATION":
         return False, prop
     assert isinstance(x, tuple) and len(x) == 1
     v = x[0]
@@ -90,10 +106,21 @@ def has_prop_just_one_negated_constituent(prop):
     return False, prop
 
 
-
-
-
-
+def rewrite_predicate_with_new_first_argument(sentence, first_argument):
+    if first_argument is None:
+        return sentence
+    if isinstance(sentence, FUnaryPredicate) or type(sentence).__name__ == "FUnaryPredicate":
+        if (is_existential(sentence.arg)):
+            return FUnaryPredicate(sentence.rel, first_argument, sentence.score, sentence.properties)
+        else:
+            return sentence
+    elif isinstance(sentence, FBinaryPredicate) or type(sentence).__name__ == "FBinaryPredicate":
+        if (is_existential(sentence.src)):
+            return FBinaryPredicate(sentence.rel, first_argument, sentence.dst, sentence.score, sentence.properties)
+        else:
+            return sentence
+    else:
+        return sentence
 
 
 
@@ -110,6 +137,39 @@ class RewriteKernels:
         self.dpos = None
         self.dmin, self.dmax, self.dpos = obj.update_map(defaultdict(lambda: 10000000), defaultdict(lambda:-1), defaultdict(lambda: 10000000))
 
+    def derive_external_relationships(self, collection, arg):
+        ls = []
+        for node, mappa in collection:
+            for k, v in mappa.items() if isinstance(mappa, dict) else mappa:
+                if k == "SENTENCE":
+                    for x in v:
+                        if isinstance(x, Formula):
+                            x = rewrite_predicate_with_new_first_argument(x, arg)
+                            ls.append(x)
+                        else:
+                            result = self.rewrite_kernels(x)
+                            result = rewrite_predicate_with_new_first_argument(result, arg)
+                            ls.append(result)
+        return ls
+
+    def derive_kernel_properties(self, collection, properties):
+        final_properties = defaultdict(list)
+        for k,v in properties.items() if isinstance(properties, dict) else properties:
+            for x in v:
+                    final_properties[k].append(x)
+        for node, mappa in collection:
+            for k, v in mappa.items() if isinstance(mappa, dict) else mappa:
+                if k == "nmod_poss":
+                    if isinstance(v, str):
+                        final_properties["SPECIFICATION"].append(node.add_specification(v))
+                    elif isinstance(v, tuple):
+                        for x in v:
+                            if isinstance(x, str):
+                                final_properties["SPECIFICATION"].append(node.add_specification(x))
+                    elif hasattr(v, "name"):
+                        final_properties["SPECIFICATION"].append(node.add_specification(v.name))
+        return final_properties
+
     def make_properties(self, p):
         result = defaultdict(set)
         if "not" in set(map(lambda x: x.lower(), p.keys())):
@@ -125,12 +185,13 @@ class RewriteKernels:
         for k, v in p.items():
             if str(k) == "\u2203" or str(k).lower() == "in" or str(k).lower() == "not":
                 continue
-            else:
+            elif k not in discard_properties:
                 for single_val in v:
-                    tmp = self.make_arg(single_val)
-                    neg_tmp = make_not(tmp)
-                    if neg_tmp not in result[k]:
-                        result[k].add(tmp)
+                    if not isinstance(single_val, str):
+                        tmp = self.make_arg(single_val)
+                        neg_tmp = make_not(tmp)
+                        if neg_tmp not in result[k]:
+                            result[k].add(tmp)
         result2 = dict()
         for k, v in result.items():
             result2[k] = list(v)
@@ -167,11 +228,11 @@ class RewriteKernels:
                 cop = self.make_cop(props.pop("JJ"))
             for k in props:
                 if k.endswith("mod"):
-                    coplist.append(self.make_cop(props[k]))
+                    coplist.append(props[k])
         if len(coplist) == 1:
-            cop = coplist[0]
+            cop = self.make_cop(coplist[0])
         elif len(coplist) > 1:
-            cop = tuple(coplist)
+            cop = self.make_cop(" ".join(sorted(coplist, key=lambda x: self.meu_db_row.first_sentence.find(x))))
         named_entity = props.pop("named_entity", None) if isinstance(entity,
                                                                      dict) else entity.get_name()  # TODO: Is this okay for getting the name of SetOfSingletons?
         type = props.pop("type", None) if isinstance(entity, dict) else entity.type
@@ -183,7 +244,7 @@ class RewriteKernels:
             if k == 'det' and isinstance(v, str):
                 if v.lower() == "all":
                     asAll = True
-            if k not in discard_properties and k not in {} and ((not isinstance(v, str)) or len(v) == 0):
+            if k not in discard_properties and k not in {} and ((not isinstance(v, str)) or len(v) > 0):
                 if isinstance(v, tuple):
                     props2[k] = tuple([self.make_arg(x) if isinstance(x, Singleton) else x for x in v])
                 else:
@@ -218,13 +279,21 @@ class RewriteKernels:
                     prop[x] = tuple(prop[x])
         prop = self.props_as_unique_itemset(prop)
         test, prop = has_prop_just_one_negated_constituent(prop)
+        rel = "be" if rel == "None" else rel
         result = FUnaryPredicate(rel=rel, arg=src, score=score, properties=prop)
         return FNot(result) if test else result
 
     def make_binary(self, rel, src, dst, score, prop):
-        if (rel == "be" and (dst is None or (not isinstance(dst, FBinaryPredicate) and not isinstance(dst,
+        if isinstance(dst, FAnd):
+            return make_and([self.make_binary(rel, src, x, score, prop) for x in dst.args])
+        elif isinstance(dst, FOr):
+            return make_or([self.make_binary(rel, src, x, score, prop) for x in dst.args])
+        elif isinstance(dst, FNot):
+            return make_not(self.make_binary(rel, src, dst.arg, score, prop))
+        elif (rel == "be" and (dst is None or (not isinstance(dst, FBinaryPredicate) and not isinstance(dst,
                                                                                                       FUnaryPredicate) and dst.type == "existential"))) or dst is None:
-            return self.make_unary(rel, src, score, prop)
+            from LaSSI.ner.MergeSetOfSingletons import merge_multiway_static_properties
+            return self.make_unary(rel, src, score, merge_multiway_static_properties(prop, dst.properties))
         if rel == "have":  # TODO: generalise
             if src is not None and (
                     src.type == "DATE" or src.type == "GPE" or src.type == "LOC" or src.type == "SPACE") and src.cop is None:  # TODO: generalise
@@ -297,17 +366,39 @@ class RewriteKernels:
                                     p[k] = tuple(j)
                             else:
                                 p[k] = v
+                    props_to_merge = []
+                    src_old_props = get_props(src)
                     src = self.make_arg(src)
                     p["src"] = []
                     p["dst"] = []
                     if src is not None:
                         p["src"].append(src)
+                        if src_old_props is not None:
+                            props_to_merge.append((src, src_old_props))
+                        if hasattr(src, "properties"):
+                            props_to_merge.append((src, src.properties))
+                    dst_old_props = get_props(dst)
+                    # dst_old_props = dst.get_props() if dst is not None else None
                     dst = self.make_arg(dst)
+                    if "ENTITY" in p and len(p["ENTITY"])==1:
+                        orig_dst = dst
+                        dst = dst.instantiate_variable_with_entity(p["ENTITY"][0])
+                        if dst != orig_dst:
+                            del p["ENTITY"]
                     if dst is not None:
                         p["dst"].append(dst)
+                        if dst_old_props is not None:
+                            props_to_merge.append((dst, dst_old_props))
+                        if hasattr(dst, "properties"):
+                            props_to_merge.append((dst, dst.properties))
                     prop = self.make_properties(p)
                     del prop["src"]
                     del prop["dst"]
+                    prop = self.derive_kernel_properties(props_to_merge, prop)
+                    props_to_merge.append((None, prop))
+                    prop = deepcopy(prop)
+                    if "SENTENCE" in prop:
+                        del prop["SENTENCE"]
                     if src.name.lower() in bogus_src and rel.lower() == "be":
                         if src.cop is None:
                             result = self.make_unary(rel, dst, score, prop)
@@ -318,35 +409,95 @@ class RewriteKernels:
                             result = self.make_unary(rel, src, score, prop)
                         else:
                             result = self.make_binary(rel, src, dst, score, prop)
-                    if foundSingleton == Grouping.NONE:
-                        return result
-                    else:
-                        dcp = copy.deepcopy(prop)
-                        dcp[forKey] = (argument,)
-                        if foundSingleton == Grouping.AND:
-                            return make_and([result, self.make_prop(src, rel, negated, score, dcp, dst)])
-                        elif foundSingleton == Grouping.OR:
-                            return make_or([result, self.make_prop(src, rel, negated, score, dcp, dst)])
+
+                    other_props = []
+                    if isinstance(result, FUnaryPredicate) or isinstance(result, FBinaryPredicate):
+                        arg = None
+                        if isinstance(result, FBinaryPredicate):
+                            if result.rel == "have":
+                                arg = result.src
+                            else:
+                                arg = result.dst
                         else:
-                            n = dst.type.name
-                            raise RuntimeError(f"Unknown source type: {n}")
+                            if result.rel != "be":
+                                arg = result.arg
+                        other_props = self.derive_external_relationships(props_to_merge, arg)
+                    if len(other_props) > 0:
+                        other_props.append(result)
+                        result = make_and(other_props)
+                    return self.onFoundSingleton(foundSingleton, result, prop, forKey, argument, src, rel, negated, score, dst)
         else:
             if negated:
                 return make_not(self.make_prop(src, rel, False, score, properties, None))
             else:
+                argument = None
+                forKey = None
+                foundSingleton = Grouping.NONE
                 p = dict()
                 for k, v in properties.items():
                     if k not in discard_properties:
-                        p[k] = v
+                        if isinstance(v, list) or isinstance(v, tuple):
+                            j = []
+                            for x in v:
+                                if (foundSingleton == Grouping.NONE) and isinstance(x, SetOfSingletons) and (
+                                        x.type != Grouping.NOT):
+                                    assert len(x.entities) == 1
+                                    foundSingleton = x.type
+                                    argument = x.entities[0]
+                                    forKey = k
+                                elif isinstance(x, str) or isinstance(x, Formula):
+                                    j.append(x)
+                                elif isinstance(x, Singleton):
+                                    j.append(self.make_arg(x))
+                                elif isinstance(x, SetOfSingletons):
+                                    if x.type == Grouping.NOT:
+                                        if isinstance(x.entities[0], Singleton):
+                                            j.append(make_not(self.make_arg(x.entities[0])))
+                                        else:
+                                            raise RuntimeError(f"Unknown argument type: {x}")
+                                    else:
+                                        raise RuntimeError(f"Unknown argument type: {x}")
+                                else:
+                                    raise RuntimeError(f"Unknown argument type: {x}")
+                            if len(j) > 0:
+                                p[k] = tuple(j)
+                        else:
+                            p[k] = v
                 p["src"] = []
                 p["dst"] = []
+                props_to_merge = []
+                src_old_props = get_props(src)
+                src = self.make_arg(src)
                 if src is not None:
                     p["src"].append(src)
+                    if src_old_props is not None:
+                        props_to_merge.append((src, src_old_props))
+                    if hasattr(src, "properties"):
+                        props_to_merge.append((src, src.properties))
                 prop = self.make_properties(p)
                 del prop["src"]
                 if "dst" in prop:
                     del prop["dst"]
-                return self.make_unary(rel, self.make_arg(src), score, prop)
+                prop = self.derive_kernel_properties(props_to_merge, prop)
+                props_to_merge.append((None, prop))
+                prop = deepcopy(prop)
+                if "SENTENCE" in prop:
+                    del prop["SENTENCE"]
+                result = self.make_unary(rel, src, score, prop)
+                other_props = []
+                if isinstance(result, FUnaryPredicate) or isinstance(result, FBinaryPredicate):
+                    arg = None
+                    if isinstance(result, FUnaryPredicate):
+                        arg = result.arg
+                    elif result.rel == "have":
+                        arg = result.src
+                    else:
+                        arg = result.dst
+                    other_props = self.derive_external_relationships(props_to_merge, arg)
+                if len(other_props) > 0:
+                    other_props.append(result)
+                    result = make_and(other_props)
+                return self.onFoundSingleton(foundSingleton, result, prop, forKey, argument, src, rel, negated, score, dst)
 
     def src_make_prop(self, src, rel, negated, score, properties, dst):
         if src is not None:
@@ -370,9 +521,9 @@ class RewriteKernels:
     def props_as_unique_itemset(self, prop):
         d = dict()
         for k, v in prop.items():
-            if k in discard_properties or len(k) == 0:
+            if k in discard_properties or len(k) == 0 or isinstance(v, str):
                 continue
-            if len(v)==1 or k in Grouping.__members__.keys():
+            if len(v)==1 or k in Grouping.__members__.keys() or k == "SPECIFICATION":
                 d[k] = tuple(set(v))
             else:
                 assert len(v)==2
@@ -409,6 +560,9 @@ class RewriteKernels:
             obj = self.obj
         main_pop = obj.kernel
         properties = obj.properties
+        from LaSSI.ner.MergeSetOfSingletons import merge_multiway_static_properties
+        if main_pop.edgeLabel is not None:
+            properties = merge_multiway_static_properties(properties, main_pop.edgeLabel.properties)
         rel = main_pop.edgeLabel.named_entity if main_pop.edgeLabel is not None else "None"  # TODO: Do we want string "None" or None? (e.g. when we have no verb?)
         negated = main_pop.isNegated
 
@@ -418,10 +572,30 @@ class RewriteKernels:
         if main_pop.target is not None:
             score *= main_pop.target.confidence
 
-        return self.src_make_prop(main_pop.source, rel, negated, score, dict(properties), main_pop.target)
+        source = main_pop.source
+        target = main_pop.target
+        if rel == "be" and is_existential(target):
+            if len(target.properties) > 0:
+                source = source.update_node_props(merge_multiway_static_properties(main_pop.source.properties, target.properties))
+            target = None
+        return self.src_make_prop(source, rel, negated, score, dict(properties), target)
 
+    def onFoundSingleton(self, foundSingleton, result, prop, forKey, argument, src, rel, negated, score, dst):
+        if foundSingleton == Grouping.NONE:
+            return result
+        else:
+            dcp = copy.deepcopy(prop)
+            dcp[forKey] = (argument,)
+            if foundSingleton == Grouping.AND:
+                return make_and([result, self.make_prop(src, rel, negated, score, dcp, dst)])
+            elif foundSingleton == Grouping.OR:
+                return make_or([result, self.make_prop(src, rel, negated, score, dcp, dst)])
+            else:
+                n = dst.type.name
+                raise RuntimeError(f"Unknown source type: {n}")
 
 
 def rewrite_kernels(obj, meudb):
     r = RewriteKernels(obj, meudb)
-    return r.rewrite_kernels()
+    tmp = r.rewrite_kernels()
+    return tmp

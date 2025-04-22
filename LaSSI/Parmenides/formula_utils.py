@@ -3,11 +3,11 @@ import latextools
 from LaSSI.structures.extended_fol.Formulae import Formula
 from bs4 import Tag
 
-def latex_rendering(strx, mathjax=True):
+def latex_rendering(strx, mathjax=True, separators=(r"$",r"$")):
     if mathjax:
-        return '$' + strx + '$'
+        return separators[0] + strx + separators[1]
     latex_eq = latextools.render_snippet(
-        r'$' + strx + '$',
+        separators[0] + strx + separators[1],
         commands=[latextools.cmd.all_math])
     svg_eq = latex_eq.as_svg()
     import base64

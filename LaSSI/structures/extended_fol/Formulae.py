@@ -19,6 +19,37 @@ from FunctionalMatch.functions.structural_match import Ignore
 #     def __str__(self):
 #         return "Formula(?)"
 
+def get_existential_variables(f):
+    if f is None:
+        yield from []
+    elif isinstance(f, FNot) or type(f).__name__ == "FNot":
+        yield from  get_existential_variables(f.arg)
+    elif isinstance(f, FAnd) or type(f).__name__ == "FAnd":
+        for x in f.args:
+            yield from get_existential_variables(x)
+    elif isinstance(f, FOr) or type(f).__name__ == "FOr":
+        for x in f.args:
+            yield from get_existential_variables(x)
+    elif isinstance(f, FUnaryPredicate) or type(f).__name__ == "FUnaryPredicate":
+        yield from get_existential_variables(f.arg)
+        for k,v in f.properties:
+            for x in v:
+                yield from get_existential_variables(x)
+    elif isinstance(f, FBinaryPredicate) or type(f).__name__ == "FBinaryPredicate":
+        yield from get_existential_variables(f.src)
+        yield from get_existential_variables(f.dst)
+        for k,v in f.properties:
+            for x in v:
+                yield from get_existential_variables(x)
+    elif isinstance(f, FVariable) or type(f).__name__ == "FVariable":
+        if f.name[0] == "?" and f.name[1:].isdigit() and f.type == "existential":
+            yield f.name
+        yield from get_existential_variables(f.cop)
+        for k,v in f.properties:
+            for x in v:
+                yield from get_existential_variables(x)
+    else:
+        yield from []
 
 def print_proprieties(proprieties, cop=None):
     if isinstance(proprieties, dict) or isinstance(proprieties, defaultdict):
@@ -28,11 +59,11 @@ def print_proprieties(proprieties, cop=None):
         k = k.replace("_", "\\_").replace(" ", "\; ")
         if isinstance(v, list) or isinstance(v, tuple):
             for x in v:
-                L.append("\\texttt{" + str(k) + "}: " + str(x) if not isinstance(x, str) else x.replace("_", "\\_"))
+                L.append("\\texttt{" + str(k) + "}: " + x.asLatexString() if not isinstance(x, str) else x.replace("_", "\\_"))
         else:
-            L.append("\\texttt{" + str(k) + "}: " + str(v) if not isinstance(v, str) else v.replace("_", "\\_"))
+            L.append("\\texttt{" + str(k) + "}: " + v.asLatexString() if not isinstance(v, str) else v.replace("_", "\\_"))
     if cop is not None:
-        L.append("\\texttt{JJ}: " + str(cop))
+        L.append("\\texttt{JJ}: " + cop.asLatexString())
     if len(L) > 0:
         return "_{" + ",\; ".join(L) + "}"
     else:
@@ -64,6 +95,16 @@ class FVariable: ## TODO: rename to FTerm or FConstant
     asAll: bool = False ## By default, the interpretation is exitential. If not, this is interpreted as All
     # matched: bool = field(default_factory=lambda: False)
 
+    def instantiate_variable_with_entity(self, external_entity):
+        if self.name[0] == "?" and self.name[1:].isdigit() and self.type == "existential" and isinstance(external_entity, FVariable):
+            return FVariable(external_entity.name, external_entity.type, self.specification, self.cop, external_entity.id, external_entity.properties, self.spec_negation, self.meta, external_entity.asAll)
+        else:
+            return self
+
+
+    def add_specification(self, spec):
+        return FVariable(self.name, self.type, spec, self.cop, self.id, self.properties, self.spec_negation, self.meta, self.asAll)
+
     def add_adjective(self, adj, type="JJ"):
         return FVariable(self.name, self.type, self.specification, FVariable(adj, type, "", None, None), self.id, self.properties)
 
@@ -89,7 +130,15 @@ class FVariable: ## TODO: rename to FTerm or FConstant
         return self.__str__()
 
     def __str__(self):
-        name = ("\\forall" if self.asAll else "\\exists") + self.name
+        premise = self.asLatexString()
+        vars = list(set(get_existential_variables(self)))
+        if len(vars) == 0:
+            return premise
+        else:
+            return "\\exists " + (", ".join(vars)) + ".\," + premise
+    def asLatexString(self):
+        quant = ("\\square " if self.asAll else "\\lozenge ")
+        name = self.name
         if name is None:
             name = "?"
         else:
@@ -97,11 +146,12 @@ class FVariable: ## TODO: rename to FTerm or FConstant
         assert isinstance(self.specification, str) or (self.specification is None)
         if (self.specification is not None) and len(str(self.specification))>0:
             negation = "\\neg " if self.spec_negation else ""
-            name += (" [\\textup{of}] " + negation + "\\textit{" + str(self.specification)) + "}"
+            assert isinstance(self.specification, str)
+            name += (" [\\textup{of}] " + negation + "\\textit{" + self.specification) + "}"
             name = "\\left[" + name + "\\right]^{\\texttt{" + str(self.id) + "}}"
         else:
             name = "{" + name + "}^{\\texttt{" + str(self.id) + "}}"
-        return name + print_proprieties(self.properties, self.cop)
+        return quant + name + print_proprieties(self.properties, self.cop)
 
     def add_specification(self, value):
         return FVariable(self.name, self.type, value, self.cop, self.id, self.properties)
@@ -120,6 +170,9 @@ class FUnaryPredicate:
     meta: str = field(default_factory=lambda: "FUnaryPredicate")
     # matched: bool = field(default_factory=lambda: False)
 
+    def instantiate_variable_with_entity(self, arg):
+        return self
+
     def add_property(self, key, value):
         # d = {k:v for k,v in self.properties} if self.properties is not None else {}
         # if key in d:
@@ -136,12 +189,19 @@ class FUnaryPredicate:
         return self.__str__()
 
     def __str__(self):
+        premise = self.asLatexString()
+        vars = list(set(get_existential_variables(self)))
+        if len(vars) == 0:
+            return premise
+        else:
+            return "\\exists " + (", ".join(vars)) + ".\," + premise
+    def asLatexString(self):
         name = self.rel
         if name is None:
             name = "?"
         else:
             name = "\\textit{" + name + "}"
-        return name + print_proprieties(self.properties) + (("(" + str(self.arg) + ")") if self.arg is not None else "(?)")
+        return name + print_proprieties(self.properties) + (("(" + self.arg.asLatexString() + ")") if self.arg is not None else "(?)")
 
 
 
@@ -154,6 +214,9 @@ class FBinaryPredicate:
     properties: frozenset
     meta: str = field(default_factory=lambda: "FBinaryPredicate")
     # matched: bool = field(default_factory=lambda: False)
+
+    def instantiate_variable_with_entity(self, arg):
+        return self
 
     def add_property(self, key, value):
         # d = {k:v for k,v in self.properties} if self.properties is not None else {}
@@ -171,6 +234,13 @@ class FBinaryPredicate:
         return self.__str__()
 
     def __str__(self):
+        premise = self.asLatexString()
+        vars = list(set(get_existential_variables(self)))
+        if len(vars) == 0:
+            return premise
+        else:
+            return "\\exists " + (", ".join(vars)) + ".\," + premise
+    def asLatexString(self):
         name = self.rel
         if name is None:
             name = "?"
@@ -178,11 +248,14 @@ class FBinaryPredicate:
             name = "\\textit{" + name + "}"
         s = "("
         if self.src is not None:
-            s += (str(self.src) + ",")
+            s += (self.src.asLatexString() + ",")
         else:
             s += "?,"
         if self.dst is not None:
-            s += (str(self.dst) + ")")
+            if isinstance(self.dst, list):
+                s += ("["+ (",\,".join([x.asLatexString() for x in self.dst]))  + "])")
+            else:
+                s += (self.dst.asLatexString() + ")")
         else:
             s += "?)"
         return name + print_proprieties(self.properties) +s
@@ -196,11 +269,21 @@ class FAnd:
     meta: str = field(default_factory=lambda: "FAnd")
     # matched: bool = field(default_factory=lambda: False)
 
+    def instantiate_variable_with_entity(self, external_entity):
+        return FAnd(args=tuple([x.instantiate_variable_with_entity(external_entity) for x in self.args]))
+
     def __repr__(self):
         return self.__str__()
 
     def __str__(self):
-        return "\\left(" + (" \\wedge ".join(map(str, self.args))) + "\\right)"
+        premise = self.asLatexString()
+        vars = list(set(get_existential_variables(self)))
+        if len(vars) == 0:
+            return premise
+        else:
+            return "\\exists " + (", ".join(vars)) + ".\," + premise
+    def asLatexString(self):
+        return "\\left(" + (" \\wedge ".join(map(lambda x: x.asLatexString(), self.args))) + "\\right)"
 
 
 
@@ -210,11 +293,22 @@ class FOr:
     meta: str = field(default_factory=lambda: "FOr")
     # matched: bool = field(default_factory=lambda: False)
 
+    def instantiate_variable_with_entity(self, external_entity):
+        return FOr(args=tuple([x.instantiate_variable_with_entity(external_entity) for x in self.args]))
+
     def __repr__(self):
         return self.__str__()
 
     def __str__(self):
-        return "\\left(" + (" \\vee ".join(map(str, self.args))) + "\\right)"
+        premise = self.asLatexString()
+        vars = list(set(get_existential_variables(self)))
+        if len(vars) == 0:
+            return premise
+        else:
+            return "\\exists " + (", ".join(vars)) + ".\," + premise
+
+    def asLatexString(self):
+        return "\\left(" + (" \\vee ".join(map(lambda x: x.asLatexString(), self.args))) + "\\right)"
 
 @dataclass(order=True, frozen=True, eq=True)
 class FNot:
@@ -226,21 +320,30 @@ class FNot:
         return self.__str__()
 
     def __str__(self):
-        return " \\neg \\left(" + str(self.arg) + "\\right)"
+        premise = self.asLatexString()
+        vars = list(set(get_existential_variables(self)))
+        if len(vars) == 0:
+            return premise
+        else:
+            return "\\exists " + (", ".join(vars)) + ".\," + premise
+
+    def asLatexString(self):
+        return " \\neg \\left(" + self.arg.asLatexString() + "\\right)"
+
+
+# @dataclass(order=True, frozen=True, eq=True)
+# class FNot:
+#     arg: 'Formula'
+#     meta: str = field(default_factory=lambda: "FNot")
+#     matched: bool = field(default_factory=lambda: False)
+#
+#     def __repr__(self):
+#         return self.__str__()
+#
+#     def asLatexString(self):
+#         return " \\neg \\left(" + self.arg.asLatexString() + "\\right)"
 
 Formula = Union[FOr, FAnd, FUnaryPredicate, FBinaryPredicate, FVariable, FNot]
-
-@dataclass(order=True, frozen=True, eq=True)
-class FNot:
-    arg: Formula
-    meta: str = field(default_factory=lambda: "FNot")
-    matched: bool = field(default_factory=lambda: False)
-
-    def __repr__(self):
-        return self.__str__()
-
-    def __str__(self):
-        return " \\neg \\left(" + str(self.arg) + "\\right)"
 
 def make_not(param):
     return FNot(arg=param)
@@ -305,6 +408,8 @@ def type_atom(f:Formula):
     else:
         raise RuntimeError("ERROR: wrongly expected type")
 
+
+
 def formula_from_dict(f: Union[dict, str]):
     """
     Loading a json file in its object-dictionary rerpesentation into formulaes.
@@ -332,7 +437,13 @@ def formula_from_dict(f: Union[dict, str]):
         id = None #int(f["id"]) if "id" in f and f["id"] is not None else -1
         specification = formula_from_dict(f["specification"]) if "specification" in f and f["specification"] is not None else None
         cop = formula_from_dict(f["cop"]) if "cop" in f else None
-        return FVariable(name=name, type=type, specification=specification, cop=cop, id=id, spec_negation=spec_negation)
+        properties = defaultdict(set)
+        if "properties" in f:
+            for k, v in f["properties"].items():
+                for x in v:
+                    properties[k].add(formula_from_dict(x))
+        properties = frozenset({k: tuple(v) for k, v in properties.items()}.items())
+        return FVariable(name=name, type=type, specification=specification, cop=cop, id=id, spec_negation=spec_negation, properties=properties)
     if meta == "FUnaryPredicate":
         rel = str(f["rel"]) if "rel" in f and f["rel"] is not None else ""
         arg = formula_from_dict(f["arg"]) if "arg" in f and f["arg"] is not None else None

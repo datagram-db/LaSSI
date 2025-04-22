@@ -149,7 +149,7 @@ p3simple = (V)--[∀n:nsubj]->(>>S)
        //del V
        //del T
        del M
-       set (𝜋 kernel @ S) as kernel
+       set (𝜋 kernel @ S) as SCRIPT "\"kernel\""
        set (φ inherit_edge , S ) as V
        (S) ;
 
@@ -158,8 +158,7 @@ p3simple = (V)--[∀n:nsubj]->(>>S)
     // This matches any direct clause with subject and (in)direct object.
     // Still, we want to avoid having multiple matches: the idea is to group them by as in 4.
 
-p3 = (>> V)<-[∀ ? w:]--(B)
-        --[n:nsubj]->(>> S)
+p3 =  (V)--[n:nsubj]->(>> S)
         --[? mark]->(M)
         --[? compound_prt]->(FB)
         --[? aux]->(A)
@@ -173,7 +172,7 @@ p3 = (>> V)<-[∀ ? w:]--(B)
      where ((V unmatched p3pass . V) ∧ ((V unmatched p3expl . V) ∧((ℓ 0 @ V = verb))))
      ↪
        //new s
-       set (φ (SCRIPT "[(° (fun y → { l cp (fun x → { ^ (^ ([⦃x⦄ 0]) \" \") ([⦃x⦄ 1]) }) (\" \") y } ) ( zip ( a {  (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.M\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.A\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.N\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.V\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.ADM\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.FB\"⦄) } ) )) 0]"), S) as Z
+       set (φ (SCRIPT "[(° (fun y → { l cp (fun x → { ^ (^ ([⦃x⦄ 0]) \" \") ([⦃x⦄ 1]) }) (\" \") y } ) ( zip ( a {  (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.M\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.A\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"N\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"V\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.ADM\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"FB\"⦄) } ) )) 0]"), S) as Z
        //set(   𝜋 mark @ s) as (𝜉 0 @ M)
        //set(   φ orig , s) as S
        //set(   𝜉 0 @ s) as (𝜉 0 @ S)
@@ -187,7 +186,7 @@ p3 = (>> V)<-[∀ ? w:]--(B)
        del A
        del E
        del NN
-       set (𝜋 kernel @ S) as kernel
+       set (𝜋 kernel @ S) as SCRIPT "\"kernel\""
        (S);
 
 p3expl = (V)--[∀n:nsubj]->(>> S)
@@ -222,7 +221,7 @@ p3expl = (V)--[∀n:nsubj]->(>> S)
        del A
        del NN
        //del ADM
-       set (𝜋 kernel @ S) as kernel
+       set (𝜋 kernel @ S) as SCRIPT "\"kernel\""
        (S);
 
 p3pass = (V)--[∀n:nsubjpass]->(>> S)
@@ -277,7 +276,7 @@ p3noobj = (V)--[∀n:nsubj]->(>>S)
         set(φ (SCRIPT "(^(^(^(^(^ (^ (^(^ (^ ( [(𝜉 ⦃\"M\"⦄) 0])  \" \") ([ (𝜉 ⦃\"A\"⦄)  0])) \" \")  \" \") ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])) \" \") ([ (𝜉 ⦃\"FB\"⦄)  0]))") , S) as obj
         set (𝜋 (SCRIPT "e cp (= (+ ( [(𝜉 ⦃\"CC\"⦄) 0]) 0.0) 0.0) \"\" ( \"cc\" )")  @ S) as (𝜉 0 @ CC)
         //set (φ (SCRIPT "e cp (= (| ( [(𝜉 ⦃\"CC\"⦄) 0]) |) 0.0) \"\" ( \"cc\" )") , S ) as CC
-       set (𝜋 kernel @ S) as kernel
+       set (𝜋 kernel @ S) as SCRIPT "\"kernel\""
               del M
               del V
               del N

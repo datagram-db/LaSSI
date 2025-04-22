@@ -17,7 +17,7 @@ import os.path
 import pathlib
 
 import dash
-import dash_table
+from dash import dash_table
 import dashvis
 import flask
 import dash_bootstrap_components as dbc

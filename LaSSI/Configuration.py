@@ -4,3 +4,6 @@ class SentenceRepresentation(Enum):
     SimpleGraph = 1
     LogicalGraph = 2
     Logical = 3
+    SimpleGraphDisabledAdHoc = 4
+    LogicalGraphDisabledAdHoc = 5
+    LogicalDisabledAdHoc = 6
