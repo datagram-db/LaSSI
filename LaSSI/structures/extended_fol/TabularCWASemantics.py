@@ -7,8 +7,8 @@ import pandas
 from functools import reduce
 
 from LaSSI.Parmenides.TBox.ExpandConstituents import ExpandConstituents
-from LaSSI.structures.extended_fol.Formulae import Formula
-from LaSSI.Parmenides.formula_utils import latex_rendering, latex_rendering_to_raster_file
+from LaSSI.structures.extended_fol.Formulae import Formula, FNot
+from LaSSI.Parmenides.formula_utils import latex_rendering, latex_rendering_to_raster_file, getAtoms
 from FunctionalMatch.utils import CountingDictionary
 
 from LaSSI.structures.extended_fol.TBoxReasoning import non_redundant_constituents
@@ -66,7 +66,7 @@ class TabularCWASemantics:
         #getSentenceAtomsFromId
         for sentence_id in range(len(self.sentence_list)):
             # collect_sentence_constituents
-            from LaSSI.Parmenides.formula_utils import getAtoms
+            from LaSSI.Parmenides.formula_utils import getAtomsWithNegations
             # getSentenceAtomsFromId, for arg
             for x in getAtoms(self.sentence_list[sentence_id]):
                 self.minimal_constituent_dict[sentence_id].add(self.minimal_constituents.add(x))
