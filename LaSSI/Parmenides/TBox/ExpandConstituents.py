@@ -242,7 +242,7 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
             hasDirectSubset = False
             dLHS = dict(xprop)
             dRHS = dict(yprop)
-            if is_direct_subset(xprop, yprop):
+            if (is_direct_subset(xprop, yprop) and len(xprop)>0) or (len(yprop) == 0 and len(xprop) > 0):
                 keyCmpElements = CasusHappening.GENERAL_IMPLICATION
                 keyCmpElementsInv = CasusHappening.INDIFFERENT
                 hasDirectSubset = True
