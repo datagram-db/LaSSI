@@ -58,6 +58,7 @@ def compare_variable(d, lhs, rhs):
         kb = ParmenidesSingleton.get()
         nameEQ = kb.name_eq(lhs.name, rhs.name)
         specEQ = kb.name_eq(lhs.specification, rhs.specification)
+        specEQInv = kb.name_eq(rhs.specification, lhs.specification)
         if lhs.spec_negation != rhs.spec_negation:
             specEQ = transformCaseWhenOneArgIsNegated(specEQ)
         copCompareInv = compare_variable(d, rhs.cop, lhs.cop)
@@ -97,7 +98,10 @@ def compare_variable(d, lhs, rhs):
                 if specEQ == CasusHappening.MISSING_1ST_IMPLICATION:
                     val = CasusHappening.INSTANTIATION_IMPLICATION if lhs.asAll else CasusHappening.INDIFFERENT
                 else:
-                    val = specEQ
+                    if rhs.asAll:
+                        val = specEQ
+                    else:
+                        val = specEQInv
         elif isImplication(nameEQ):
             nameAgainstSpec = kb.name_eq(lhs.name, rhs.specification)
             if (specEQ == copCompareInv) and (specEQ == CasusHappening.EQUIVALENT):
@@ -242,11 +246,11 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
             hasDirectSubset = False
             dLHS = dict(xprop)
             dRHS = dict(yprop)
-            if is_direct_subset(xprop, yprop):
+            if (is_direct_subset(xprop, yprop) and len(xprop)>0) or (len(yprop) == 0 and len(xprop) > 0):
                 keyCmpElements = CasusHappening.GENERAL_IMPLICATION
                 keyCmpElementsInv = CasusHappening.INDIFFERENT
                 hasDirectSubset = True
-            elif set(dLHS.keys()).issubset(set(dRHS.keys())):
+            elif set(dLHS.keys()).issubset(set(dRHS.keys())) and set(dLHS.keys()) != set(dRHS.keys()):
                 keyCmpElements = CasusHappening.INDIFFERENT
                 keyCmpElementsInv = CasusHappening.INDIFFERENT
             else:
@@ -351,7 +355,7 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
     return val
 
 def instantiate_rules(constituents, expansion_dictionary, final_constituents, isImpl):
-    for idx, constituent in enumerate(constituents):
+    for idx, constituent in constituents:
         from LaSSI.structures.extended_fol.TBoxReasoning import TBoxReasoningSingleton
         s = TBoxReasoningSingleton.knowledge_expand(constituent, isImpl)
         # s.add(constituent)
@@ -371,7 +375,7 @@ class ExpandConstituents:
         from LaSSI.external_services.Services import Services
         # self.kb = kb
 
-        self.constituents = list(constituents)
+        self.constituents = constituents#list(constituents)
         _ied = os.path.join(cache_folder, "_ied.pickle")
         _ic = os.path.join(cache_folder, "_ic.pickle")
         _eed = os.path.join(cache_folder, "_eed.pickle")
@@ -394,7 +398,7 @@ class ExpandConstituents:
             self.eq_constituents = set()
 
             if not all(map(lambda x: isinstance(x, FBinaryPredicate) or isinstance(x, FUnaryPredicate),
-                           self.constituents)):
+                           map(lambda x: x[1], self.constituents))):
                 raise ValueError(
                     "Error: all the rules within the set of rules must represent Predicates to be assessed, be them unary or binary")
 
@@ -418,15 +422,17 @@ class ExpandConstituents:
                 pickle.dump(self.eq_constituents, f, protocol=pickle.HIGHEST_PROTOCOL)
 
         self.result_cache = dict()
+        self.result_cache_raw = dict()
         self.ms = ModelSearch()
         self.lhsOrigDict = dict()
         self.rhsOrigDict = dict()
         self.inv_idx = dict()
         Services.getInstance().log("Splitting across unary and binary constituents for each sentence...")
-        for i, sentence in enumerate(self.constituents):
+        for i, sentence in self.constituents:
             self.inv_idx[sentence] = i
             self.lhsOrigDict[i] = ModelSearchBasis(sentence, self.impl_expansion_dictionary[sentence])
             self.rhsOrigDict[i] = ModelSearchBasis(sentence, self.eq_expansion_dictionary[sentence])
+        self.constituents = dict(self.constituents)
 
     def getImplExpansions(self, idx):
         return self.lhsOrigDict[idx].all() if idx in self.lhsOrigDict else []
@@ -454,11 +460,35 @@ class ExpandConstituents:
         from LaSSI.structures.extended_fol.TBoxReasoning import TBoxReasoningSingleton
         return TBoxReasoningSingleton.subGraphEq(constituent)
 
+    def determine_raw(self, i: int, j: int, forceEquiv:bool=False):
+        if (i == j):
+            self.result_cache_raw[(i, j)] = CasusHappening.EQUIVALENT
+        assert i in self.constituents
+        assert j in self.constituents
+        if (i, j) in self.result_cache_raw:
+            return self.result_cache_raw[(i, j)]
+        lhsOrig = self.lhsOrigDict[i]
+        rhsOrig = self.lhsOrigDict[j] if forceEquiv else self.rhsOrigDict[j]
+        tmp = self.ms.compare(lhsOrig, rhsOrig)
+        self.result_cache_raw[(i, j)] = tmp
+        return tmp
+
+    @staticmethod
+    def rectify_implication(tmp):
+        if tmp == CasusHappening.EXCLUSIVES:
+            return PairwiseCases.ConflictingImplication
+        elif tmp == CasusHappening.EQUIVALENT:
+            return PairwiseCases.Equivalent
+        elif isImplication(tmp):
+            return PairwiseCases.Implying
+        else:
+            return PairwiseCases.Indifferent
+
     def determine(self, i: int, j: int):
         if (i == j):
             self.result_cache[(i, j)] = PairwiseCases.Equivalent
-        assert i < len(self.constituents)
-        assert j < len(self.constituents)
+        assert i in self.constituents
+        assert j in self.constituents
         if (i, j) in self.result_cache:
             return self.result_cache[(i, j)]
         val = PairwiseCases.Indifferent

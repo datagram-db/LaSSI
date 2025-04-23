@@ -6,9 +6,9 @@ from typing import List
 import pandas
 from functools import reduce
 
-from LaSSI.Parmenides.TBox.ExpandConstituents import ExpandConstituents
-from LaSSI.structures.extended_fol.Formulae import Formula
-from LaSSI.Parmenides.formula_utils import latex_rendering, latex_rendering_to_raster_file
+from LaSSI.Parmenides.TBox.ExpandConstituents import ExpandConstituents, isImplication, transformCaseWhenOneArgIsNegated
+from LaSSI.structures.extended_fol.Formulae import Formula, FNot
+from LaSSI.Parmenides.formula_utils import latex_rendering, latex_rendering_to_raster_file, getAtoms
 from FunctionalMatch.utils import CountingDictionary
 
 from LaSSI.structures.extended_fol.TBoxReasoning import non_redundant_constituents
@@ -62,22 +62,34 @@ class TabularCWASemantics:
         self.buildup = False
         self.ec = None
         self.cache_folder = cache_folder
+        self.negation_resolution = dict()
+        self.negations = set()
 
         #getSentenceAtomsFromId
         for sentence_id in range(len(self.sentence_list)):
             # collect_sentence_constituents
-            from LaSSI.Parmenides.formula_utils import getAtoms
+            from LaSSI.Parmenides.formula_utils import getAtomsWithNegations
             # getSentenceAtomsFromId, for arg
-            for x in getAtoms(self.sentence_list[sentence_id]):
-                self.minimal_constituent_dict[sentence_id].add(self.minimal_constituents.add(x))
+            for x in getAtomsWithNegations(self.sentence_list[sentence_id]):
+                current_x = self.minimal_constituents.add(x)
+                self.minimal_constituent_dict[sentence_id].add(current_x)
+                if isinstance(x, FNot):
+                    assert {x.arg} == getAtoms(x)
+                    self.negations.add(current_x)
+                    not_neg_x = self.minimal_constituents.add(x.arg)
+                    self.negation_resolution[current_x] = not_neg_x
 
-        d_folder = os.path.join(self.cache_folder, "_d.pickle")
-        with open(d_folder, "wb") as p:
-            pickle.dump(self.minimal_constituent_dict, p, protocol=pickle.HIGHEST_PROTOCOL)
-        cd_folder = os.path.join(self.cache_folder, "_cd.pickle")
-        with open(cd_folder, "wb") as p:
-            pickle.dump(self.minimal_constituents, p, protocol=pickle.HIGHEST_PROTOCOL)
-        self.ec = ExpandConstituents(self.cache_folder, self.minimal_constituents.getAllObjects())
+        ## --> Considering the constituent expansion without negation, so to avoid the rule deduplication within the constituent phase (i.e., nested match is not supported)
+        N = len(self.minimal_constituents)
+        # nonNegatedObjects = list(map(self.minimal_constituents.fromId, [x for x in range(N) if x not in self.negations]))
+        nonNegatedObjects = sorted({x: self.minimal_constituents.fromId(x) for x in range(N) if x not in self.negations}.items())
+        self.ec = ExpandConstituents(self.cache_folder, nonNegatedObjects)
+
+    def getMinimalConstituentDict(self, sentence_id):
+        S = set()
+        for x in self.minimal_constituent_dict[sentence_id]:
+            S.add(self.negation_resolution.get(x, x))
+        return S
 
     def getIDXGraph(self):
         return self.ec.getIDXGraph()
@@ -88,11 +100,11 @@ class TabularCWASemantics:
     def getConstituentIDX(self, obj):
         return self.ec.getConstituentIDX(obj)
 
-    def getImplExpansions(self, minimal_constituent_idx):
-        return self.ec.getImplExpansions(minimal_constituent_idx)
+    # def getImplExpansions(self, minimal_constituent_idx):
+    #     return self.ec.getImplExpansions(minimal_constituent_idx)
 
-    def getEqExpansions(self, minimal_constituent_idx):
-        return self.ec.getEqExpansions(minimal_constituent_idx)
+    # def getEqExpansions(self, minimal_constituent_idx):
+    #     return self.ec.getEqExpansions(minimal_constituent_idx)
 
     def getImplExpansionExplanation(self, minimal_constituent_idx):
         return self.ec.getImplExpansionExplanation(minimal_constituent_idx)
@@ -103,8 +115,45 @@ class TabularCWASemantics:
     def __call__(self, i, j):
         return self.get_straightforward_id_similarity(self.sentence_to_id[i], self.sentence_to_id[j])
 
+    def determine(self, i, j):
+        from LaSSI.Parmenides.Parmenides import CasusHappening
+        from LaSSI.structures.extended_fol.Enums import PairwiseCases
+        x = self.minimal_constituents.fromId(i)
+        y = self.minimal_constituents.fromId(j)
+        if (isinstance(x, FNot) and isinstance(y, FNot)):
+            val = self.ec.determine_raw(self.negation_resolution.get(i, i), self.negation_resolution.get(j, j))
+            if isImplication(val):
+                val = CasusHappening.INDIFFERENT
+            return ExpandConstituents.rectify_implication(val)
+        elif (x == FNot(y)) or (y == FNot(x)):
+            return ExpandConstituents.rectify_implication(CasusHappening.EXCLUSIVES)
+        elif isinstance(x, FNot):
+            i_new = self.negation_resolution.get(i, i)
+            # val = self.ec.determine_raw(i_new, j, True)
+            # if isImplication(val):
+            #     return PairwiseCases.ConflictingImplication
+            val = self.ec.determine_raw(i_new, j, False)
+            if isImplication(val):
+                if isImplication(self.ec.determine_raw(j, i_new)):
+                    return PairwiseCases.ConflictingImplication
+            val = transformCaseWhenOneArgIsNegated(val)
+            return ExpandConstituents.rectify_implication(val)
+        elif isinstance(y, FNot):
+            j_new = self.negation_resolution.get(j, j)
+            # val = self.ec.determine_raw(i, j_new, True)
+            # if isImplication(val):
+            #     return PairwiseCases.ConflictingImplication
+            val = self.ec.determine_raw(i, j_new, False)
+            if isImplication(val):
+                if isImplication(self.ec.determine_raw(j_new, i)):
+                    return PairwiseCases.ConflictingImplication
+            val = transformCaseWhenOneArgIsNegated(val)
+            return ExpandConstituents.rectify_implication(val)
+        else:
+            return self.ec.determine(i,j)
+
     def _mutual_truth(self, i, j):
-        test = self.ec.determine(i, j) #self.get_mutual_truth(i, j)
+        test = self.determine(i,j)#self.ec.determine(i, j) #self.get_mutual_truth(i, j)
         # relation = Relation()
         # relation.add_attributes([str(i), str(j)])
         from LaSSI.structures.extended_fol.Enums import PairwiseCases
