@@ -26,7 +26,7 @@ class DirectionTests(unittest.TestCase):
             raise ValueError(f"ERROR: {val} != {case}")
 
     def test_all(self):
-        self._cmpVariables(all_ncc, ncl, CasusHappening.INDIFFERENT)
+        self._cmpVariables(all_ncc, ncl, CasusHappening.MISSING_1ST_IMPLICATION)
         self._cmpVariables(all_ncc, all_ncl, CasusHappening.INDIFFERENT)
         self._cmpVariables(all_ncc, ncc, CasusHappening.EQUIVALENT)
         self._cmpVariables(all_ncc, all_ncc, CasusHappening.EQUIVALENT)
@@ -48,7 +48,7 @@ class DirectionTests(unittest.TestCase):
         self._cmpVariables(all_cc, all_cc, CasusHappening.EQUIVALENT)
 
         ## Second shot
-        self._cmpVariables(ncc, ncl, CasusHappening.INDIFFERENT)
+        self._cmpVariables(ncc, ncl, CasusHappening.MISSING_1ST_IMPLICATION)
         self._cmpVariables(ncc, all_ncl, CasusHappening.INDIFFERENT)
         self._cmpVariables(ncc, ncc, CasusHappening.EQUIVALENT)
         self._cmpVariables(ncc, all_ncc, CasusHappening.INDIFFERENT) #Done

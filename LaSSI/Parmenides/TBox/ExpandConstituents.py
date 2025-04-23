@@ -58,6 +58,7 @@ def compare_variable(d, lhs, rhs):
         kb = ParmenidesSingleton.get()
         nameEQ = kb.name_eq(lhs.name, rhs.name)
         specEQ = kb.name_eq(lhs.specification, rhs.specification)
+        specEQInv = kb.name_eq(rhs.specification, lhs.specification)
         if lhs.spec_negation != rhs.spec_negation:
             specEQ = transformCaseWhenOneArgIsNegated(specEQ)
         copCompareInv = compare_variable(d, rhs.cop, lhs.cop)
@@ -97,7 +98,10 @@ def compare_variable(d, lhs, rhs):
                 if specEQ == CasusHappening.MISSING_1ST_IMPLICATION:
                     val = CasusHappening.INSTANTIATION_IMPLICATION if lhs.asAll else CasusHappening.INDIFFERENT
                 else:
-                    val = specEQ
+                    if rhs.asAll:
+                        val = specEQ
+                    else:
+                        val = specEQInv
         elif isImplication(nameEQ):
             nameAgainstSpec = kb.name_eq(lhs.name, rhs.specification)
             if (specEQ == copCompareInv) and (specEQ == CasusHappening.EQUIVALENT):
@@ -246,7 +250,7 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
                 keyCmpElements = CasusHappening.GENERAL_IMPLICATION
                 keyCmpElementsInv = CasusHappening.INDIFFERENT
                 hasDirectSubset = True
-            elif set(dLHS.keys()).issubset(set(dRHS.keys())):
+            elif set(dLHS.keys()).issubset(set(dRHS.keys())) and set(dLHS.keys()) != set(dRHS.keys()):
                 keyCmpElements = CasusHappening.INDIFFERENT
                 keyCmpElementsInv = CasusHappening.INDIFFERENT
             else:

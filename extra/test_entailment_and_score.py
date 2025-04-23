@@ -1,8 +1,8 @@
 from LaSSI.Parmenides.Parmenides import ParmenidesSingleton
-from LaSSI.Parmenides.TBox.ExpandConstituents import test_pairwise_sentence_similarity
+from LaSSI.Parmenides.TBox.ExpandConstituents import test_pairwise_sentence_similarity, compare_variable
 
 from LaSSI.structures.extended_fol.Formulae import FUnaryPredicate, FVariable, FNot, FAnd
-from extra.test_allex import ncc, ncl
+from extra.test_allex import ncc, ncl, all_ncc, all_ncl
 
 traffic = FVariable('traffic', 'ENTITY')
 t = FUnaryPredicate("be", traffic, 1)
@@ -26,6 +26,17 @@ if __name__ == "__main__":
     ParmenidesSingleton.init("/home/giacomo/projects/LaSSI/catabolites", "giacomo", "omocaig",
                              "localhost", 5432, False, "/home/giacomo/projects/LaSSI/parmenides.ttl")
 
+    val = test_pairwise_sentence_similarity({}, tn, n_tcc, shift=False)
+    print(val)
+    val = test_pairwise_sentence_similarity({}, tn, t, shift=False)
+    print(val)
+    exit(1)
+    val = test_pairwise_sentence_similarity({}, tn, t, shift=False)
+    print(val)
+    val = compare_variable({}, all_ncc, all_ncl)
+    print(val)
+    val = compare_variable({}, all_ncc, ncl)
+    print(val)
     val = test_pairwise_sentence_similarity({}, tn, tcc, shift=False)
     print(val)
     val = test_pairwise_sentence_similarity({}, tcc, tn, shift=False)
