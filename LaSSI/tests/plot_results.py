@@ -18,16 +18,16 @@ def main():
     averaged_data = data.groupby('Dataset', as_index=False).mean(numeric_only=True)
 
     # Create a new DataFrame for the GPT-3 data
-    gpt3_data = pd.DataFrame({
-        'Dataset': averaged_data['Dataset'].unique(),
-        # 'GPT-3 training time': [34 * 24 * 60 * 60] * len(averaged_data['Dataset'].unique()) # 34 days to seconds
-        'all-MiniLM-L6-v2/all-MiniLM-L12-v2/ training time': [10240000] * len(averaged_data['Dataset'].unique()),
-        'all-roberta-large-v1 training time': [8192000] * len(averaged_data['Dataset'].unique())
-        # TODO: Cannot get other training times
-    })
+    # gpt3_data = pd.DataFrame({
+    #     'Dataset': averaged_data['Dataset'].unique(),
+    #     # 'GPT-3 training time': [34 * 24 * 60 * 60] * len(averaged_data['Dataset'].unique()) # 34 days to seconds
+    #     'all-MiniLM-L6-v2/all-MiniLM-L12-v2/ training time': [10240000] * len(averaged_data['Dataset'].unique()),
+    #     'all-roberta-large-v1 training time': [8192000] * len(averaged_data['Dataset'].unique())
+    #     # TODO: Cannot get other training times
+    # })
 
     # Merge the GPT-3 data with the averaged data
-    averaged_data = pd.merge(averaged_data, gpt3_data, on='Dataset', how='left')
+    # averaged_data = pd.merge(averaged_data, gpt3_data, on='Dataset', how='left')
 
     melted_data = averaged_data.melt(id_vars=['Dataset'], var_name='Phase', value_name='Time')
     melted_data['Dataset'] = pd.to_numeric(melted_data['Dataset'])  # Essential for highlighting last dataset on graph

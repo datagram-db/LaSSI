@@ -10,6 +10,7 @@ __status__ = "Production"
 import json
 import os
 import sys
+from itertools import combinations
 
 import numpy as np
 from matplotlib.patches import Rectangle
@@ -130,32 +131,40 @@ def plot_dendogram(model, D, filename="dendrogram.png", box_clusters=None):
     # axmatrix.yaxis.set_label_position('right')
     # axmatrix.yaxis.tick_right()
 
-    if box_clusters is not None and len(box_clusters) == 2:
+    if box_clusters is not None:
+        indices_x = [list(idx1).index(cluster) for cluster in box_clusters]
+        indices_y = [list(idx2).index(cluster) for cluster in box_clusters]
+
         box_linewidth = 4
         box_color = 'red'
-        cluster_label_x, cluster_label_y = box_clusters
-        index_x = list(idx1).index(cluster_label_x)
-        index_y = list(idx2).index(cluster_label_y)
-        n_y = len(idx2)  # Total number of labels on the y-axis
 
-        # Check for diagonal adjacency
-        if abs(index_x - index_y) == 1:
-            # Highlight the 2x2 grid
-            x_start = min(index_y, index_x) - 0.5
-            y_start = max(index_x, index_y) - 1.5
-            width = 2
-            height = 2
-            rect = Rectangle((x_start, y_start), width, height, linewidth=box_linewidth, edgecolor=box_color,
-                             facecolor='none')
-            axmatrix.add_patch(rect)
-        else:
-            # Highlight individual boxes
-            rect1 = Rectangle((index_y - 0.5, index_x - 0.5), 1, 1, linewidth=box_linewidth, edgecolor=box_color,
-                              facecolor='none')
-            axmatrix.add_patch(rect1)
-            rect2 = Rectangle((index_x - 0.5, index_y - 0.5), 1, 1, linewidth=box_linewidth, edgecolor=box_color,
-                              facecolor='none')
-            axmatrix.add_patch(rect2)
+        if len(box_clusters) == 3:
+            if is_consecutive(indices_x) and is_consecutive(indices_y):
+                # Highlight the 3x3 grid
+                x_start = min(indices_x) - 0.5
+                y_start = max(indices_y) - 2.5
+                width = 3
+                height = 3
+                rect = Rectangle((x_start, y_start), width, height, linewidth=box_linewidth, edgecolor=box_color,
+                                 facecolor='none')
+                axmatrix.add_patch(rect)
+            else:
+                # Highlight pairwise combinations
+                for cluster_pair in combinations(box_clusters, 2):
+                    cluster_label_x, cluster_label_y = cluster_pair
+                    index_x = list(idx1).index(cluster_label_x)
+                    index_y = list(idx2).index(cluster_label_y)
+
+                    # Check for diagonal adjacency
+                    highlight_boxes(axmatrix, box_color, box_linewidth, index_x, index_y)
+        elif len(box_clusters) == 2:
+            cluster_label_x, cluster_label_y = box_clusters
+            index_x = list(idx1).index(cluster_label_x)
+            index_y = list(idx2).index(cluster_label_y)
+            n_y = len(idx2)  # Total number of labels on the y-axis
+
+            # Check for diagonal adjacency
+            highlight_boxes(axmatrix, box_color, box_linewidth, index_x, index_y)
 
     # axcolor = fig.add_axes([0.94, 0.1, 0.02, 0.6])
     # plt.show()
@@ -169,6 +178,44 @@ def plot_dendogram(model, D, filename="dendrogram.png", box_clusters=None):
         # Display interactive viewer
         matplotlib.pyplot.show()
 
+
+def highlight_boxes(axmatrix, box_color, box_linewidth, index_x, index_y):
+    if abs(index_x - index_y) == 1:
+        # Highlight the 2x2 grid
+        x_start = min(index_y, index_x) - 0.5
+        y_start = max(index_x, index_y) - 1.5
+        width = 2
+        height = 2
+        rect = Rectangle((x_start, y_start), width, height, linewidth=box_linewidth,
+                         edgecolor=box_color,
+                         facecolor='none')
+        axmatrix.add_patch(rect)
+    else:
+        # Highlight individual boxes
+        rect1 = Rectangle((index_y - 0.5, index_x - 0.5), 1, 1, linewidth=box_linewidth,
+                          edgecolor=box_color,
+                          facecolor='none')
+        axmatrix.add_patch(rect1)
+        rect2 = Rectangle((index_x - 0.5, index_y - 0.5), 1, 1, linewidth=box_linewidth,
+                          edgecolor=box_color,
+                          facecolor='none')
+        axmatrix.add_patch(rect2)
+
+
+def is_consecutive(arr):
+    min_val = min(arr)
+    max_val = max(arr)
+
+    if max_val - min_val + 1 != len(arr):
+        return False  # If the range isn't equal to the length, they can't be consecutive
+
+    seen = set()
+    for num in arr:
+        if num in seen:
+            return False  # Duplicate numbers mean they can't be strictly consecutive
+        seen.add(num)
+
+    return True
 
 def as_distance_matrix(similarity_matrix):
     lls = [[1.0 - value for value in row] for row in similarity_matrix]
@@ -318,12 +365,12 @@ def test_with_maximal_matching(expected_clusters, experiment_name, transformer, 
         transformer = f"T5_{transformer}"
     elif transformer == "FullText_colbertv2.0":
         transformer = f"T6_{transformer}"
-    elif transformer == "SimpleGraph":
-        transformer = "1SimpleGraph"
-    elif transformer == "LogicalGraph":
-        transformer = "2LogicalGraph"
-    elif transformer == "Logical":
-        transformer = "3Logical"
+    # elif transformer == "SimpleGraph":
+    #     transformer = "1SimpleGraph"
+    # elif transformer == "LogicalGraph":
+    #     transformer = "2LogicalGraph"
+    # elif transformer == "Logical":
+    #     transformer = "3Logical"
 
     row_name = f"{experiment_name}_{transformer}"
 
@@ -358,11 +405,11 @@ def test_with_maximal_matching(expected_clusters, experiment_name, transformer, 
         os.makedirs(f"catabolites/{experiment_name}")
 
     if 'alice_bob' in experiment_name:
-        box_clusters = [0,1]
+        box_clusters = None
     elif 'cat_mouse' in experiment_name:
         box_clusters = [2,3]
     elif 'newcastle' in experiment_name:
-        box_clusters = [2,4]
+        box_clusters = [0,1,9]
     else:
         box_clusters = None
 
