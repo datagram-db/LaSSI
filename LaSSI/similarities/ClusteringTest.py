@@ -12,6 +12,7 @@ import os
 import sys
 
 import numpy as np
+from matplotlib.patches import Rectangle
 from sklearn.cluster import AgglomerativeClustering
 from scipy.sparse import csr_matrix
 import markov_clustering as mc
@@ -76,7 +77,7 @@ def _plot_dendrogram(model, **kwargs):
     return dendrogram(linkage_matrix, **kwargs)
 
 
-def plot_dendogram(model, D, filename="dendrogram.png"):
+def plot_dendogram(model, D, filename="dendrogram.png", box_clusters=None):
     # fig = matplotlib.pyplot.figure()
     from scipy.spatial.distance import squareform
     # Compute and plot first dendrogram.
@@ -128,6 +129,33 @@ def plot_dendogram(model, D, filename="dendrogram.png"):
     axmatrix.set_yticklabels(idx2, minor=False, fontsize=20)
     # axmatrix.yaxis.set_label_position('right')
     # axmatrix.yaxis.tick_right()
+
+    if box_clusters is not None and len(box_clusters) == 2:
+        box_linewidth = 4
+        box_color = 'red'
+        cluster_label_x, cluster_label_y = box_clusters
+        index_x = list(idx1).index(cluster_label_x)
+        index_y = list(idx2).index(cluster_label_y)
+        n_y = len(idx2)  # Total number of labels on the y-axis
+
+        # Check for diagonal adjacency
+        if abs(index_x - index_y) == 1:
+            # Highlight the 2x2 grid
+            x_start = min(index_y, index_x) - 0.5
+            y_start = max(index_x, index_y) - 1.5
+            width = 2
+            height = 2
+            rect = Rectangle((x_start, y_start), width, height, linewidth=box_linewidth, edgecolor=box_color,
+                             facecolor='none')
+            axmatrix.add_patch(rect)
+        else:
+            # Highlight individual boxes
+            rect1 = Rectangle((index_y - 0.5, index_x - 0.5), 1, 1, linewidth=box_linewidth, edgecolor=box_color,
+                              facecolor='none')
+            axmatrix.add_patch(rect1)
+            rect2 = Rectangle((index_x - 0.5, index_y - 0.5), 1, 1, linewidth=box_linewidth, edgecolor=box_color,
+                              facecolor='none')
+            axmatrix.add_patch(rect2)
 
     # axcolor = fig.add_axes([0.94, 0.1, 0.02, 0.6])
     # plt.show()
@@ -329,6 +357,15 @@ def test_with_maximal_matching(expected_clusters, experiment_name, transformer, 
     if not os.path.exists(f"catabolites/{experiment_name}"):
         os.makedirs(f"catabolites/{experiment_name}")
 
+    if 'alice_bob' in experiment_name:
+        box_clusters = [0,1]
+    elif 'cat_mouse' in experiment_name:
+        box_clusters = [2,3]
+    elif 'newcastle' in experiment_name:
+        box_clusters = [2,4]
+    else:
+        box_clusters = None
+
     print("Metrics (Agglomerative clustering)")
     n_expected_clusters = len(expected_clusters)
     agg_cluster_assignment, agg_model, distances = agglomerative_clustering(similarity_matrix, n_expected_clusters)
@@ -336,7 +373,7 @@ def test_with_maximal_matching(expected_clusters, experiment_name, transformer, 
         N, agg_cluster_assignment, not_implying_score, similarity_matrix)
     print_metrics(agg_scores, expected_labels, implying_vs_indifferent, "Agglomerative", row_name)
 
-    plot_dendogram(agg_model, distances, f"catabolites/{experiment_name}/{transformer}_dend.png")
+    plot_dendogram(agg_model, distances, f"catabolites/{experiment_name}/{transformer}_dend.png", box_clusters)
 
     print("Metrics (Markov clustering)")
     mkv_cluster_assignment, matrix, mkv_clusters = knn(similarity_matrix, n_expected_clusters)

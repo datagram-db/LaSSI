@@ -56,7 +56,7 @@ if __name__ == '__main__':
 
     if all_outputs:
         # transformations = [SentenceRepresentation.FullText, SentenceRepresentation.SimpleGraph, SentenceRepresentation.LogicalGraph, SentenceRepresentation.Logical]
-        transformations = [SentenceRepresentation.FullText, SentenceRepresentation.SimpleGraphDisabledAdHoc, SentenceRepresentation.SimpleGraph, SentenceRepresentation.LogicalDisabledAdHoc, SentenceRepresentation.LogicalGraph, SentenceRepresentation.LogicalDisabledAdHoc, SentenceRepresentation.Logical]
+        transformations = [SentenceRepresentation.FullText, SentenceRepresentation.SimpleGraphDisabledAdHoc, SentenceRepresentation.SimpleGraph, SentenceRepresentation.LogicalGraphDisabledAdHoc, SentenceRepresentation.LogicalGraph, SentenceRepresentation.LogicalDisabledAdHoc, SentenceRepresentation.Logical]
 
         for transformation in transformations:
             if transformation == SentenceRepresentation.FullText:

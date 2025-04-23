@@ -20,7 +20,10 @@ def main():
     # Create a new DataFrame for the GPT-3 data
     gpt3_data = pd.DataFrame({
         'Dataset': averaged_data['Dataset'].unique(),
-        'GPT-3 training time': [34 * 24 * 60 * 60] * len(averaged_data['Dataset'].unique()) # 34 days to seconds
+        # 'GPT-3 training time': [34 * 24 * 60 * 60] * len(averaged_data['Dataset'].unique()) # 34 days to seconds
+        'all-MiniLM-L6-v2/all-MiniLM-L12-v2/ training time': [10240000] * len(averaged_data['Dataset'].unique()),
+        'all-roberta-large-v1 training time': [8192000] * len(averaged_data['Dataset'].unique())
+        # TODO: Cannot get other training times
     })
 
     # Merge the GPT-3 data with the averaged data
@@ -33,13 +36,16 @@ def main():
     melted_data['Phase'] = pd.Categorical(melted_data['Phase'], categories=list(averaged_data.columns[1:]), ordered=True)
 
     original_labels = list(averaged_data.columns[1:])
-    line_types = ['solid'] * (len(original_labels) -1) + ['dashed'] # all solid except last which is dashed
+    line_types = ['solid'] * len(original_labels)
+    for i, label in enumerate(original_labels):
+        if 'training time' in label.lower():
+            line_types[i] = 'dashed'
     line_type_dict = dict(zip(original_labels, line_types))
 
     # Highlight last dataset
     last_dataset_label = sorted(data['Dataset'].unique())[-1]
     last_dataset_data = melted_data[pd.to_numeric(melted_data['Dataset']) == last_dataset_label]
-    last_dataset_data = last_dataset_data[(last_dataset_data['Phase'] != "GPT-3 training time")]
+    last_dataset_data = last_dataset_data[last_dataset_data['Phase'].str.contains("training time") == False]
     y_min = last_dataset_data['Time'].min()
     y_max = last_dataset_data['Time'].max()
 
@@ -79,8 +85,9 @@ def main():
                 plot_title=element_text(ha='center', fontproperties=title_font),
                 panel_border=element_blank(),
                 legend_position='bottom',
-                legend_direction='horizontal'
+                legend_direction='horizontal',
             )
+            + guides(color=guide_legend(nrow=3), shape=guide_legend(nrow=3))
     )
     plot.save('performance_metrics_plot.png', dpi=1200, width=7.5, height=5)
 

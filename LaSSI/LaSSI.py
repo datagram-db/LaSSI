@@ -231,7 +231,7 @@ class LaSSI():
             internal_representations.append(final_form)
             end = time.time()
             self.sentences_benchmark.add_row(idx, "Sentence length", len(graph))
-            self.sentences_benchmark.add_row(idx, "Internal representation", end - start)
+            self.sentences_benchmark.add_row(idx, "Generating intermediate representation", end - start)
         return internal_representations
 
     def _logical_rewriting(self, intermediate_representations):
@@ -248,7 +248,7 @@ class LaSSI():
             start = time.time()
             rewritten_kernels.append(rewrite_kernels(x, self.meu_dbs[idx]))
             end = time.time()
-            self.sentences_benchmark.add_row(idx, "Logical rewriting", end - start)
+            self.sentences_benchmark.add_row(idx, "Generating logical representation", end - start)
         return rewritten_kernels
         # return [rewrite_kernels(x, self.meu_dbs[idx]) for idx, x in enumerate(intermediate_representations)]
 
@@ -313,7 +313,7 @@ class LaSSI():
                 matrices.append(ls)
 
                 end = time.time()
-                self.sentences_benchmark.add_row(i, "Ex post", end - start)
+                self.sentences_benchmark.add_row(i, "Performing ex post", end - start)
             # matrices = np.array(matrices)
 
         return matrices
