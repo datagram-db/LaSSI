@@ -60,8 +60,8 @@ class ModelSearch:
 
     def compare(self, objLHS:ModelSearchBasis, objRHS:ModelSearchBasis)->'CasusHappening':
         cp = (objLHS.original, objRHS.original)
-        if cp in self.main_cache:
-            return self.main_cache[cp]
+        # if cp in self.main_cache:
+        #     return self.main_cache[cp]
         if (objLHS.original == objRHS.original):
             self.main_cache[cp] = CasusHappening.EQUIVALENT
             return self.main_cache[cp]
@@ -111,7 +111,8 @@ class ModelSearch:
                         firstConst = val
                     # return val
             from LaSSI.Parmenides.TBox.ExpandConstituents import simplifyConstituents
-            result = simplifyConstituents(elems)
+            from LaSSI.Parmenides.TBox.ExpandConstituents import simplifyConstituentsAcross
+            result = simplifyConstituentsAcross(elems)
             # assert (firstConst is None) or (result == firstConst)
             if result != CasusHappening.INDIFFERENT:
                 self.main_cache[cp] = result
