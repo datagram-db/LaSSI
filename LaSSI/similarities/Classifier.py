@@ -7,7 +7,7 @@ class Classifier:
         self.pipe = pipeline("text-classification", model)
 
     def __call__(self, premise, consequence):
-        prompt = f"If {premise}, then {consequence}"
+        prompt = f"{premise}. {consequence}."
         result = self.pipe(prompt)[0]
         if (result["label"] == 1):
             score =  result["score"]/2.0+0.5
