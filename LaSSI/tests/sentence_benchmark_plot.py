@@ -5,9 +5,9 @@ from plotnine import ggplot, aes, scale_y_log10, labs, geom_point, geom_line, \
     guide_legend
 
 if __name__ == '__main__':
-    font_regular = fm.FontProperties(fname='./fonts/Satoshi-Medium.ttf', size=8)
-    font_bold = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=8)
-    font_title = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=12)
+    font_regular = fm.FontProperties(fname='./fonts/Satoshi-Medium.ttf', size=11)
+    font_bold = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=11)
+    font_title = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=13)
 
     df = pd.read_csv('./benchmarks/each_sentence/benchmark_results_200.csv')
     df_to_append = pd.read_csv(
@@ -21,8 +21,8 @@ if __name__ == '__main__':
 
     df_mean = df.groupby(by='Sentence length').mean().reset_index()
 
-    desired_orders = [['Generating StanfordNLP representation', 'Generating meuDB', 'Generating intermediate representation', 'Generating logical representation', 'Performing ex post'], ['Vertices']]
-    name = ['sentence_length','vertices']
+    # desired_orders = [['Generating StanfordNLP representation', 'Generating meuDB', 'Generating intermediate representation', 'Generating logical representation', 'Performing ex post explanation'], ['Vertices']]
+    desired_orders = [['Generating StanfordNLP representation', 'Generating meuDB', 'Generating intermediate representation', 'Generating logical representation', 'Performing ex post'], ['Generating StanfordNLP representation'], ['Generating meuDB'], ['Generating intermediate representation'], ['Generating logical representation'], ['Performing ex post explanation'], ['Vertices']]
 
     for idx, desired_order in enumerate(desired_orders):
         mean_value_columns = [col for col in desired_order if col in df_mean.columns]
@@ -46,9 +46,9 @@ if __name__ == '__main__':
                 #               breaks=[10 ** x for x in range(-5, 7)],
                 #               labels=lambda l: ["{:.0e}".format(v).replace("+0", "+").replace("-0", "-") for v in l])
                 + scale_x_continuous(breaks=all_sentence_lengths)
-                + labs(title='Mean Values of LaSSI Phases vs. Sentence Length' if idx == 0 else 'Mean Number of Vertices vs. Sentence Length',
+                + labs(title=f"Mean Values of {'LaSSI Phases' if len(desired_order) > 1 else desired_order[0].title()} vs. Sentence Length",
                        x='Sentence Length',
-                       y='Mean Value (Log Scale, seconds)' if idx == 0 else 'Mean Number of Vertices',
+                       y='Mean Value (Log Scale, seconds)' if len(desired_order) > 1 else f'Mean Number of {desired_order[0].replace("Generating", "")}',
                        color='Metric',
                        shape='Metric')
                 + theme_minimal()
@@ -68,10 +68,10 @@ if __name__ == '__main__':
                 + guides(color=guide_legend(nrow=3), shape=guide_legend(nrow=3))
         )
 
-        if idx == 0:
+        if len(desired_order) > 1:
             plot = plot + scale_y_log10(minor_breaks=[],
                                         breaks=[10 ** x for x in range(-5, 7)],
                                         labels=lambda l: ["{:.0e}".format(v).replace("+0", "+").replace("-0", "-") for v
                                                           in l])
 
-        plot.save(f'{name[idx]}.png', dpi=1200, width=7.5, height=5)
+        plot.save(f"{'sentence_length' if len(desired_order) > 1 else desired_order[0].replace(' ','')}.png", dpi=1200, width=7.5, height=5)

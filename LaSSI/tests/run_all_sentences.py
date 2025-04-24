@@ -9,6 +9,7 @@ from tqdm import tqdm
 from LaSSI.Configuration import SentenceRepresentation
 from LaSSI.LaSSI import LaSSI
 from LaSSI.tests.benchmark import Benchmark
+from LaSSI.tests.delete_catabolites import delete_files
 
 
 def sort_by_numeric_value(file_path):
@@ -49,20 +50,33 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         folders = sys.argv[1:]
     else:
-        folders = ["orig"]
+        folders = ["newcastle_mdpi"]
 
     all_outputs = True
     metrics_benchmark = Benchmark("Metrics")
 
     if all_outputs:
         # transformations = [SentenceRepresentation.FullText, SentenceRepresentation.SimpleGraph, SentenceRepresentation.LogicalGraph, SentenceRepresentation.Logical]
-        transformations = [SentenceRepresentation.FullText, SentenceRepresentation.SimpleGraphDisabledAdHoc, SentenceRepresentation.SimpleGraph, SentenceRepresentation.LogicalGraphDisabledAdHoc, SentenceRepresentation.LogicalGraph, SentenceRepresentation.LogicalDisabledAdHoc, SentenceRepresentation.Logical]
+        # transformations = [SentenceRepresentation.FullText, SentenceRepresentation.SimpleGraphDisabledAdHoc, SentenceRepresentation.SimpleGraph, SentenceRepresentation.LogicalGraphDisabledAdHoc, SentenceRepresentation.LogicalGraph, SentenceRepresentation.LogicalDisabledAdHoc, SentenceRepresentation.Logical]
+        transformations = [
+            # SentenceRepresentation.SimpleGraphDisabledAdHoc, SentenceRepresentation.SimpleGraph,
+            # SentenceRepresentation.LogicalGraphDisabledAdHoc, SentenceRepresentation.LogicalGraph,
+            SentenceRepresentation.LogicalDisabledAdHoc, SentenceRepresentation.Logical
+        ]
 
         for transformation in transformations:
+            delete_files(False, False, folders, transformation)
             if transformation == SentenceRepresentation.FullText:
-                transformers = ["all-MiniLM-L6-v2", "all-MiniLM-L12-v2", "all-mpnet-base-v2", "all-roberta-large-v1", "Log#qbao775/AMR-LE-DeBERTa-V2-XXLarge-Contraposition-Double-Negation-Implication-Commutative-Pos-Neg-1-3", "RAG#colbert-ir/colbertv2.0"]
+                transformers = [
+                    "all-MiniLM-L6-v2", "all-MiniLM-L12-v2", "all-mpnet-base-v2", "all-roberta-large-v1",
+                    "Log#qbao775/AMR-LE-DeBERTa-V2-XXLarge-Contraposition-Double-Negation-Implication-Commutative-Pos-Neg-1-3",
+                    "RAG#colbert-ir/colbertv2.0"
+                ]
                 for transformer in transformers:
-                    get_and_run_all_sentences(folders, transformation, f"sentence-transformers/{transformer}" if "#" not in transformer else transformer)
+                    get_and_run_all_sentences(
+                        folders, transformation,
+                        f"sentence-transformers/{transformer}" if "#" not in transformer else transformer
+                    )
             else:
                 get_and_run_all_sentences(folders, transformation)
     else:

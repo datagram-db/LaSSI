@@ -78,7 +78,7 @@ def _plot_dendrogram(model, **kwargs):
     return dendrogram(linkage_matrix, **kwargs)
 
 
-def plot_dendogram(model, D, filename="dendrogram.png", box_clusters=None):
+def plot_dendogram(model, D, filename="dendrogram.png", all_box_clusters=None):
     # fig = matplotlib.pyplot.figure()
     from scipy.spatial.distance import squareform
     # Compute and plot first dendrogram.
@@ -131,40 +131,39 @@ def plot_dendogram(model, D, filename="dendrogram.png", box_clusters=None):
     # axmatrix.yaxis.set_label_position('right')
     # axmatrix.yaxis.tick_right()
 
-    if box_clusters is not None:
-        indices_x = [list(idx1).index(cluster) for cluster in box_clusters]
-        indices_y = [list(idx2).index(cluster) for cluster in box_clusters]
+    if all_box_clusters is not None:
+        for idx, box_clusters in enumerate(all_box_clusters):
+            indices_x = [list(idx1).index(cluster) for cluster in box_clusters]
+            indices_y = [list(idx2).index(cluster) for cluster in box_clusters]
 
-        box_linewidth = 4
-        box_color = 'red'
+            box_linewidth = 6
+            box_color = 'red' if idx == 0 else 'orange'
 
-        if len(box_clusters) == 3:
-            if is_consecutive(indices_x) and is_consecutive(indices_y):
-                # Highlight the 3x3 grid
-                x_start = min(indices_x) - 0.5
-                y_start = max(indices_y) - 2.5
-                width = 3
-                height = 3
-                rect = Rectangle((x_start, y_start), width, height, linewidth=box_linewidth, edgecolor=box_color,
-                                 facecolor='none')
-                axmatrix.add_patch(rect)
-            else:
-                # Highlight pairwise combinations
-                for cluster_pair in combinations(box_clusters, 2):
-                    cluster_label_x, cluster_label_y = cluster_pair
-                    index_x = list(idx1).index(cluster_label_x)
-                    index_y = list(idx2).index(cluster_label_y)
+            if len(box_clusters) == 3:
+                if is_consecutive(indices_x) and is_consecutive(indices_y):
+                    # Highlight the 3x3 grid
+                    x_start = min(indices_x) - 0.5
+                    y_start = max(indices_y) - 2.5
+                    width = 3
+                    height = 3
+                    rect = Rectangle((x_start, y_start), width, height, linewidth=box_linewidth, edgecolor=box_color,
+                                     facecolor='none')
+                    axmatrix.add_patch(rect)
+                else:
+                    # Highlight pairwise combinations
+                    for cluster_pair in combinations(box_clusters, 2):
+                        cluster_label_x, cluster_label_y = cluster_pair
+                        index_x = list(idx1).index(cluster_label_x)
+                        index_y = list(idx2).index(cluster_label_y)
 
-                    # Check for diagonal adjacency
-                    highlight_boxes(axmatrix, box_color, box_linewidth, index_x, index_y)
-        elif len(box_clusters) == 2:
-            cluster_label_x, cluster_label_y = box_clusters
-            index_x = list(idx1).index(cluster_label_x)
-            index_y = list(idx2).index(cluster_label_y)
-            n_y = len(idx2)  # Total number of labels on the y-axis
+                        highlight_boxes(axmatrix, box_color, box_linewidth, index_x, index_y)
+            elif len(box_clusters) == 2:
+                cluster_label_x, cluster_label_y = box_clusters
+                index_x = list(idx1).index(cluster_label_x)
+                index_y = list(idx2).index(cluster_label_y)
+                n_y = len(idx2)  # Total number of labels on the y-axis
 
-            # Check for diagonal adjacency
-            highlight_boxes(axmatrix, box_color, box_linewidth, index_x, index_y)
+                highlight_boxes(axmatrix, box_color, box_linewidth, index_x, index_y)
 
     # axcolor = fig.add_axes([0.94, 0.1, 0.02, 0.6])
     # plt.show()
@@ -180,6 +179,7 @@ def plot_dendogram(model, D, filename="dendrogram.png", box_clusters=None):
 
 
 def highlight_boxes(axmatrix, box_color, box_linewidth, index_x, index_y):
+    # Check for diagonal adjacency
     if abs(index_x - index_y) == 1:
         # Highlight the 2x2 grid
         x_start = min(index_y, index_x) - 0.5
@@ -407,9 +407,9 @@ def test_with_maximal_matching(expected_clusters, experiment_name, transformer, 
     if 'alice_bob' in experiment_name:
         box_clusters = None
     elif 'cat_mouse' in experiment_name:
-        box_clusters = [2,3]
+        box_clusters = [[0,1],[2,3]]
     elif 'newcastle' in experiment_name:
-        box_clusters = [0,1,9]
+        box_clusters = [[0,1,9],[6,7,8]]
     else:
         box_clusters = None
 

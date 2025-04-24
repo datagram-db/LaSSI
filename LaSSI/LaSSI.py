@@ -129,12 +129,18 @@ class LaSSI():
         if self.transformation == SentenceRepresentation.LogicalDisabledAdHoc:
             self.disable_ad_hoc = True
             self.transformation = SentenceRepresentation.Logical
+        elif self.transformation == SentenceRepresentation.Logical:
+            self.disable_ad_hoc = False
         elif self.transformation == SentenceRepresentation.SimpleGraphDisabledAdHoc:
             self.disable_ad_hoc = True
             self.transformation = SentenceRepresentation.SimpleGraph
+        elif self.transformation == SentenceRepresentation.SimpleGraph:
+            self.disable_ad_hoc = False
         elif self.transformation == SentenceRepresentation.LogicalGraphDisabledAdHoc:
             self.disable_ad_hoc = True
             self.transformation = SentenceRepresentation.LogicalGraph
+        elif self.transformation == SentenceRepresentation.LogicalGraph:
+            self.disable_ad_hoc = False
         self.force = force
         self.should_benchmark = should_benchmark
         self.logger("init file structure")
@@ -181,7 +187,7 @@ class LaSSI():
                                                                 "rewritten graphs,Generating intermediate "
                                                                 "representation,Generating logical representation")
             if self.run_ex_post:
-                write_variable_to_file(self.benchmarking_file, ",Ex Post Explanation\n")
+                write_variable_to_file(self.benchmarking_file, ",Performing ex post explanation\n")
             else:
                 write_variable_to_file(self.benchmarking_file, "\n")
         else:
@@ -212,8 +218,6 @@ class LaSSI():
             shutil.copytree(self.catabolites_viz, dataset_folder)
 
         return L
-
-
 
     def _internal_graph(self, gsm_list):
         internal_representations = []
@@ -313,7 +317,7 @@ class LaSSI():
                 matrices.append(ls)
 
                 end = time.time()
-                self.sentences_benchmark.add_row(i, "Performing ex post", end - start)
+                self.sentences_benchmark.add_row(i, "Performing ex post explanation", end - start)
             # matrices = np.array(matrices)
 
         return matrices

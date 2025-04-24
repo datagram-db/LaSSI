@@ -2,13 +2,14 @@ import matplotlib.font_manager as fm
 import numpy as np
 import pandas as pd
 from plotnine import ggplot, aes, geom_line, labs, theme_minimal, theme, scale_y_log10, scale_color_brewer, \
-    element_rect, scale_x_continuous, geom_point, element_text, scale_linetype_manual, element_blank, geom_rect
+    element_rect, scale_x_continuous, geom_point, element_text, scale_linetype_manual, element_blank, geom_rect, guides, \
+    guide_legend
 
 
 def main():
-    font = fm.FontProperties(fname='./fonts/Satoshi-Medium.ttf', size=8)
-    bold_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=8)
-    title_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=12)
+    font = fm.FontProperties(fname='./fonts/Satoshi-Medium.ttf', size=11)
+    bold_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=11)
+    title_font = fm.FontProperties(fname='./fonts/Satoshi-Bold.ttf', size=13)
 
     pd.set_option('display.max_columns', None)
 

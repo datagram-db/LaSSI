@@ -2,12 +2,14 @@ import os
 import shutil
 from pathlib import Path
 
-def delete_files(delete_all_files=False, benchmarking=False):
+def delete_files(delete_all_files=False, benchmarking=False, target_folders=None, transformation=None):
+    if target_folders is None:
+        target_folders = []
     catabolites_dir = os.path.join(Path(os.path.dirname(os.path.abspath(__file__))).parent.absolute().parent.absolute(), "catabolites")
     for subdir, dirs, files in os.walk(catabolites_dir):
-        if subdir.split('/')[-1][0].isdigit() or not benchmarking:
+        if (subdir.split(os.sep)[-1][0].isdigit() and benchmarking) or (subdir.split(os.sep)[-1] in target_folders and not benchmarking):
             for dir in dirs:
-                if dir == "viz":
+                if (dir == "viz") or (dir == f"SentenceRepresentation.{transformation.name}" and not benchmarking and transformation is not None):
                     dir_path = os.path.join(subdir, dir)
                     print(f"Deleting folder: {str(dir_path)}")
                     try:
@@ -15,9 +17,15 @@ def delete_files(delete_all_files=False, benchmarking=False):
                     except OSError as e:
                         print(f"Error deleting {dir_path}: {e}")
             for file in files:
-                if (file in ("gsmDB.txt", "datagramdb_output.json", "logical_rewriting.json",
-                              "_cd.pickle", "_d.pickle", "_ec.pickle", "_eed.pickle", "_ic.pickle", "_ied.pickle") or
-                    (file in ("internals.json", "internals-bin.json", "string_rep.txt", "meuDBs.json") and delete_all_files)):
+                if (
+                        file in ("gsmDB.txt", "datagramdb_output.json", "logical_rewriting.json") or file.endswith(".pickle")
+                        or (file in ("internals.json", "internals-bin.json", "string_rep.txt", "meuDBs.json") and delete_all_files)
+                        or (
+                            (file in ("internals.json", "logical_rewriting.json", "gsmDB.txt", "datagramdb_output.json")
+                                or file.startswith("confusion_matrices"))
+                            and len(target_folders) > 0
+                        )
+                ):
                     file_path = os.path.join(subdir, file)
                     print(f"Deleting file: {str(file_path)}")
                     try:

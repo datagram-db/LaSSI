@@ -1,4 +1,4 @@
-id,Generating meuDB,Sentence length,Generating intermediate representation,Generating logical representation,Performing ex post
+id,Generating meuDB,Sentence length,Generating intermediate representation,Generating logical representation,Performing ex post explanation
 0,14.523489236831665,5,0.08624553680419922,0.0001010894775390625,0.8653194904327393
 1,18.801223278045654,6,0.08896732330322266,8.106231689453125e-05,0.5767006874084473
 2,12.740876197814941,4,0.04920649528503418,5.650520324707031e-05,0.6180357933044434
