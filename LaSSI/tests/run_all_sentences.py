@@ -36,7 +36,7 @@ def get_and_run_all_sentences(folders, transformation=SentenceRepresentation.Log
             pbar.set_description(f"Rewriting sentences: {yaml_file.split('/')[-1]}")
             try:
                 with open(os.devnull, 'w') as devnull:
-                    # sys.stdout = devnull
+                    sys.stdout = devnull
                     pipeline = LaSSI(yaml_file, "/home/campus.ncl.ac.uk/b9063849/PycharmProjects/LaSSI/connection.yaml", transformation, transformer)
                     pipeline.run()
                     pipeline.close()
@@ -59,8 +59,8 @@ if __name__ == '__main__':
         # transformations = [SentenceRepresentation.FullText, SentenceRepresentation.SimpleGraph, SentenceRepresentation.LogicalGraph, SentenceRepresentation.Logical]
         # transformations = [SentenceRepresentation.FullText, SentenceRepresentation.SimpleGraphDisabledAdHoc, SentenceRepresentation.SimpleGraph, SentenceRepresentation.LogicalGraphDisabledAdHoc, SentenceRepresentation.LogicalGraph, SentenceRepresentation.LogicalDisabledAdHoc, SentenceRepresentation.Logical]
         transformations = [
-            # SentenceRepresentation.SimpleGraphDisabledAdHoc, SentenceRepresentation.SimpleGraph,
-            # SentenceRepresentation.LogicalGraphDisabledAdHoc, SentenceRepresentation.LogicalGraph,
+            SentenceRepresentation.SimpleGraphDisabledAdHoc, SentenceRepresentation.SimpleGraph,
+            SentenceRepresentation.LogicalGraphDisabledAdHoc, SentenceRepresentation.LogicalGraph,
             SentenceRepresentation.LogicalDisabledAdHoc, SentenceRepresentation.Logical
         ]
 

@@ -13,10 +13,17 @@ def main():
 
     pd.set_option('display.max_columns', None)
 
-    data = pd.read_csv('benchmarks/mar18-benchmark-added-logical.csv')  # FYI: mar18 is used in MDPI25 paper
+    data = pd.read_csv('benchmarks/mar18-benchmark-added-logical-expost__1.csv')  # FYI: mar18 is used in MDPI25 paper
+
+    data = data.loc[:, ['Dataset', 'Generating meuDB', 'Generating gsmDB', 'Generating intermediate representation',
+                        'Generating logical representation', 'Performing ex post explanation',
+                        'Loading sentences', 'Loading meuDB', 'Generating rewritten graphs']]
+
     data = data.sort_values(by='Dataset')
     data = data.replace(0, np.nan)  # For generating/loading meuDB where values are 0
     averaged_data = data.groupby('Dataset', as_index=False).mean(numeric_only=True)
+
+
 
     # Create a new DataFrame for the GPT-3 data
     # gpt3_data = pd.DataFrame({
@@ -88,7 +95,7 @@ def main():
                 legend_position='bottom',
                 legend_direction='horizontal',
             )
-            + guides(color=guide_legend(nrow=3), shape=guide_legend(nrow=3))
+            + guides(color=guide_legend(nrow=4), shape=guide_legend(nrow=4))
     )
     plot.save('performance_metrics_plot.png', dpi=1200, width=7.5, height=5)
 

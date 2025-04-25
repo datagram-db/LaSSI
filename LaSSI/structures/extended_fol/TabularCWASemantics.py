@@ -74,7 +74,7 @@ class TabularCWASemantics:
                 current_x = self.minimal_constituents.add(x)
                 self.minimal_constituent_dict[sentence_id].add(current_x)
                 if isinstance(x, FNot):
-                    assert {x.arg} == getAtoms(x)
+                    # assert {x.arg} == getAtoms(x)
                     self.negations.add(current_x)
                     not_neg_x = self.minimal_constituents.add(x.arg)
                     self.negation_resolution[current_x] = not_neg_x

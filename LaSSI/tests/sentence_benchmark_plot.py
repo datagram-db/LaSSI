@@ -11,9 +11,9 @@ if __name__ == '__main__':
 
     df = pd.read_csv('./benchmarks/each_sentence/benchmark_results_200.csv')
     df_to_append = pd.read_csv(
-        './benchmarks/each_sentence/java_graph_generation_benchmark_nvertices_vs_milliseconds.csv', names=['Vertices', 'Generating StanfordNLP representation'])
+        './benchmarks/each_sentence/java_graph_generation_benchmark_nvertices_vs_milliseconds.csv', names=['Vertices', 'Generating gsmDB'])
 
-    df_to_append['Generating StanfordNLP representation'] = df_to_append['Generating StanfordNLP representation'] * 1000
+    df_to_append['Generating gsmDB'] = df_to_append['Generating gsmDB'] * 1000
     df = pd.concat([df, df_to_append], axis=1, ignore_index=False, sort=False)
 
     if 'id' in df.columns:
@@ -21,8 +21,8 @@ if __name__ == '__main__':
 
     df_mean = df.groupby(by='Sentence length').mean().reset_index()
 
-    # desired_orders = [['Generating StanfordNLP representation', 'Generating meuDB', 'Generating intermediate representation', 'Generating logical representation', 'Performing ex post explanation'], ['Vertices']]
-    desired_orders = [['Generating StanfordNLP representation', 'Generating meuDB', 'Generating intermediate representation', 'Generating logical representation', 'Performing ex post'], ['Generating StanfordNLP representation'], ['Generating meuDB'], ['Generating intermediate representation'], ['Generating logical representation'], ['Performing ex post explanation'], ['Vertices']]
+    desired_orders = [['Generating meuDB', 'Generating gsmDB', 'Generating intermediate representation', 'Generating logical representation', 'Performing ex post explanation'], ['Vertices']]
+    # desired_orders = [['Generating gsmDB', 'Generating meuDB', 'Generating intermediate representation', 'Generating logical representation', 'Performing ex post'], ['Generating gsmDB'], ['Generating meuDB'], ['Generating intermediate representation'], ['Generating logical representation'], ['Performing ex post explanation'], ['Vertices']]
 
     for idx, desired_order in enumerate(desired_orders):
         mean_value_columns = [col for col in desired_order if col in df_mean.columns]
@@ -30,16 +30,16 @@ if __name__ == '__main__':
         df_melted = pd.melt(df_mean,
                             id_vars=['Sentence length'],
                             value_vars=mean_value_columns,
-                            var_name='Metric',
+                            var_name='Phase',
                             value_name='Mean Value')
 
-        df_melted['Metric'] = pd.Categorical(df_melted['Metric'], categories=mean_value_columns, ordered=True)
+        df_melted['Phase'] = pd.Categorical(df_melted['Phase'], categories=mean_value_columns, ordered=True)
 
         all_sentence_lengths = df_melted['Sentence length'].unique()
         all_sentence_lengths.sort()
 
         plot = (
-                ggplot(df_melted, aes(x='Sentence length', y='Mean Value', color='Metric', shape='Metric'))
+                ggplot(df_melted, aes(x='Sentence length', y='Mean Value', color='Phase', shape='Phase'))
                 + geom_point(size=1.75)
                 + geom_line(size=0.75)
                 # + scale_y_log10(minor_breaks=[],
@@ -48,9 +48,9 @@ if __name__ == '__main__':
                 + scale_x_continuous(breaks=all_sentence_lengths)
                 + labs(title=f"Mean Values of {'LaSSI Phases' if len(desired_order) > 1 else desired_order[0].title()} vs. Sentence Length",
                        x='Sentence Length',
-                       y='Mean Value (Log Scale, seconds)' if len(desired_order) > 1 else f'Mean Number of {desired_order[0].replace("Generating", "")}',
-                       color='Metric',
-                       shape='Metric')
+                       y='Mean Value (seconds, log scale)' if len(desired_order) > 1 else f'Mean Number of {desired_order[0].replace("Generating", "")}',
+                       color='Phase',
+                       shape='Phase')
                 + theme_minimal()
                 + theme(
                     plot_background=element_rect(fill='white', color="white"),

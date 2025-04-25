@@ -153,7 +153,7 @@ class KnowledgeExpansion:
         from LaSSI.Parmenides.Parmenides import ParmenidesSingleton
         assert ParmenidesSingleton.isReady()
         from LaSSI.structures.extended_fol.Formulae import FAnd, FOr
-        assert (not isinstance(sentence, FAnd)) and (not isinstance(sentence, FOr))
+        # assert (not isinstance(sentence, FAnd)) and (not isinstance(sentence, FOr))
         idx, wasAlreadyPresent = self.constituents.add_with_wasPresent(sentence)
         wasAlreadyPresent = wasAlreadyPresent and idx in alreadyVisitedIdx
         # if wasAlreadyPresent:

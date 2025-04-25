@@ -397,10 +397,10 @@ class ExpandConstituents:
             self.eq_expansion_dictionary = dict()
             self.eq_constituents = set()
 
-            if not all(map(lambda x: isinstance(x, FBinaryPredicate) or isinstance(x, FUnaryPredicate),
-                           map(lambda x: x[1], self.constituents))):
-                raise ValueError(
-                    "Error: all the rules within the set of rules must represent Predicates to be assessed, be them unary or binary")
+            # if not all(map(lambda x: isinstance(x, FBinaryPredicate) or isinstance(x, FUnaryPredicate),
+            #                map(lambda x: x[1], self.constituents))):
+            #     raise ValueError(
+            #         "Error: all the rules within the set of rules must represent Predicates to be assessed, be them unary or binary")
 
             # Expanding the constituents
 

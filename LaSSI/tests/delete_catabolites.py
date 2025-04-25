@@ -8,17 +8,21 @@ def delete_files(delete_all_files=False, benchmarking=False, target_folders=None
     catabolites_dir = os.path.join(Path(os.path.dirname(os.path.abspath(__file__))).parent.absolute().parent.absolute(), "catabolites")
     for subdir, dirs, files in os.walk(catabolites_dir):
         if (subdir.split(os.sep)[-1][0].isdigit() and benchmarking) or (subdir.split(os.sep)[-1] in target_folders and not benchmarking):
-            for dir in dirs:
-                if (dir == "viz") or (dir == f"SentenceRepresentation.{transformation.name}" and not benchmarking and transformation is not None):
-                    dir_path = os.path.join(subdir, dir)
-                    print(f"Deleting folder: {str(dir_path)}")
+            for in_dir in dirs:
+                if (in_dir == "viz") or (transformation is not None and in_dir == f"SentenceRepresentation.{transformation.name}"):
+                    dir_path = os.path.join(subdir, in_dir)
                     try:
-                        shutil.rmtree(dir_path)
-                    except OSError as e:
-                        print(f"Error deleting {dir_path}: {e}")
+                        print(f"Deleting folder: {str(dir_path)}")
+                        try:
+                            shutil.rmtree(dir_path)
+                        except OSError as e:
+                            print(f"Error deleting {dir_path}: {e}")
+                    except ValueError as e:
+                        print(e)
             for file in files:
                 if (
-                        file in ("gsmDB.txt", "datagramdb_output.json", "logical_rewriting.json") or file.endswith(".pickle")
+                        file in ("gsmDB.txt", "datagramdb_output.json", "logical_rewriting.json")
+                        or file.endswith(".pickle") or file.startswith("confusion_matrices")
                         or (file in ("internals.json", "internals-bin.json", "string_rep.txt", "meuDBs.json") and delete_all_files)
                         or (
                             (file in ("internals.json", "logical_rewriting.json", "gsmDB.txt", "datagramdb_output.json")
