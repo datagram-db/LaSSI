@@ -23,4 +23,4 @@ Afterwards, you can use the usual way to install packages:
 pip install .
 ```
 
-The main pipeline can be run using ```main.py```. The main datasets with annotations are provided in the [orig](https://github.com/LogDS/LaSSI/tree/v2.0/test_sentences/orig) folder. The benchmarking sentences are given in [this](https://github.com/LogDS/LaSSI/tree/v2.0/test_sentences/benchmarking) other folder. 
+The main pipeline can be run using ```main.py```. The main [datasets](https://osf.io/g5k9q/) with annotations are provided in the [orig](https://github.com/LogDS/LaSSI/tree/v2.0/test_sentences/orig) folder. The benchmarking sentences are given in [this](https://github.com/LogDS/LaSSI/tree/v2.0/test_sentences/benchmarking) other folder. 
