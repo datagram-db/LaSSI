@@ -101,7 +101,7 @@ def compare_variable(d, lhs, rhs):
                     if rhs.asAll:
                         val = specEQ
                     else:
-                        val = specEQInv
+                        val = specEQInv if rhs.specification is None else specEQ
         elif isImplication(nameEQ):
             nameAgainstSpec = kb.name_eq(lhs.name, rhs.specification)
             if (specEQ == copCompareInv) and (specEQ == CasusHappening.EQUIVALENT):
@@ -328,7 +328,7 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
                                         keyCmp.values()):
                                     val = keyCmpElements
                                 else:
-                                    val = CasusHappening.INDIFFERENT if not hasDirectSubset else CasusHappening.GENERAL_IMPLICATION
+                                    val = CasusHappening.GENERAL_IMPLICATION
                             else:
                                 val = keyCmpElements
                         elif keyCmpElementsInv == CasusHappening.LOSE_SPEC_IMPLICATION:

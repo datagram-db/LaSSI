@@ -313,7 +313,8 @@ class LaSSI():
 
                 ls = []
                 for j, y in enumerate(obj_list):
-                    ls.append(f(x, y))
+                    eval = f(x, y)
+                    ls.append(eval)
                 matrices.append(ls)
 
                 end = time.time()

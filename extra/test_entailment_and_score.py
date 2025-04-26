@@ -39,7 +39,7 @@ class DirectionTests(unittest.TestCase):
         self._cmpVariables(all_ncc, all_ncl, CasusHappening.INDIFFERENT)
         self._cmpVariables(all_ncc, ncl, CasusHappening.MISSING_1ST_IMPLICATION)
         self._cmpConcepts(tn, tcc, CasusHappening.INDIFFERENT)
-        self._cmpConcepts(tcc, tn, CasusHappening.INDIFFERENT)
+        self._cmpConcepts(tcc, tn, CasusHappening.GENERAL_IMPLICATION)
 
     def test_last(self):
         self._cmpConcepts(tn, n_tcc, CasusHappening.INDIFFERENT)

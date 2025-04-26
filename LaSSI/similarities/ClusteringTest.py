@@ -382,7 +382,7 @@ def test_with_maximal_matching(expected_clusters, experiment_name, transformer, 
         expected_labels = []
         roc_expected = []
         for i in range(N):
-            row = similarity_matrix[i]
+            row = implication_matrix[i]
             for j in range(N):
                 cell = row[j]
                 if cell == 1.0:

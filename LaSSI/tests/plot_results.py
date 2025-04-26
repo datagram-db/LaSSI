@@ -13,7 +13,7 @@ def main():
 
     pd.set_option('display.max_columns', None)
 
-    data = pd.read_csv('benchmarks/benchmark-apr26.csv')  # FYI: mar18 is used in MDPI25 paper
+    data = pd.read_csv('benchmarks/mar18-benchmark-added-logical-expost__1.csv')  # FYI: mar18 is used in MDPI25 paper
 
     data = data.loc[:, ['Dataset', 'Generating meuDB', 'Generating gsmDB', 'Generating intermediate representation',
                         'Generating logical representation', 'Performing ex post explanation',

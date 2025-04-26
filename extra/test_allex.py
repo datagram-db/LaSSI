@@ -7,8 +7,14 @@ all_ncl = ncl.makeAsAll()
 cc = FVariable("city center", "Noun", None, None, 1)
 all_cc = cc.makeAsAll()
 
+c = FVariable("city", "Noun", None, None, 1)
+all_c = c.makeAsAll()
+
 ncc = FVariable("Newcastle", "GPE", "city center", None, 1)
 all_ncc = ncc.makeAsAll()
+
+nc = FVariable("Newcastle", "GPE", "city", None, 1)
+all_nc = nc.makeAsAll()
 
 import unittest
 from LaSSI.Parmenides.Parmenides import ParmenidesSingleton, CasusHappening
@@ -69,6 +75,8 @@ class DirectionTests(unittest.TestCase):
         self._cmpVariables(cc, cc, CasusHappening.EQUIVALENT)
         self._cmpVariables(cc, all_cc, CasusHappening.INDIFFERENT) #Done
 
+        self._cmpVariables(ncc, nc, CasusHappening.GENERAL_IMPLICATION)
+        self._cmpVariables(nc, ncc, CasusHappening.INDIFFERENT)
 
 
     # def test_classic_paper(self):
@@ -116,4 +124,4 @@ if __name__ == '__main__':
     ParmenidesSingleton.instance()
     ParmenidesSingleton.init("/home/giacomo/projects/LaSSI/catabolites", "giacomo", "omocaig",
                                      "localhost", 5432, False, "/home/giacomo/projects/LaSSI/parmenides.ttl")
-    print(compare_variable(dict(), all_ncl, cc))  #Indifferent
+    print(compare_variable(dict(), nc, cc))  #Indifferent
