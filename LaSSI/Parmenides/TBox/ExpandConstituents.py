@@ -32,6 +32,10 @@ def transformCaseWhenOneArgIsNegated(orig: CasusHappening):
                                               CasusHappening.MISSING_1ST_IMPLICATION: CasusHappening.INDIFFERENT}
     return d_transformCaseWhenOneArgIsNegated[orig]
 
+def isExistential(x):
+    if x is None:
+        return False
+    return isinstance(x, FVariable) and x.name[0] == "?" and x.name[1:].isdigit()
 
 def compare_variable(d, lhs, rhs):
     cp = (lhs, rhs)
@@ -42,9 +46,9 @@ def compare_variable(d, lhs, rhs):
     if (lhs == rhs):
         val = CasusHappening.EQUIVALENT
     elif lhs is None:
-        val = CasusHappening.MISSING_1ST_IMPLICATION
+        val = CasusHappening.MISSING_1ST_IMPLICATION if not isExistential(rhs) else CasusHappening.EQUIVALENT
     elif rhs is None:
-        val = CasusHappening.INDIFFERENT
+        val = CasusHappening.INDIFFERENT if not isExistential(lhs) else CasusHappening.EQUIVALENT
     elif (lhs == FNot(rhs)) or (rhs == FNot(lhs)):
         val = CasusHappening.EXCLUSIVES
     elif isinstance(lhs, FNot):
@@ -465,7 +469,7 @@ class ExpandConstituents:
         from LaSSI.structures.extended_fol.TBoxReasoning import TBoxReasoningSingleton
         return TBoxReasoningSingleton.subGraphEq(constituent)
 
-    def determine_raw(self, i: int, j: int, forceEquiv:bool=False):
+    def determine_raw(self, i: int, j: int, forceEquiv:bool=False, isLeftDrop = False):
         if (i == j):
             self.result_cache_raw[(i, j)] = CasusHappening.EQUIVALENT
         assert i in self.constituents

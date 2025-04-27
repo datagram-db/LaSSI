@@ -132,7 +132,7 @@ class TabularCWASemantics:
             return ExpandConstituents.rectify_implication(CasusHappening.EXCLUSIVES)
         elif isinstance(x, FNot):
             i_new = self.negation_resolution.get(i, i)
-            val = self.ec.determine_raw(i_new, j, False)
+            val = self.ec.determine_raw(i_new, j, False, True)
             if isImplication(val):
                 if isImplication(self.ec.determine_raw(j, i_new)):
                     return PairwiseCases.ConflictingImplication

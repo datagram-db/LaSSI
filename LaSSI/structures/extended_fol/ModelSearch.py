@@ -62,7 +62,7 @@ class ModelSearch:
                 return CasusHappening.GENERAL_IMPLICATION
         return CasusHappening.INDIFFERENT
 
-    def compare(self, objLHS:ModelSearchBasis, objRHS:ModelSearchBasis)->'CasusHappening':
+    def compare(self, objLHS:ModelSearchBasis, objRHS:ModelSearchBasis, isLeftDrop = False)->'CasusHappening':
         cp = (objLHS.original, objRHS.original)
         # if cp in self.main_cache:
         #     return self.main_cache[cp]
@@ -105,7 +105,8 @@ class ModelSearch:
             elems = set()
             firstConst = None
             for lhs in objLHS.unary:
-                val = self.searchInSet(lhs, objRHS.unary)
+                tmp = lhs if not isLeftDrop else lhs.bogusCopula()
+                val = self.searchInSet(tmp, objRHS.unary)
                 if val == CasusHappening.EXCLUSIVES:
                     self.main_cache[cp] = val
                     return val
@@ -124,8 +125,9 @@ class ModelSearch:
             elems = set()
             firstConst = None
             for lhs in objLHS.binary:
+                tmp = lhs if not isLeftDrop else lhs.bogusCopula()
                 elems = {CasusHappening.INDIFFERENT}
-                val = self.searchInSet(lhs, objRHS.binary)
+                val = self.searchInSet(tmp, objRHS.binary)
                 if val == CasusHappening.EXCLUSIVES:
                     self.main_cache[cp] = val
                     return val
