@@ -127,6 +127,8 @@ class TabularCWASemantics:
                     val = CasusHappening.EQUIVALENT
                 else:
                     val = CasusHappening.INDIFFERENT
+            elif val == CasusHappening.EQUIVALENT:
+                val = CasusHappening.EQUIVALENT
             return ExpandConstituents.rectify_implication(val)
         elif (x == FNot(y)) or (y == FNot(x)):
             return ExpandConstituents.rectify_implication(CasusHappening.EXCLUSIVES)
@@ -134,16 +136,20 @@ class TabularCWASemantics:
             i_new = self.negation_resolution.get(i, i)
             val = self.ec.determine_raw(i_new, j, False, True)
             if isImplication(val):
-                if isImplication(self.ec.determine_raw(j, i_new)):
+                if isImplication(self.ec.determine_raw(j, i_new, isRightDrop=True)):
                     return PairwiseCases.ConflictingImplication
+            elif val == CasusHappening.EQUIVALENT:
+                return PairwiseCases.ConflictingImplication
             val = transformCaseWhenOneArgIsNegated(val)
             return ExpandConstituents.rectify_implication(val)
         elif isinstance(y, FNot):
             j_new = self.negation_resolution.get(j, j)
-            val = self.ec.determine_raw(i, j_new, False)
+            val = self.ec.determine_raw(i, j_new, False, isRightDrop=True)
             if isImplication(val):
-                if isImplication(self.ec.determine_raw(j_new, i)):
+                if isImplication(self.ec.determine_raw(j_new, i, True)):
                     return PairwiseCases.ConflictingImplication
+            elif val == CasusHappening.EQUIVALENT:
+                return PairwiseCases.ConflictingImplication
             val = transformCaseWhenOneArgIsNegated(val)
             return ExpandConstituents.rectify_implication(val)
         else:

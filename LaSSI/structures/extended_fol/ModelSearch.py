@@ -40,10 +40,11 @@ class ModelSearch:
         # self.kb = kb
         self.main_cache = dict()
 
-    def searchInSet(self, lhs, rhsSet):
+    def searchInSet(self, lhs, rhsSet, isRightDrop = False):
         foundImplication = False
         foundEquivalence = False
-        for rhs in rhsSet:
+        for rrr in rhsSet:
+            rhs = rrr.bogusCopula() if isRightDrop else rrr
             from LaSSI.Parmenides.TBox.ExpandConstituents import test_pairwise_sentence_similarity
             if (not isinstance(rhs, FNot)) and rhs.rel == "be" and rhs.arg.name == "traffic":
                 test_pairwise_sentence_similarity({}, lhs.bogusCopula(), rhs, shift=False)
@@ -62,7 +63,7 @@ class ModelSearch:
                 return CasusHappening.GENERAL_IMPLICATION
         return CasusHappening.INDIFFERENT
 
-    def compare(self, objLHS:ModelSearchBasis, objRHS:ModelSearchBasis, isLeftDrop = False)->'CasusHappening':
+    def compare(self, objLHS:ModelSearchBasis, objRHS:ModelSearchBasis, isLeftDrop = False, isRightDrop = False)->'CasusHappening':
         cp = (objLHS.original, objRHS.original)
         # if cp in self.main_cache:
         #     return self.main_cache[cp]
@@ -105,8 +106,10 @@ class ModelSearch:
             elems = set()
             firstConst = None
             for lhs in objLHS.unary:
+                if (isRightDrop) and isinstance(lhs, FNot):
+                    continue
                 tmp = lhs if not isLeftDrop else lhs.bogusCopula()
-                val = self.searchInSet(tmp, objRHS.unary)
+                val = self.searchInSet(tmp, objRHS.unary, isRightDrop)
                 if val == CasusHappening.EXCLUSIVES:
                     self.main_cache[cp] = val
                     return val
@@ -125,9 +128,11 @@ class ModelSearch:
             elems = set()
             firstConst = None
             for lhs in objLHS.binary:
+                if (isRightDrop) and isinstance(lhs, FNot):
+                    continue
                 tmp = lhs if not isLeftDrop else lhs.bogusCopula()
                 elems = {CasusHappening.INDIFFERENT}
-                val = self.searchInSet(tmp, objRHS.binary)
+                val = self.searchInSet(tmp, objRHS.binary, isRightDrop)
                 if val == CasusHappening.EXCLUSIVES:
                     self.main_cache[cp] = val
                     return val

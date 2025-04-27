@@ -469,16 +469,17 @@ class ExpandConstituents:
         from LaSSI.structures.extended_fol.TBoxReasoning import TBoxReasoningSingleton
         return TBoxReasoningSingleton.subGraphEq(constituent)
 
-    def determine_raw(self, i: int, j: int, forceEquiv:bool=False, isLeftDrop = False):
-        if (i == j):
-            self.result_cache_raw[(i, j)] = CasusHappening.EQUIVALENT
+    def determine_raw(self, i: int, j: int, forceEquiv:bool=False, isLeftDrop = False, isRightDrop = False):
+        # if (i == j):
+        #     self.result_cache_raw[(i, j)] = CasusHappening.EQUIVALENT
+        #     return self.result_cache_raw[(i, j)]
         assert i in self.constituents
         assert j in self.constituents
         # if (i, j) in self.result_cache_raw:
         #     return self.result_cache_raw[(i, j)]
         lhsOrig = self.lhsOrigDict[i]
         rhsOrig = self.lhsOrigDict[j] if forceEquiv else self.rhsOrigDict[j]
-        tmp = self.ms.compare(lhsOrig, rhsOrig)
+        tmp = self.ms.compare(lhsOrig, rhsOrig, isLeftDrop, isRightDrop)
         self.result_cache_raw[(i, j)] = tmp
         return tmp
 

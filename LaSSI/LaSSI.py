@@ -313,11 +313,13 @@ class LaSSI():
                 with open(self.matrix_file, "r") as ww:
                     matrix = json.load(ww)
             matrices = []
-            for i, x in enumerate(obj_list):
+
+            inv_it = list(reversed(list(enumerate(obj_list))))
+            for i, x in inv_it: #enumerate(obj_list):
                 start = time.time()
 
                 ls = []
-                for j, y in enumerate(obj_list):
+                for j, y in inv_it: #enumerate(obj_list):
                     eval = f(x, y)
                     returned = matrix[i][j]
                     if (returned == 0.0 or returned == 1.0) and (returned == eval):
