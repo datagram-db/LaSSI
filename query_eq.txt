@@ -16,6 +16,7 @@ import "addSpecification"                     in-module "LaSSI.Parmenides.TBox.q
 import "getIngoingNodes"                      in-module "LaSSI.Parmenides.TBox.queries"
 import "dropCopula"                           in-module "LaSSI.Parmenides.TBox.queries"
 import "neitherNegatedNorNone"                in-module "LaSSI.Parmenides.TBox.queries"
+import "IsNone"                in-module "LaSSI.Parmenides.TBox.queries"
 
 
 // query #3: If x has a property y which is an adjective, then x exists with such a property
@@ -149,9 +150,9 @@ nested match FBinaryPredicate ( _, _, var(dst), var(score), var(props) )
 ;
 
 // query 25: Extracting be from have target
-nested match FBinaryPredicate ( _, var(src), _, var(score), var(props) )
-       where (call "neitherNegatedNorNone" with variable : "src")
-       as (  FUnaryPredicate ( "be",  var(src) , var(score), ( "removeFromProperties" ( var(props) ) with key : "AIM_OBJECTIVE" )  ) )
+nested match FBinaryPredicate ( _, var(src), var(dst), var(score), var(props) )
+       where (call "IsNone" with variable : "src")
+       as (  FUnaryPredicate ( "be",  var(dst) , var(score), ( "removeFromProperties" ( var(props) ) with key : "AIM_OBJECTIVE" )  ) )
 ;
 
 // query 26

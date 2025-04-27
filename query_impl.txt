@@ -16,6 +16,7 @@ import "addSpecification"                     in-module "LaSSI.Parmenides.TBox.q
 import "getIngoingNodes"                      in-module "LaSSI.Parmenides.TBox.queries"
 import "dropCopula"                           in-module "LaSSI.Parmenides.TBox.queries"
 import "neitherNegatedNorNone"                in-module "LaSSI.Parmenides.TBox.queries"
+import "IsNone"                in-module "LaSSI.Parmenides.TBox.queries"
 
 // query #1: If x has y and x is part of z, then also z has y (not in eq)
 nested match FBinaryPredicate ( "have", var(src), ( FVariable (var(a), "JJ",var(b),var(c),var(d),var(e)) ) , var(f) , var(g) )
@@ -156,7 +157,7 @@ nested match FUnaryPredicate ("be", ( FVariable ( var(x), "JJ",var(b),var(c),var
        replace var(arg) with  jsonpath "$0:$.arg"
        extend-with "extractProperties" with from : "$0" field : "SPACE" result : "yvar",
                    "extractJsonPath"   with jquery : "yvar:$.specification" result : "z",
-                   "getIngoingNodes" with variable : "z" result : "t" rel : "partOf"
+                   "getOutgoingNodes" with variable : "z" result : "t" rel : "partOf"
        as deep rewrite var(final) to "addSpecification" ( var(yvar) ) with value : var(t),
                        jsonpath "$0:$" to FUnaryPredicate ("be", ( FVariable ( var(x), "JJ",var(b),var(c),var(d),var(e)) ), var(score), ( "addProperty" (  "removeFromProperties" ( var(props) ) with key : "SPACE" )  with key : "SPACE" value : var(final) ) )
        ;
@@ -186,6 +187,10 @@ nested match FBinaryPredicate ( _, _, var(dst), var(score), var(props) )
 nested match FBinaryPredicate ( _, var(src), _, var(score), var(props) )
        where (call "neitherNegatedNorNone" with variable : "src")
        as (  FUnaryPredicate ( "be",  var(src) , var(score), ( "removeFromProperties" ( var(props) ) with key : "AIM_OBJECTIVE" )  ) )
+;
+nested match FBinaryPredicate ( _, var(src), var(dst), var(score), var(props) )
+       where (call "IsNone" with variable : "src")
+       as (  FUnaryPredicate ( "be",  var(dst) , var(score), ( "removeFromProperties" ( var(props) ) with key : "AIM_OBJECTIVE" )  ) )
 ;
 
 // query 26

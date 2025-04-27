@@ -214,6 +214,20 @@ def neitherNegatedNorNone(kwargs):
         return False
     return (not isinstance(adjForm, FNot)) and ((not  hasattr(adjForm, "name")) or ((adjForm.name is not None) and ((not adjForm.name.startswith("?")) or (not adjForm.name[1:].isdigit()))))
 
+def NegatedOrNone(kwargs):
+    return not neitherNegatedNorNone(kwargs)
+
+def IsNone(kwargs):
+    var = kwargs.get("variable", None)
+    if var is None:
+        return False
+    assert isinstance(var, str)
+    adjForm = kwargs.get(var)
+    if adjForm is None:
+        return False
+    return (not isinstance(adjForm, FNot)) and ((not  hasattr(adjForm, "name")) or ((adjForm.name is None) or (( adjForm.name.startswith("?")) and ( adjForm.name[1:].isdigit()))))
+
+
 def nonEmptyMatch(kwargs):
     var = kwargs.get("variable", None)
     if var is None:

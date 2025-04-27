@@ -45,16 +45,20 @@ class ModelSearch:
         foundEquivalence = False
         for rhs in rhsSet:
             from LaSSI.Parmenides.TBox.ExpandConstituents import test_pairwise_sentence_similarity
+            if (not isinstance(rhs, FNot)) and rhs.rel == "be" and rhs.arg.name == "traffic":
+                test_pairwise_sentence_similarity({}, lhs.bogusCopula(), rhs, shift=False)
             val = test_pairwise_sentence_similarity(self.pairwise_similarity_cache, lhs, rhs, shift=False)
             if (val == CasusHappening.EXCLUSIVES):
+                test_pairwise_sentence_similarity({}, lhs, rhs, shift=False)
                 # val = test_pairwise_sentence_similarity(dict(), lhs, rhs, kb=self.kb, shift=False)
                 return val
             if (val == CasusHappening.EQUIVALENT): ## To check: if I found at least one equivalence after rewriting, then that's it.
+                # test_pairwise_sentence_similarity({}, lhs, rhs, shift=False)
                 return CasusHappening.EQUIVALENT
             from LaSSI.Parmenides.TBox.ExpandConstituents import isImplication
             if isImplication(val):
                 # val = test_pairwise_sentence_similarity(dict(), lhs, rhs, kb=self.kb)
-                test_pairwise_sentence_similarity({}, lhs, rhs, shift=False)
+                # test_pairwise_sentence_similarity({}, lhs, rhs, shift=False)
                 return CasusHappening.GENERAL_IMPLICATION
         return CasusHappening.INDIFFERENT
 
@@ -125,10 +129,10 @@ class ModelSearch:
                 if val == CasusHappening.EXCLUSIVES:
                     self.main_cache[cp] = val
                     return val
-                elif val != CasusHappening.INDIFFERENT:
-                    elems.add(val)
-                    if firstConst is None:
-                        firstConst = val
+                # elif val != CasusHappening.INDIFFERENT:
+                    # elems.add(val)
+                    # if firstConst is None:
+                    #     firstConst = val
                     # return val
             # from LaSSI.Parmenides.TBox.ExpandConstituents import simplifyConstituents
             # result = simplifyConstituents(elems)

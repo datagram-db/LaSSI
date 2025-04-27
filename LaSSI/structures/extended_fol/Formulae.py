@@ -69,6 +69,22 @@ def print_proprieties(proprieties, cop=None):
     else:
         return ""
 
+def update_property_function(prop, f):
+    d = {k: v for k, v in prop} if prop is not None else {}
+    for key in d:
+        assert not isinstance(d[key], list)
+        if isinstance(d[key], tuple):
+            d[key] = tuple(map(f, d[key]))
+        else:
+            d[key] = f(d[key])
+    return frozenset(d.items())
+
+def update_bogus_copula(f):
+    if isinstance(f, str):
+        return f
+    elif isinstance(f, Formula):
+        return f.bogusCopula()
+    raise RuntimeError("RROR")
 
 def update_property(prop, key, value):
     d = {k: v for k, v in prop} if prop is not None else {}
@@ -110,6 +126,9 @@ class FVariable: ## TODO: rename to FTerm or FConstant
 
     def dropCopula(self):
         return FVariable(self.name, self.type, self.specification, None, self.id, self.properties)
+
+    def bogusCopula(self):
+        return FVariable(self.name, self.type, self.specification, FVariable("?0", "existential"), self.id, self.properties)
 
     def makeAsAll(self):
         return FVariable(self.name, self.type, self.specification, self.cop, self.id, self.properties, self.spec_negation, self.meta, True)
@@ -170,6 +189,9 @@ class FUnaryPredicate:
     meta: str = field(default_factory=lambda: "FUnaryPredicate")
     # matched: bool = field(default_factory=lambda: False)
 
+    def bogusCopula(self):
+        return FUnaryPredicate(self.rel, self.arg.bogusCopula(), self.score, update_property_function(self.properties, update_bogus_copula))
+
     def instantiate_variable_with_entity(self, arg):
         return self
 
@@ -214,6 +236,9 @@ class FBinaryPredicate:
     properties: frozenset
     meta: str = field(default_factory=lambda: "FBinaryPredicate")
     # matched: bool = field(default_factory=lambda: False)
+
+    def bogusCopula(self):
+        return FUnaryPredicate(self.rel, self.src.bogusCopula(), self.dst.bogusCopula(), self.score, update_property_function(self.properties, update_bogus_copula))
 
     def instantiate_variable_with_entity(self, arg):
         return self
@@ -269,6 +294,9 @@ class FAnd:
     meta: str = field(default_factory=lambda: "FAnd")
     # matched: bool = field(default_factory=lambda: False)
 
+    def bogusCopula(self):
+        return FAnd([x.bogusCopula() for x in self.args])
+
     def instantiate_variable_with_entity(self, external_entity):
         return FAnd(args=tuple([x.instantiate_variable_with_entity(external_entity) for x in self.args]))
 
@@ -293,6 +321,9 @@ class FOr:
     meta: str = field(default_factory=lambda: "FOr")
     # matched: bool = field(default_factory=lambda: False)
 
+    def bogusCopula(self):
+        return FOr([x.bogusCopula() for x in self.args])
+
     def instantiate_variable_with_entity(self, external_entity):
         return FOr(args=tuple([x.instantiate_variable_with_entity(external_entity) for x in self.args]))
 
@@ -315,6 +346,10 @@ class FNot:
     arg: 'Formula'
     meta: str = field(default_factory=lambda: "FNot")
     matched: bool = field(default_factory=lambda: False)
+
+
+    def bogusCopula(self):
+        return FNot(self.arg.bogusCopula())
 
     def __repr__(self):
         return self.__str__()

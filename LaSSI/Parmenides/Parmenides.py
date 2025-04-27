@@ -511,6 +511,8 @@ class Parmenides(RDFGraph):
             return CasusHappening.MISSING_1ST_IMPLICATION
         elif (dst is None) or len(dst) == 0:
             return CasusHappening.INDIFFERENT
+        elif (src.startswith("?") and src[1:].isdigit()) or (dst.startswith("?") and dst[1:].isdigit()):
+            return CasusHappening.EQUIVALENT
         else:
             resolveTypeFromOntologyLHS = set(self.getSuperTypes(src))
             resolveTypeFromOntologyRHS = set(self.getSuperTypes(dst))

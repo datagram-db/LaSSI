@@ -1,3 +1,4 @@
+import copy
 import os.path
 import pickle
 from collections import defaultdict
@@ -88,7 +89,7 @@ def compare_variable(d, lhs, rhs):
                     val = CasusHappening.INDIFFERENT
         elif nameEQ == CasusHappening.EQUIVALENT:
             if (specEQ == copCompareInv):
-                val = specEQ if ((lhs.asAll == rhs.asAll) or (lhs.asAll)) else CasusHappening.INDIFFERENT
+                val = specEQ if ((lhs.asAll == rhs.asAll) or (lhs.asAll)) and (not isImplication(specEQ)) else CasusHappening.INDIFFERENT
             elif (specEQ == CasusHappening.EQUIVALENT):
                 if copCompareInv == CasusHappening.MISSING_1ST_IMPLICATION:
                     val = CasusHappening.LOSE_SPEC_IMPLICATION
@@ -206,14 +207,14 @@ def is_direct_subset(kv1, kv2):
 
 
 def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
-    if shift:
-        if (y, x) in d:
-            test_shift = d[(y, x)]
-        else:
-            test_shift = test_pairwise_sentence_similarity(d, y, x, store,  False)
-        if test_shift == CasusHappening.EQUIVALENT or test_shift == CasusHappening.EXCLUSIVES:
-            d[(x, y)] = test_shift
-            return test_shift
+    # if shift:
+    #     if (y, x) in d:
+    #         test_shift = d[(y, x)]
+    #     else:
+    #         test_shift = test_pairwise_sentence_similarity(d, y, x, store,  False)
+    #     if test_shift == CasusHappening.EQUIVALENT or test_shift == CasusHappening.EXCLUSIVES:
+    #         d[(x, y)] = test_shift
+    #         return test_shift
     val = CasusHappening.NONE
     if y is None and x is None:
         val = CasusHappening.EQUIVALENT
@@ -224,15 +225,15 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
     elif (x == y):
         val = CasusHappening.EQUIVALENT
     elif (isinstance(x, FNot) and isinstance(y, FNot)):
-        val = test_pairwise_sentence_similarity(d, x.arg, y.arg, False)
+        val = test_pairwise_sentence_similarity(d, x.arg, y.arg, False, False)
         if isImplication(val):
             val = CasusHappening.INDIFFERENT
     elif (x == FNot(y)) or (y == FNot(x)):
         val = CasusHappening.EXCLUSIVES
     elif isinstance(x, FNot):
-        val = transformCaseWhenOneArgIsNegated(test_pairwise_sentence_similarity(d, x.arg, y, False))
+        val = transformCaseWhenOneArgIsNegated(test_pairwise_sentence_similarity(d, x.arg, y, False, False))
     elif isinstance(y, FNot):
-        val = transformCaseWhenOneArgIsNegated(test_pairwise_sentence_similarity(d, x, y.arg, False))
+        val = transformCaseWhenOneArgIsNegated(test_pairwise_sentence_similarity(d, x, y.arg, False, False))
     else:
         if (x.meta != y.meta):
             val = CasusHappening.INDIFFERENT
@@ -253,6 +254,7 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
             elif set(dLHS.keys()).issubset(set(dRHS.keys())) and set(dLHS.keys()) != set(dRHS.keys()):
                 keyCmpElements = CasusHappening.INDIFFERENT
                 keyCmpElementsInv = CasusHappening.INDIFFERENT
+                hasDirectSubset = True
             else:
             # if is_direct_subset(yprop, xprop):
             #     keyCmpElements = CasusHappening.GENERAL_IMPLICATION
@@ -346,20 +348,23 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
                         else:
                             val = keyCmpElements
                 elif val == CasusHappening.EXCLUSIVES:
-                    if keyCmpElements == CasusHappening.INDIFFERENT:
-                        val = CasusHappening.INDIFFERENT
-                    elif keyCmpElements == CasusHappening.EXCLUSIVES:
+                    if (keyCmpElements == CasusHappening.INDIFFERENT) or (keyCmpElements == CasusHappening.EXCLUSIVES) or hasDirectSubset:
                         val = CasusHappening.INDIFFERENT
     if store:
         d[(x, y)] = val
     return val
 
 def instantiate_rules(constituents, expansion_dictionary, final_constituents, isImpl):
-    for idx, constituent in constituents:
+    ls = copy.deepcopy(list(reversed(constituents)))
+    for original, (idx, constituent) in enumerate(ls):
+        str1 = str(constituent)
         from LaSSI.structures.extended_fol.TBoxReasoning import TBoxReasoningSingleton
         s = TBoxReasoningSingleton.knowledge_expand(constituent, isImpl)
         # s.add(constituent)
-        expansion_dictionary[constituent] = s
+        str2 = str(ls[original][1])
+        if (str1 != str2):
+            raise RuntimeError(str1+"!="+str2)
+        expansion_dictionary[ls[original][1]] = s
     for y in expansion_dictionary.values():
         final_constituents = final_constituents.union(set(y))
     # return {(x, y): CasusHappening.NONE for x in final_constituents for y in
@@ -380,9 +385,9 @@ class ExpandConstituents:
         _ic = os.path.join(cache_folder, "_ic.pickle")
         _eed = os.path.join(cache_folder, "_eed.pickle")
         _ec = os.path.join(cache_folder, "_ec.pickle")
-        _exp = TBoxReasoningSingleton.get_ke_file_name()
+        # _exp = TBoxReasoningSingleton.get_ke_file_name()
 
-        if (os.path.exists(_ied) and os.path.exists(_ic) and os.path.exists(_eed) and os.path.exists(_ec) and os.path.exists(_exp)):
+        if (os.path.exists(_ied) and os.path.exists(_ic) and os.path.exists(_eed) and os.path.exists(_ec)):# and os.path.exists(_exp)
             with open(_ied, "rb") as f:
                 self.impl_expansion_dictionary = pickle.load(f)
             with open(_ic, "rb") as f:
@@ -448,15 +453,15 @@ class ExpandConstituents:
         from LaSSI.structures.extended_fol.TBoxReasoning import TBoxReasoningSingleton
         return TBoxReasoningSingleton.getConstituentFromIdx(ith)
 
-    def getImplExpansionExplanation(self, idx):
-        constituent = self.constituents[idx]
-        assert idx == self.inv_idx[constituent]
+    def getImplExpansionExplanation(self, constituent):
+        # constituent = self.constituents[idx]
+        # assert idx == self.inv_idx[constituent]
         from LaSSI.structures.extended_fol.TBoxReasoning import TBoxReasoningSingleton
         return TBoxReasoningSingleton.subGraphImpl(constituent)
 
-    def getEqExpansionExplanation(self, idx):
-        constituent = self.constituents[idx]
-        assert idx == self.inv_idx[constituent]
+    def getEqExpansionExplanation(self, constituent):
+        # constituent = self.constituents[idx]
+        # assert idx == self.inv_idx[constituent]
         from LaSSI.structures.extended_fol.TBoxReasoning import TBoxReasoningSingleton
         return TBoxReasoningSingleton.subGraphEq(constituent)
 
@@ -465,8 +470,8 @@ class ExpandConstituents:
             self.result_cache_raw[(i, j)] = CasusHappening.EQUIVALENT
         assert i in self.constituents
         assert j in self.constituents
-        if (i, j) in self.result_cache_raw:
-            return self.result_cache_raw[(i, j)]
+        # if (i, j) in self.result_cache_raw:
+        #     return self.result_cache_raw[(i, j)]
         lhsOrig = self.lhsOrigDict[i]
         rhsOrig = self.lhsOrigDict[j] if forceEquiv else self.rhsOrigDict[j]
         tmp = self.ms.compare(lhsOrig, rhsOrig)
@@ -489,8 +494,8 @@ class ExpandConstituents:
             self.result_cache[(i, j)] = PairwiseCases.Equivalent
         assert i in self.constituents
         assert j in self.constituents
-        if (i, j) in self.result_cache:
-            return self.result_cache[(i, j)]
+        # if (i, j) in self.result_cache:
+        #     return self.result_cache[(i, j)]
         val = PairwiseCases.Indifferent
 
         lhsOrig = self.lhsOrigDict[i]

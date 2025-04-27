@@ -106,11 +106,11 @@ class TabularCWASemantics:
     # def getEqExpansions(self, minimal_constituent_idx):
     #     return self.ec.getEqExpansions(minimal_constituent_idx)
 
-    def getImplExpansionExplanation(self, minimal_constituent_idx):
-        return self.ec.getImplExpansionExplanation(minimal_constituent_idx)
+    def getImplExpansionExplanation(self, constit):
+        return self.ec.getImplExpansionExplanation(constit)
 
-    def getEqExpansionExplanation(self, minimal_constituent_idx):
-        return self.ec.getEqExpansionExplanation(minimal_constituent_idx)
+    def getEqExpansionExplanation(self, constituent):
+        return self.ec.getEqExpansionExplanation(constituent)
 
     def __call__(self, i, j):
         return self.get_straightforward_id_similarity(self.sentence_to_id[i], self.sentence_to_id[j])
@@ -123,15 +123,15 @@ class TabularCWASemantics:
         if (isinstance(x, FNot) and isinstance(y, FNot)):
             val = self.ec.determine_raw(self.negation_resolution.get(i, i), self.negation_resolution.get(j, j))
             if isImplication(val):
-                val = CasusHappening.INDIFFERENT
+                if isImplication(self.ec.determine_raw(self.negation_resolution.get(j, j), self.negation_resolution.get(i, i))):
+                    val = CasusHappening.EQUIVALENT
+                else:
+                    val = CasusHappening.INDIFFERENT
             return ExpandConstituents.rectify_implication(val)
         elif (x == FNot(y)) or (y == FNot(x)):
             return ExpandConstituents.rectify_implication(CasusHappening.EXCLUSIVES)
         elif isinstance(x, FNot):
             i_new = self.negation_resolution.get(i, i)
-            # val = self.ec.determine_raw(i_new, j, True)
-            # if isImplication(val):
-            #     return PairwiseCases.ConflictingImplication
             val = self.ec.determine_raw(i_new, j, False)
             if isImplication(val):
                 if isImplication(self.ec.determine_raw(j, i_new)):
@@ -140,9 +140,6 @@ class TabularCWASemantics:
             return ExpandConstituents.rectify_implication(val)
         elif isinstance(y, FNot):
             j_new = self.negation_resolution.get(j, j)
-            # val = self.ec.determine_raw(i, j_new, True)
-            # if isImplication(val):
-            #     return PairwiseCases.ConflictingImplication
             val = self.ec.determine_raw(i, j_new, False)
             if isImplication(val):
                 if isImplication(self.ec.determine_raw(j_new, i)):
@@ -253,13 +250,13 @@ class TabularCWASemantics:
         p_.append("Constutents DB")
         body.append(p_)
         ol = Tag(name="ol")
-        initial_constituents = self.minimal_constituents.getAllObjects()
+        # initial_constituents = self.minimal_constituents.getAllObjects()
         # constituent_id = CountingDictionary()
 
-        for idx_orig, x in enumerate(initial_constituents):
+        for idx_orig, x in self.minimal_constituents.reverseConstituent.items():
             li = Tag(name="li")
-            idx = self.getConstituentIDX(x)
-            li["id"] = f"constituent{idx}"
+            # idx = self.getConstituentIDX(x)
+            li["id"] = f"constituent{idx_orig}"
             li.append(latex_formula_rendering(x, mathJax))
 
             pp = Tag(name="p")
@@ -268,7 +265,7 @@ class TabularCWASemantics:
             ool = Tag(name="ol")
             # eqex = self.getEqExpansions(idx)
             # meqex = {x:idx2+1 for idx2, x in enumerate(eqex)}
-            fmeqex = self.getEqExpansionExplanation(idx_orig)
+            fmeqex = self.getEqExpansionExplanation(x)
             for idx_ in fmeqex:
                 lli = Tag(name="li")
                 lli["value"] = idx_
@@ -353,7 +350,7 @@ class TabularCWASemantics:
             body.append(p2)
             ol = Tag(name="ul")
             for x_idx in minimal_constituents:
-                obj = initial_constituents[x_idx]
+                obj = self.minimal_constituents.reverseConstituent[x_idx]
                 global_x_idx = self.getConstituentIDX(obj)
                 li = Tag(name="li")
                 li["value"] = global_x_idx
@@ -361,7 +358,7 @@ class TabularCWASemantics:
                 ali["href"] = f"#constituent{global_x_idx}"
                 ali.append(str(global_x_idx))
                 ali.append(latex_formula_rendering(obj, mathJax))
-                nodes_map = png_node(initial_constituents[x_idx], f"constituent{global_x_idx}", file + "_dir", nodes_map, fillColor="lightblue")
+                nodes_map = png_node(self.minimal_constituents.reverseConstituent[x_idx], f"constituent{global_x_idx}", file + "_dir", nodes_map, fillColor="lightblue")
                 graph.add_node(nodes_map[f"constituent{global_x_idx}"])
                 graph.add_edge(pydot.Edge(ref, f"constituent{global_x_idx}", label="hasConstituent"))
                 li.append(ali)

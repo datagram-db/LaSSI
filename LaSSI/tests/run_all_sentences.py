@@ -37,7 +37,7 @@ def get_and_run_all_sentences(folders, transformation=SentenceRepresentation.Log
             try:
                 with open(os.devnull, 'w') as devnull:
                     sys.stdout = devnull
-                    pipeline = LaSSI(yaml_file, "/home/campus.ncl.ac.uk/b9063849/PycharmProjects/LaSSI/connection.yaml", transformation, transformer)
+                    pipeline = LaSSI(yaml_file, "/home/giacomo/Scrivania/LaSSI/connection_giacomo.yaml", transformation, transformer)
                     pipeline.run()
                     pipeline.close()
                 sys.stdout = sys.__stdout__
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         folders = sys.argv[1:]
     else:
-        folders = ["newcastle_mdpi"]
+        folders = ["/home/giacomo/Scrivania/LaSSI/test_sentences/cm"]
 
     all_outputs = True
     metrics_benchmark = Benchmark("Metrics")
@@ -59,9 +59,11 @@ if __name__ == '__main__':
         # transformations = [SentenceRepresentation.FullText, SentenceRepresentation.SimpleGraph, SentenceRepresentation.LogicalGraph, SentenceRepresentation.Logical]
         # transformations = [SentenceRepresentation.FullText, SentenceRepresentation.SimpleGraphDisabledAdHoc, SentenceRepresentation.SimpleGraph, SentenceRepresentation.LogicalGraphDisabledAdHoc, SentenceRepresentation.LogicalGraph, SentenceRepresentation.LogicalDisabledAdHoc, SentenceRepresentation.Logical]
         transformations = [
-            SentenceRepresentation.SimpleGraphDisabledAdHoc, SentenceRepresentation.SimpleGraph,
-            SentenceRepresentation.LogicalGraphDisabledAdHoc, SentenceRepresentation.LogicalGraph,
-            SentenceRepresentation.LogicalDisabledAdHoc, SentenceRepresentation.Logical
+            SentenceRepresentation.SimpleGraph,
+             SentenceRepresentation.LogicalGraph,
+            SentenceRepresentation.FullText,
+            SentenceRepresentation.Logical, SentenceRepresentation.SimpleGraphDisabledAdHoc, SentenceRepresentation.LogicalGraphDisabledAdHoc,
+             SentenceRepresentation.LogicalDisabledAdHoc
         ]
 
         for transformation in transformations:
@@ -82,4 +84,4 @@ if __name__ == '__main__':
     else:
         get_and_run_all_sentences(folders)
 
-    metrics_benchmark.to_csv("metrics_benchmark.csv")
+    metrics_benchmark.to_csv("cm.csv")

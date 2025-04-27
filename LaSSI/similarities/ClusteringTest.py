@@ -374,7 +374,7 @@ def test_with_maximal_matching(expected_clusters, experiment_name, transformer, 
 
     row_name = f"{experiment_name}_{transformer}"
 
-    not_implying_score = 0.0
+    not_implying_score = []
     N = len(similarity_matrix)
     expected_labels = None
     roc_expected = None
@@ -390,16 +390,17 @@ def test_with_maximal_matching(expected_clusters, experiment_name, transformer, 
                     roc_expected.append([1.0, 0.0, 0.0])
                 elif cell == 0.0:
                     expected_labels.append(-1)
+                    not_implying_score.append((i,j))
                     roc_expected.append([0.0, 0.0, 1.0])
                 else:
                     expected_labels.append(0)
                     roc_expected.append([0.0, 1.0, 0.0])
         import itertools
-        scores = list(itertools.chain.from_iterable(implication_matrix))
-        n_not_implying = sum(1 for x in scores if x == 0.0)
-        scores = list(itertools.chain.from_iterable(similarity_matrix))
-        scores.sort()
-        not_implying_score = max(scores[: n_not_implying])
+        # scores = list(itertools.chain.from_iterable(implication_matrix))
+        # n_not_implying = sum(1 for x in scores if x == 0.0)
+        # scores = list(itertools.chain.from_iterable(similarity_matrix))
+        # scores.sort()
+        # not_implying_score = max(scores[: n_not_implying])
 
     if not os.path.exists(f"catabolites/{experiment_name}"):
         os.makedirs(f"catabolites/{experiment_name}")
@@ -509,12 +510,15 @@ def print_metrics(agg_scores, expected_labels, implying_vs_indifferent, type, ro
         metrics_benchmark.add_row(row_name, f"Weighted-Recall Score ({type})", recall_score(expected_labels, agg_scores, average='weighted'))
 
 
-def prepare_for_classical_clustering_metrics(N, agg_cluster_assignment, not_implying_score, similarity_matrix):
+def prepare_for_classical_clustering_metrics(N, agg_cluster_assignment, not_implying_pairs, similarity_matrix):
     implying_vs_indifferent = sys.float_info.max
+    not_implying_score = -sys.float_info.max
     for cluster in agg_cluster_assignment:
         for j in cluster:
             for i in cluster:
                 implying_vs_indifferent = min([implying_vs_indifferent, similarity_matrix[i][j]])
+    for (i,j) in not_implying_pairs:
+        not_implying_score = max([not_implying_score, similarity_matrix[i][j]])
     if implying_vs_indifferent <= not_implying_score:
         implying_vs_indifferent = not_implying_score
     # assert implying_vs_indifferent > not_implying_score
@@ -534,7 +538,7 @@ def prepare_for_classical_clustering_metrics(N, agg_cluster_assignment, not_impl
                 indifferent_score = 0.0 if (implying_vs_indifferent == cell) else 1.0 - (implying_vs_indifferent - cell)
                 wrong_score = 0.0 if (not_implying_score == cell) else 1.0 - abs(cell - not_implying_score)
                 roc_scores.append([implying_score, indifferent_score, wrong_score])
-            elif cell <= not_implying_score:
+            elif (cell < not_implying_score) or (cell == 0.0):
                 agg_scores.append(-1)
                 implying_score = 0.0 if (implying_vs_indifferent == cell) else 1.0 - (implying_vs_indifferent - cell)
                 indifferent_score = 0.0 if (not_implying_score == cell) else 1.0 - abs(cell - not_implying_score)

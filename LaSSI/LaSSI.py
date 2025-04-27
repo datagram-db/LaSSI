@@ -303,10 +303,15 @@ class LaSSI():
                 from LaSSI.structures.extended_fol.TabularCWASemantics import TabularCWASemantics
                 f = TabularCWASemantics(obj_list, os.path.join(self.catabolites_of_dataset, str(self.full_transformation)))
                 TBoxReasoningSingleton.instance().dump()
+                # f.buildReport("rport")
             elif (self.transformation == SentenceRepresentation.LogicalGraph or
                   self.transformation == SentenceRepresentation.SimpleGraph):
                 f = self.graph_with_logic_similarity
 
+            matrix = None
+            if self.matrix_file is not None:
+                with open(self.matrix_file, "r") as ww:
+                    matrix = json.load(ww)
             matrices = []
             for i, x in enumerate(obj_list):
                 start = time.time()
@@ -314,6 +319,14 @@ class LaSSI():
                 ls = []
                 for j, y in enumerate(obj_list):
                     eval = f(x, y)
+                    returned = matrix[i][j]
+                    if (returned == 0.0 or returned == 1.0) and (returned == eval):
+                        print(f"OK: {i} {j} with {eval}")
+                    elif (eval != 0.0) and (eval != 1.0) and (returned == None):
+                        print(f"OK: {i} {j} with {eval}")
+                    else:
+                        print(f"ERROR: {i} {j} with {eval} != {returned}")
+                        f(x, y)
                     ls.append(eval)
                 matrices.append(ls)
 
