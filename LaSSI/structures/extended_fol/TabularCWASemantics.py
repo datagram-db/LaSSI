@@ -182,8 +182,8 @@ class TabularCWASemantics:
         if N == len(S.intersection(T)) and N == 1:
             return pandas.DataFrame({str(list(S)[0]):[0,1]})
         else:
-            for i in S:
-                for j in T:
+            for i in sorted(list(S)):
+                for j in sorted(list(T)):
                     if i != j:
                         L.append(self._mutual_truth(i, j))
             return reduce(lambda x, y: x.merge(y), L)

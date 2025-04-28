@@ -314,18 +314,18 @@ class LaSSI():
                     matrix = json.load(ww)
             matrices = []
 
-            inv_it = list(reversed(list(enumerate(obj_list))))
-            for i, x in inv_it: #enumerate(obj_list):
+            # inv_it = list(reversed(list(enumerate(obj_list))))
+            for i, x in enumerate(obj_list): #inv_it: #enumerate(obj_list):
                 start = time.time()
 
                 ls = []
-                for j, y in inv_it: #enumerate(obj_list):
+                for j, y in enumerate(obj_list): #inv_it: #enumerate(obj_list):
                     eval = f(x, y)
                     returned = matrix[i][j]
                     if (returned == 0.0 or returned == 1.0) and (returned == eval):
-                        print(f"OK: {i} {j} with {eval}")
+                        print(f"OK: {i} {j} with {eval} (expected: {returned})")
                     elif (eval != 0.0) and (eval != 1.0) and (returned == None):
-                        print(f"OK: {i} {j} with {eval}")
+                        print(f"OK: {i} {j} with {eval} (expected: {returned})")
                     else:
                         print(f"ERROR: {i} {j} with {eval} != {returned}")
                         f(x, y)

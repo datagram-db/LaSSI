@@ -50,7 +50,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         folders = sys.argv[1:]
     else:
-        folders = ["/home/giacomo/Scrivania/LaSSI/test_sentences/cm"]
+        folders = ["/home/giacomo/Scrivania/LaSSI/test_sentences/nc"]
 
     all_outputs = True
     metrics_benchmark = Benchmark("Metrics")
@@ -62,7 +62,8 @@ if __name__ == '__main__':
             SentenceRepresentation.SimpleGraph,
              SentenceRepresentation.LogicalGraph,
             SentenceRepresentation.FullText,
-            SentenceRepresentation.Logical, SentenceRepresentation.SimpleGraphDisabledAdHoc, SentenceRepresentation.LogicalGraphDisabledAdHoc,
+            # SentenceRepresentation.Logical,
+            SentenceRepresentation.SimpleGraphDisabledAdHoc, SentenceRepresentation.LogicalGraphDisabledAdHoc,
              SentenceRepresentation.LogicalDisabledAdHoc
         ]
 
@@ -84,4 +85,4 @@ if __name__ == '__main__':
     else:
         get_and_run_all_sentences(folders)
 
-    metrics_benchmark.to_csv("cm.csv")
+    metrics_benchmark.to_csv("n.csv")
