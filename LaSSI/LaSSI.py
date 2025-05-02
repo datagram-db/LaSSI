@@ -115,9 +115,17 @@ class LaSSI():
             from nltk.corpus import wordnet
             # Attempting to access a resource will trigger a LookupError if not downloaded
             wordnet.synsets('city')
-            print("WordNet not downloaded...")
+            print("WordNet already downloaded.")
         except LookupError:
+            print("WordNet not downloaded...")
             import nltk
+            import ssl
+            try:
+                _create_unverified_https_context = ssl._create_unverified_context
+            except AttributeError:
+                pass
+            else:
+                ssl._create_default_https_context = _create_unverified_https_context
             nltk.download('wordnet')
             print("Downloaded WordNet.")
 
