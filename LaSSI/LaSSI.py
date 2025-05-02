@@ -111,6 +111,15 @@ class LaSSI():
             self.logger(f" - Loading {k}.")
             FuzzyStringMatchDatabase.instance().create(k, v)
 
+        try:
+            from nltk.corpus import wordnet
+            # Attempting to access a resource will trigger a LookupError if not downloaded
+            wordnet.synsets('city')
+            print("WordNet not downloaded...")
+        except LookupError:
+            import nltk
+            nltk.download('wordnet')
+            print("Downloaded WordNet.")
 
         if sentences is None:
             sentences = open(self.dataset_name, "r")
@@ -182,6 +191,8 @@ class LaSSI():
         if os.path.exists(self.string_rep_dir):
             os.remove(self.string_rep_dir)
         if not os.path.exists(self.benchmarking_file):
+            if not os.path.exists("catabolites"):
+                os.makedirs("catabolites")
             write_variable_to_file(self.benchmarking_file, "Dataset,Loading sentences,Generating meuDB,"
                                                                 "Loading meuDB,Generating gsmDB,Generating "
                                                                 "rewritten graphs,Generating intermediate "

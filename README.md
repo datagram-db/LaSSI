@@ -23,4 +23,27 @@ Afterwards, you can use the usual way to install packages:
 pip install .
 ```
 
+Also ensure **Java** is installed.
+
+### PostgreSQL
+PostgreSQL must be installed, along with a database and user:
+```bash
+sudo apt install postgresql -y
+sudo -u postgres psql
+create database conceptnet;
+create user lassi with encrypted password 'drowssap';
+grant all privileges on database conceptnet to lassi;
+\c conceptnet postgres
+grant all on schema public to lassi;
+exit
+```
+
+### NLTK
+Open your Python interpreter and run the following:
+```python
+import nltk
+nltk.download('wordnet')
+```
+
+## Running
 The main pipeline can be run using ```main.py```. The main [datasets](https://osf.io/g5k9q/) with annotations are provided in the [orig](https://github.com/LogDS/LaSSI/tree/v2.0/test_sentences/orig) folder. The benchmarking sentences are given in [this](https://github.com/LogDS/LaSSI/tree/v2.0/test_sentences/benchmarking) other folder. 
