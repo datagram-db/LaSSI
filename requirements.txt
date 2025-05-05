@@ -4,3 +4,6 @@ Cython
 sqlitedict
 pytest
 pandas
+psycopg2-binary
+rdflib_sqlalchemy
+sqlalchemy-utils
