@@ -57,5 +57,7 @@
     "related_to": {"rel": "related_to", "relNegated": false},
     "instance_of": {"rel": "instance_of", "relNegated": false},
     "inflection": {"rel": "form_of", "relNegated":  false},
-    "SubwordOf": {"rel": "SubwordOf", "relNegated": false}
+    "SubwordOf": {"rel": "SubwordOf", "relNegated": false},
+    "with_pos": {"rel": "class", "relNegated":  false},
+    "with_sense": {"rel": "with_sense", "relNegated":  false}
 }

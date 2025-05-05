@@ -8,7 +8,6 @@ import csv
 from config import config
 from sqlitedict import SqliteDict
 
-
 def from_db(db_name):
     db = SqliteDict(db_name)
     dict = {}
@@ -47,6 +46,8 @@ def generate(conceptnet_path, wiktionary_path, load_from_db=False, test_limit=-1
                 not (target.startswith("Q") and target[1:].isdigit()))
 
     def modify_triplet(source, edge_label, target):
+        source, target = transitive_closure.get_node(clusters, source), transitive_closure.get_node(clusters, target)
+        edge_label = edge_mapping.get_edge(edge_label)
         return source.lower().replace(" ", "_"), edge_label, target.lower().replace(" ", "_")
 
     with open(config["result_file"], "w", encoding="utf-8", newline="") as tsv:
@@ -59,11 +60,13 @@ def generate(conceptnet_path, wiktionary_path, load_from_db=False, test_limit=-1
         for triplet in parse_conceptnet_file.get_triplets(conceptnet_path, lang="en"):
             (source, edge_label, target) = triplet
             if not triplet_check(source, edge_label, target): continue
-            source, edge_label, target = modify_triplet(source, edge_label, target)
+            source, edge, target = modify_triplet(source, edge_label, target)
 
             #wr.writerow((transitive_closure.get_node(source), edge_mapping.get_edge(relation), transitive_closure.get_node(target)))
-            wr.writerow((transitive_closure.get_node(clusters, source), edge_mapping.get_edge(edge_label),
-                         transitive_closure.get_node(clusters, target)))
+            # wr.writerow((transitive_closure.get_node(clusters, source), edge_mapping.get_edge(edge_label),
+            #              transitive_closure.get_node(clusters, target)))
+            wr.writerow((source, edge, target))
+
             count += 1
             if count % 100000 == 0: print(count)
             if count == test_limit: break
@@ -86,10 +89,13 @@ def generate(conceptnet_path, wiktionary_path, load_from_db=False, test_limit=-1
 
                 for triplet in generator:
                     (source, edge_label, target) = triplet
-                    source = transitive_closure.get_node(clusters, source.split("#")[0])
-                    target = transitive_closure.get_node(clusters, target.split("#")[0])
+                    if not triplet_check(source, edge_label, target): continue
+                    # source = transitive_closure.get_node(clusters, source.split("#")[0])
+                    # target = transitive_closure.get_node(clusters, target.split("#")[0])
+                    source, edge, target = modify_triplet(source.split("#")[0], edge_label, target.split("#")[0])
 
-                    wr.writerow((source, edge_mapping.get_edge(edge_label), target))
+                    # wr.writerow((source, edge_mapping.get_edge(edge_label), target))
+                    wr.writerow((source, edge, target))
 
     edge_mapping.show_non_mapped_labels()
     # if type(adjacency) == SqliteDict:

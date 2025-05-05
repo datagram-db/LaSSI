@@ -63,7 +63,7 @@ def extract_information(obj, language_code=None):
     for sense_idx in range(len(obj["senses"])):
         sense = obj["senses"][sense_idx]
         full_ref = word+"#"+str(sense_idx)
-        yield tuple([word, "with_sense", full_ref])
+        yield tuple([word, "with_sense", full_ref]) # I was trying to figure out what with_sense and with_pos can be mapped to. with_pos can be maybe be isa (cuz it isa "verb", e.g.)
         yield from extract_fields(defaulted, full_ref, sense)
         for link in sense.get("links", defaulted):
             if (link[1].startswith("w:") or "usage notes" in link[1].lower() or "usage_notes" in link[1].lower()):
