@@ -1,8 +1,11 @@
 import os
 from collections import defaultdict
 
-from LaSSI.structures.extended_fol.Formulae import FUnaryPredicate
-from LaSSI.Parmenides.Parmenides import ParmenidesSingleton
+# from LaSSI.structures.extended_fol.Formulae import FUnaryPredicate
+# from LaSSI.Parmenides.Parmenides import ParmenidesSingleton
+# from FunctionalMatch.utils import CountingDictionary
+from Parmenides import ParmenidesSingleton
+from Formulae import FUnaryPredicate, FAnd, FOr
 from FunctionalMatch.utils import CountingDictionary
 
 
@@ -10,9 +13,9 @@ def knowledge_expansion_legacy(sentence, queries, filter=None):
     """
     :param sentence:    Single atom/proposition
     """
-    from LaSSI.Parmenides.Parmenides import ParmenidesSingleton
+    #from LaSSI.Parmenides.Parmenides import ParmenidesSingleton
     assert ParmenidesSingleton.isReady()
-    from LaSSI.structures.extended_fol.Formulae import FAnd, FOr
+    #from LaSSI.structures.extended_fol.Formulae import FAnd, FOr
     assert (not isinstance(sentence, FAnd)) and (not isinstance(sentence, FOr))
     S = dict()
     S[sentence] = list()
@@ -150,9 +153,9 @@ class KnowledgeExpansion:
         if isinstance(queries, list) or isinstance(queries, tuple):
             queries = {idx:q for idx, q in enumerate(queries)}
         assert isinstance(alreadyVisitedIdx, set)
-        from LaSSI.Parmenides.Parmenides import ParmenidesSingleton
+        #from LaSSI.Parmenides.Parmenides import ParmenidesSingleton
         assert ParmenidesSingleton.isReady()
-        from LaSSI.structures.extended_fol.Formulae import FAnd, FOr
+        #from LaSSI.structures.extended_fol.Formulae import FAnd, FOr
         assert (not isinstance(sentence, FAnd)) and (not isinstance(sentence, FOr))
         idx, wasAlreadyPresent = self.constituents.add_with_wasPresent(sentence)
         wasAlreadyPresent = wasAlreadyPresent and idx in alreadyVisitedIdx
@@ -171,7 +174,6 @@ class KnowledgeExpansion:
         dstToConsider = set()
         while len(toVisit) > 0:
             tmp = set()
-            print(toVisit)
             allVisited.update(toVisit)
             for srcIdx in toVisit:
                 src = self.constituents.fromId(srcIdx)
@@ -226,7 +228,7 @@ class KnowledgeExpansion:
 def non_redundant_constituents(f, strictTyping = True):
     assert ParmenidesSingleton.isReady()
     p = ParmenidesSingleton.get()
-    from LaSSI.structures.extended_fol.Formulae import is_selfstanding_variable
+    from Formulae import is_selfstanding_variable
     return not (isinstance(f, FUnaryPredicate) and (f.rel == "be") and ((f.properties is None) or ((len(f.properties) == 0))) and ((is_selfstanding_variable(f.arg) and ((not strictTyping) or p.hasTypedObject(f.arg.name)))))
 
 class TBoxReasoningSingleton(object):
