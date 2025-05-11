@@ -17,6 +17,7 @@ import yaml
 from lime.lime_text import LimeTextExplainer
 import lime
 import lime.lime_tabular
+from sklearn.metrics import precision_score, recall_score, precision_recall_fscore_support, accuracy_score, f1_score
 from sklearn.tree import DecisionTreeClassifier
 from transformers import TextClassificationPipeline
 
@@ -61,7 +62,13 @@ abstract = {From news and speeches to informal chatter on social media, natural 
     X_test_counts = count_vect.transform(data)
     X_test_tfidf = pandas.DataFrame(tfidf_transformer.transform(X_test_counts).todense(), columns=output_features)
     y_pred = classifier.predict(X_test_tfidf)
-    print(f"Accuracy Score: {accuracy_score(agg_scores, y_pred)}")
+    print(f"Decision Tree: Accuracy Score: {accuracy_score(agg_scores, y_pred)}")
+    print(f"Decision Tree: Macro Precision Score: {precision_score(agg_scores, y_pred, average='macro')}")
+    print(f"Decision Tree: Weighted Precision Score: {precision_score(agg_scores, y_pred, average='weighted')}")
+    print(f"Decision Tree: Macro Recall Score: {recall_score(agg_scores, y_pred, average='macro')}")
+    print(f"Decision Tree: Macro Recall Score: {recall_score(agg_scores, y_pred, average='weighted')}")
+    print(f"Decision Tree: Macro F1 Score: {f1_score(agg_scores, y_pred, average='macro')}")
+    print(f"Decision Tree: Macro F1 Score: {f1_score(agg_scores, y_pred, average='weighted')}")
     explainer = lime.lime_tabular.LimeTabularExplainer(X_test_tfidf.values, feature_names=
     list(X_test_tfidf.columns),
                                                        class_names=[dictd[x] for x in classifier.classes_],
@@ -114,7 +121,7 @@ def ffun(pipe, label_encoder, expected_labels, x):
     if isinstance(x, str):
         return numpy.array([predict_string(pipe, len(expected_labels), x)])
     elif isinstance(x, list):
-        return numpy.array([predict_string(pipe, len(expected_labels), y) for y in x])ac
+        return numpy.array([predict_string(pipe, len(expected_labels), y) for y in x])
     else:
         return("Some ERRORRRR")
     # tv = torch.tensor([tokenizer.encode(v, padding="max_length", max_length=500, truncation=True) for v in x])
@@ -128,6 +135,16 @@ def ffun(pipe, label_encoder, expected_labels, x):
     for dct in pipe(x)[0]:
         l[int(dct["label"][6:])] = dct["score"] #   ---- label_encoder.inverse_transform([int(dct["label"][6:])])[0]
     return numpy.array([numpy.array(l)])
+
+def compute_metrics(pred):
+    labels = pred.label_ids
+    preds = pred.predictions.argmax(-1)
+    w_precision, w_recall, w_f1, _ = precision_recall_fscore_support(labels, preds, average='weighted')
+    m_precision, m_recall, m_f1, _ = precision_recall_fscore_support(labels, preds, average='macro')
+    acc = accuracy_score(labels, preds)
+    return {'accuracy': acc, 'macro precision': m_precision, 'weighted precision: ': w_precision,
+                             'macro recall': m_recall, 'weighted recall': w_recall,
+                             'macro f1': m_f1, 'weighted f1': w_f1}
 
 def distilbert_explainer(data, agg_scores):
     ### pip install 'accelerate>=0.26.0'
@@ -174,6 +191,7 @@ def distilbert_explainer(data, agg_scores):
             eval_dataset=tokenized_train,
             tokenizer=tokenizer,
             data_collator=data_collator,
+            compute_metrics=compute_metrics
         )
 
         # Train the model
