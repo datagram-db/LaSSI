@@ -20,6 +20,7 @@ dependencies = [
     "drawsvg[all]",
     "psycopg2-binary==2.9.9",
     "psycopg2==2.9.9",
+    "torch==2.5.1",
     "stanza==1.8.1",
     "news-please==1.5.35",
     "newspaper3k==0.2.8",

@@ -26,6 +26,37 @@ from sklearn.metrics import silhouette_score, adjusted_rand_score, recall_score,
 from LaSSI.tests.benchmark import Benchmark
 metrics_benchmark = Benchmark("Metrics")
 
+def extract_proba_scores(N, implying_vs_indifferent, not_implying_score, similarity_matrix):
+    agg_scores = []
+    roc_scores = []
+    idx = 0
+    for i in range(N):
+        row = similarity_matrix[i]
+        for j in range(N):
+            cell = row[j]
+            implying_score = 0.0
+            indifferent_score = 1.0
+            wrong_score = 0.0
+            if cell >= implying_vs_indifferent:
+                agg_scores.append(1)
+                implying_score = 1.0
+                indifferent_score = 0.0 if (implying_vs_indifferent == cell) else 1.0 - (implying_vs_indifferent - cell)
+                wrong_score = 0.0 if (not_implying_score == cell) else 1.0 - abs(cell - not_implying_score)
+                roc_scores.append([implying_score, indifferent_score, wrong_score])
+            elif (cell < not_implying_score) or (cell == 0.0):
+                agg_scores.append(-1)
+                implying_score = 0.0 if (implying_vs_indifferent == cell) else 1.0 - (implying_vs_indifferent - cell)
+                indifferent_score = 0.0 if (not_implying_score == cell) else 1.0 - abs(cell - not_implying_score)
+                wrong_score = 1.0
+                roc_scores.append([implying_score, indifferent_score, wrong_score])
+            else:
+                agg_scores.append(0)
+                implying_score = 0.0 if (implying_vs_indifferent == cell) else 1.0 - (implying_vs_indifferent - cell)
+                indifferent_score = 1.0
+                wrong_score = 0.0 if (not_implying_score == cell) else 1.0 - (cell - not_implying_score)
+                roc_scores.append([implying_score, indifferent_score, wrong_score])
+            idx += 1
+    return agg_scores, roc_scores
 
 def graph_plot(matrix, clusters, filename="graph.png"):
     fig = matplotlib.pyplot.figure()
