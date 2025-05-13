@@ -1,6 +1,7 @@
 import os
 import pickle
 from collections import defaultdict
+from dataclasses import dataclass
 from typing import List
 
 import pandas
@@ -13,6 +14,38 @@ from FunctionalMatch.utils import CountingDictionary
 
 from LaSSI.structures.extended_fol.TBoxReasoning import non_redundant_constituents
 
+@dataclass
+class ExplainSentence:
+	formula: Formula
+	atoms: dict[int, Formula]
+	table: pandas.DataFrame
+	holding: bool
+
+@dataclass
+class MutualTruthExplain:
+    lhs: int
+    rhs: int
+    lhsF: Formula
+    rhsF: Formula
+    df: pandas.DataFrame
+    logical_result: 'PairwiseCases'
+
+    def __str__(self):
+        from LaSSI.structures.extended_fol.Enums import print_case
+        return print_case(self.lhs, self.logical_result, self.rhs)
+
+@dataclass
+class ExplainedUniversalTruth:
+	constituent_implication: list[MutualTruthExplain]
+	result: pandas.DataFrame
+
+@dataclass
+class FinalExplanation:
+	confidence: float
+	lhs: ExplainSentence
+	rhs: ExplainSentence
+	explained_joined_table: ExplainedUniversalTruth
+	explained_joined_table_natural_joined_with_operands: pandas.DataFrame
 
 def png_node(obj, key, dir, nodes_map,fillColor=None):
     import pydot
@@ -30,6 +63,19 @@ def png_node(obj, key, dir, nodes_map,fillColor=None):
         d["style"] = "filled"
     nodes_map[key] = pydot.Node(key, **d)
     return nodes_map
+
+def with_variables_from(f, l, minimal_constituents: CountingDictionary, fn, selection=False):
+    from LaSSI.Parmenides.formula_utils import semantic
+    pdf = reduce(lambda x,y: x.merge(y, how="cross"),[pandas.DataFrame({str(x): [1,0]}) for x in l])
+    L = []
+    for x in pdf.to_dict(orient='records'):
+        d = dict()
+        for k,v in x.items():
+            d[minimal_constituents.fromId(int(k))] = v
+        x[fn] = semantic(f, d)
+        if not selection or x[fn]>0.0:
+            L.append(x)
+    return pandas.DataFrame(L)
 
 def with_variables_from(f, l, minimal_constituents: CountingDictionary, fn, selection=False):
     from LaSSI.Parmenides.formula_utils import semantic
@@ -155,6 +201,36 @@ class TabularCWASemantics:
         else:
             return self.ec.determine(i,j)
 
+    def explained_mutual_truth(self, i:int, j:int)->MutualTruthExplain:
+        test = self.determine(i,j)#self.ec.determine(i, j) #self.get_mutual_truth(i, j)
+        # relation = Relation()
+        # relation.add_attributes([str(i), str(j)])
+        from LaSSI.structures.extended_fol.Enums import PairwiseCases
+        dataf = None
+        # df = {"lhs": i,
+        #       "rhs": j,
+        #       "lhsF": self.minimal_constituents.fromId(i),
+        #       "rhsF": self.minimal_constituents.fromId(j)}
+        if (test == PairwiseCases.Indifferent):
+            dataf= pandas.DataFrame({str(i): [0,0,1,1],
+                     str(j): [0,1,0,1]})
+        elif (test == PairwiseCases.Implying):
+            dataf=  pandas.DataFrame({str(i): [0, 0, 1],
+                            str(j): [0, 1, 1]  })
+        elif (test == PairwiseCases.ConflictingImplication):
+            dataf=  pandas.DataFrame({str(i): [0, 1],
+                           str(j): [1,0]})
+        elif (test == PairwiseCases.Equivalent):
+            dataf=  pandas.DataFrame({str(i): [0, 1],
+                           str(j): [0,1]})
+        # df["logical_rsult"] = test
+        # df["df"] = dataf
+        return MutualTruthExplain(i, j,
+                                  self.minimal_constituents.fromId(i),
+                                  self.minimal_constituents.fromId(j),
+                                  dataf,
+                                  test)
+
     def _mutual_truth(self, i, j):
         test = self.determine(i,j)#self.ec.determine(i, j) #self.get_mutual_truth(i, j)
         # relation = Relation()
@@ -173,6 +249,24 @@ class TabularCWASemantics:
             return pandas.DataFrame({str(i): [0, 1],
                            str(j): [0,1]})
 
+    def explained_universal_truth(self, S:set[int], T:set[int])->ExplainedUniversalTruth:
+        constituent_implication = []
+        L = list()
+        N = len(S.union(T))
+        if N == 0:
+            # relation = Relation(name="R")
+            return ExplainedUniversalTruth(constituent_implication, pandas.DataFrame({}))
+        if N == len(S.intersection(T)) and N == 1:
+            return ExplainedUniversalTruth(constituent_implication, pandas.DataFrame({str(list(S)[0]):[0,1]}))
+        else:
+            for i in sorted(list(S)):
+                for j in sorted(list(T)):
+                    if i != j:
+                        res = self.explained_mutual_truth(i,j)
+                        constituent_implication.append(res)
+                        L.append(res.df)
+            return ExplainedUniversalTruth(constituent_implication, reduce(lambda x, y: x.merge(y), L))
+
     def _universal_truth(self, S, T):
         L = list()
         N = len(S.union(T))
@@ -187,17 +281,37 @@ class TabularCWASemantics:
                     if i != j:
                         L.append(self._mutual_truth(i, j))
             return reduce(lambda x, y: x.merge(y), L)
-            # # if len(S)>1:
-            # #     S = set(filter(lambda i: non_redundant_constituents(self.ec.lhsOrigDict[i].original, False), S))
-            # for i in S:
-            #     # if not non_redundant_constituents(self.ec.lhsOrigDict[i].original, False):
-            #     #     continue
-            #     for j in T:
-            #         if i != j:
-            #             L.append(self._mutual_truth(i, j))
-            # return reduce(lambda x, y: x.merge(y), L) if len(L)>0 else pandas.DataFrame({})
 
-    def get_straightforward_id_similarity(self, i, j):
+    def explain_sentence(self, i:int, worldsWhereItAlwaysHolds:bool)->ExplainSentence:
+        Ri = with_variables_from(self.sentence_list[i], self.minimal_constituent_dict[i], self.minimal_constituents,
+                                 "R" + str(i), worldsWhereItAlwaysHolds)
+        # return {"formula": self.sentence_list[i],
+        #  "atoms": {x: self.minimal_constituents.fromId(x) for x in self.minimal_constituent_dict[i]},
+        #  "table": Ri,
+        #  "holding": worldsWhereItAlwaysHolds}
+        return ExplainSentence(self.sentence_list[i],
+                               {x: self.minimal_constituents.fromId(x) for x in self.minimal_constituent_dict[i]},
+                               Ri,
+                               worldsWhereItAlwaysHolds)
+
+    def get_explained_id_similarity(self, i:int, j:int):
+        Ri_explanation = self.explain_sentence(i, True)
+        Rj_explanation = self.explain_sentence(j, False)
+        ConstImplExpl = self.explained_universal_truth(set(self.minimal_constituent_dict[i]), set(self.minimal_constituent_dict[j]))
+        relevantColumns = list(set(Ri_explanation.table.columns).union(set(Rj_explanation.table.columns)))
+        tableSemantics = ConstImplExpl.result.merge(Ri_explanation.table).merge(Rj_explanation.table)[relevantColumns].drop_duplicates()
+        semantics = tableSemantics[["R" + str(j)]].prod(axis=1)
+        Rj_holding = len(semantics)
+        total = semantics.sum(axis=0)/Rj_holding if Rj_holding>0.0 else 0.0
+        # print(f"{i}~{j} := {total}")
+        return FinalExplanation(total, Ri_explanation, Rj_explanation, ConstImplExpl, tableSemantics)
+        # return {"confidence": total,
+        #         "lhs": Ri_explanation,
+        #         "rhs": Rj_explanation,
+        #         "explained_joined_table": ConstImplExpl,
+        #         "explained_joined_table_natural_joined_with_operands": tableSemantics}
+
+    def get_straightforward_id_similarity(self, i:int, j:int):
         ## Obtaining the constituents' combination where Ri always holds (premise)
         Ri = with_variables_from(self.sentence_list[i], self.minimal_constituent_dict[i], self.minimal_constituents, "R" + str(i), True)
         ## Obtaining all the constituents' combinations for Rj
@@ -218,6 +332,9 @@ class TabularCWASemantics:
             return PairwiseCases.ConflictingImplication
         else:
             return PairwiseCases.Indifferent
+
+
+
 
 
     def buildReport(self, file, mathJax = True):

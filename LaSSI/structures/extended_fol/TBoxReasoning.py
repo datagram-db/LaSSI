@@ -127,6 +127,27 @@ class KnowledgeExpansion:
     def getIDx(self, obj):
         return self.constituents.contains(obj)
 
+    def get_full_expansion_with_graph(self, sentence, ruleLabel):
+        entry_point, wasAlreadyPresent = self.constituents.add_with_wasPresent(sentence)
+        assert wasAlreadyPresent
+        allVisited = self._subGraph[entry_point]
+        finallyVisited = set()
+        Q = list(allVisited)
+        adj_list = dict()
+        while len(Q)>0:
+            curr = Q.pop(0)
+            if curr in finallyVisited:
+                continue
+            if curr not in adj_list:
+                adj_list[curr] = defaultdict(list)
+            finallyVisited.add(curr)
+            if curr in self.Graph:
+                for (lR, idxR), dst in self.Graph[curr]:
+                    if lR == ruleLabel:
+                        Q.append(dst)
+                        adj_list[curr][idxR].append(dst)
+        return entry_point, adj_list, {x: self.constituents.fromId(x) for x in finallyVisited}, {self.constituents.fromId(x) for x in finallyVisited}
+
     def get_full_expansion(self, sentence, ruleLabel):
         idx, wasAlreadyPresent = self.constituents.add_with_wasPresent(sentence)
         assert wasAlreadyPresent
@@ -298,6 +319,19 @@ class TBoxReasoningSingleton(object):
         else:
             TBoxReasoningSingleton._instance.rules.eq_already_visited_set.update(result)
         return TBoxReasoningSingleton._instance.rules.ke.get_full_expansion(formula, label)
+
+    @staticmethod
+    def explained_knowledge_expand(formula, isImpl):
+        assert TBoxReasoningSingleton.isReady()
+        rules = TBoxReasoningSingleton.get_eq_rules() if (not isImpl) else TBoxReasoningSingleton.get_impl_rules()
+        label = "implR" if isImpl else "eqR"
+        S = TBoxReasoningSingleton._instance.rules.impl_already_visited_set if isImpl else TBoxReasoningSingleton._instance.rules.eq_already_visited_set
+        result = TBoxReasoningSingleton._instance.rules.ke.pruned_expansion(formula, rules, label, S, non_redundant_constituents)
+        if isImpl:
+            TBoxReasoningSingleton._instance.rules.impl_already_visited_set.update(result)
+        else:
+            TBoxReasoningSingleton._instance.rules.eq_already_visited_set.update(result)
+        return TBoxReasoningSingleton._instance.rules.ke.get_full_expansion_with_graph(formula, label)
 
     @staticmethod
     def get_ke_file_name():

@@ -59,7 +59,9 @@ class LaSSI():
                  legacy_conf: LegacySemanticConfiguration = None,
                  disable_ad_hoc: bool = False,
                  run_ex_post: bool = True,
+                 useId:bool = False,
                  ):
+        self.useId = useId
         self.disable_ad_hoc = disable_ad_hoc
         if legacy_conf is None:
             self.legacy_conf = LegacySemanticConfiguration()
@@ -250,7 +252,7 @@ class LaSSI():
         rewritten_kernels = []
         for idx, x in enumerate(intermediate_representations):
             start = time.time()
-            rewritten_kernels.append(rewrite_kernels(x, self.meu_dbs[idx]))
+            rewritten_kernels.append(rewrite_kernels(x, self.meu_dbs[idx], self.useId))
             end = time.time()
             self.sentences_benchmark.add_row(idx, "Generating logical representation", end - start)
         return rewritten_kernels
@@ -266,6 +268,8 @@ class LaSSI():
         if self.sc is None:
             self.sc = SimilarityScore(self.legacy_conf)
         return self.sc.string_similarity(x, y)
+
+
 
     def _calculate_matrix(self, obj_list):
         matrices = None

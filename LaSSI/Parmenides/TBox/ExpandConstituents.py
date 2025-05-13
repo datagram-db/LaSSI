@@ -1,4 +1,5 @@
 import copy
+import json
 import os.path
 import pickle
 from collections import defaultdict
@@ -360,17 +361,26 @@ def test_pairwise_sentence_similarity(d, x, y, store=True, shift=True):
 
 def instantiate_rules(constituents, expansion_dictionary, final_constituents, isImpl):
     ls = copy.deepcopy(list(reversed(constituents)))
+    result_list = list()
     for original, (idx, constituent) in enumerate(ls):
         str1 = str(constituent)
         from LaSSI.structures.extended_fol.TBoxReasoning import TBoxReasoningSingleton
-        s = TBoxReasoningSingleton.knowledge_expand(constituent, isImpl)
+        entrypoint, adj_graph, id_to_constituent, s = TBoxReasoningSingleton.explained_knowledge_expand(constituent, isImpl)
         # s.add(constituent)
         str2 = str(ls[original][1])
         if (str1 != str2):
             raise RuntimeError(str1+"!="+str2)
         expansion_dictionary[ls[original][1]] = s
+        result = {"original": original,
+                  "idx": idx,
+                  "constituents": constituent,
+                  "entrypoint": entrypoint,
+                  "adj_graph": adj_graph,
+                  "id_to_constituent": id_to_constituent}
+        result_list.append(result)
     for y in expansion_dictionary.values():
         final_constituents = final_constituents.union(set(y))
+    return result_list
     # return {(x, y): CasusHappening.NONE for x in final_constituents for y in
     #         final_constituents}
 
@@ -389,9 +399,11 @@ class ExpandConstituents:
         _ic = os.path.join(cache_folder, "_ic.pickle")
         _eed = os.path.join(cache_folder, "_eed.pickle")
         _ec = os.path.join(cache_folder, "_ec.pickle")
+        explain_eq = os.path.join(cache_folder, "explain_eq.json")
+        explain_impl = os.path.join(cache_folder, "explain_impl.json")
         # _exp = TBoxReasoningSingleton.get_ke_file_name()
 
-        if (os.path.exists(_ied) and os.path.exists(_ic) and os.path.exists(_eed) and os.path.exists(_ec)):# and os.path.exists(_exp)
+        if (os.path.exists(explain_impl) and os.path.exists(explain_eq) and os.path.exists(_ied) and os.path.exists(_ic) and os.path.exists(_eed) and os.path.exists(_ec)):# and os.path.exists(_exp)
             with open(_ied, "rb") as f:
                 self.impl_expansion_dictionary = pickle.load(f)
             with open(_ic, "rb") as f:
@@ -400,6 +412,7 @@ class ExpandConstituents:
                 self.eq_expansion_dictionary = pickle.load(f)
             with open(_ec, "rb") as f:
                 self.eq_constituents = pickle.load(f)
+
         else:
             self.impl_expansion_dictionary = dict()
             self.impl_constituents = set()
@@ -415,10 +428,16 @@ class ExpandConstituents:
 
             Services.getInstance().log("Expanding the constituents...")
             # self.outcome_implication_dictionary =
-            instantiate_rules(self.constituents, self.eq_expansion_dictionary, self.eq_constituents,
+            self.eq_explained = instantiate_rules(self.constituents, self.eq_expansion_dictionary, self.eq_constituents,
                               False)
-            instantiate_rules(self.constituents, self.impl_expansion_dictionary, self.impl_constituents,
+            from LaSSI.files.JSONDump import json_dumps
+
+            with open(explain_eq, "w") as f:
+                f.write(json_dumps(self.eq_explained))
+            self.impl_explained = instantiate_rules(self.constituents, self.impl_expansion_dictionary, self.impl_constituents,
                               True)
+            with open(explain_impl, "w") as f:
+                f.write(json_dumps(self.impl_explained))
             # self.outcome_eq_dictionary =
 
             with open(_ied, "wb") as f:
@@ -430,6 +449,9 @@ class ExpandConstituents:
             with open(_ec, "wb") as f:
                 pickle.dump(self.eq_constituents, f, protocol=pickle.HIGHEST_PROTOCOL)
 
+        from LaSSI.explainer.FullExplainer import load_expansion_graph_from_json_file
+        self.impl_explained = load_expansion_graph_from_json_file(explain_impl)
+        self.eq_explained = load_expansion_graph_from_json_file(explain_eq)
         self.result_cache = dict()
         self.result_cache_raw = dict()
         self.ms = ModelSearch()
@@ -470,13 +492,8 @@ class ExpandConstituents:
         return TBoxReasoningSingleton.subGraphEq(constituent)
 
     def determine_raw(self, i: int, j: int, forceEquiv:bool=False, isLeftDrop = False, isRightDrop = False):
-        # if (i == j):
-        #     self.result_cache_raw[(i, j)] = CasusHappening.EQUIVALENT
-        #     return self.result_cache_raw[(i, j)]
         assert i in self.constituents
         assert j in self.constituents
-        # if (i, j) in self.result_cache_raw:
-        #     return self.result_cache_raw[(i, j)]
         lhsOrig = self.lhsOrigDict[i]
         rhsOrig = self.lhsOrigDict[j] if forceEquiv else self.rhsOrigDict[j]
         tmp = self.ms.compare(lhsOrig, rhsOrig, isLeftDrop, isRightDrop)

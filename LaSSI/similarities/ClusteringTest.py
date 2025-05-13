@@ -522,6 +522,11 @@ def prepare_for_classical_clustering_metrics(N, agg_cluster_assignment, not_impl
     if implying_vs_indifferent <= not_implying_score:
         implying_vs_indifferent = not_implying_score
     # assert implying_vs_indifferent > not_implying_score
+    agg_scores, roc_scores = extract_proba_scores(N, implying_vs_indifferent, not_implying_score, similarity_matrix)
+    return agg_scores, implying_vs_indifferent, roc_scores
+
+
+def extract_proba_scores(N, implying_vs_indifferent, not_implying_score, similarity_matrix):
     agg_scores = []
     roc_scores = []
     idx = 0
@@ -551,7 +556,7 @@ def prepare_for_classical_clustering_metrics(N, agg_cluster_assignment, not_impl
                 wrong_score = 0.0 if (not_implying_score == cell) else 1.0 - (cell - not_implying_score)
                 roc_scores.append([implying_score, indifferent_score, wrong_score])
             idx += 1
-    return agg_scores, implying_vs_indifferent, roc_scores
+    return agg_scores, roc_scores
 
 
 def get_labels(expected_clusters):

@@ -99,6 +99,12 @@ def update_property(prop, key, value):
     return frozenset(d.items())
 
 @dataclass(order=True, frozen=True, eq=True)
+class ProvenanceInformation:
+    name: str
+    id: int
+    specification: Optional[str]
+
+@dataclass(order=True, frozen=True, eq=True)
 class FVariable: ## TODO: rename to FTerm or FConstant
     name: str
     type: str
@@ -111,12 +117,22 @@ class FVariable: ## TODO: rename to FTerm or FConstant
     asAll: bool = False ## By default, the interpretation is exitential. If not, this is interpreted as All
     # matched: bool = field(default_factory=lambda: False)
 
+
+    def extract_provenance(self):
+        yield ProvenanceInformation(self.name, self.id, self.specification)
+        for k,v in self.properties:
+            if isinstance(v, Formula):
+                yield from v.extract_provenance()
+            elif isinstance(v, tuple):
+                for x in v:
+                    if isinstance(x, Formula):
+                        yield from x.extract_provenance()
+
     def instantiate_variable_with_entity(self, external_entity):
         if self.name[0] == "?" and self.name[1:].isdigit() and self.type == "existential" and isinstance(external_entity, FVariable):
             return FVariable(external_entity.name, external_entity.type, self.specification, self.cop, external_entity.id, external_entity.properties, self.spec_negation, self.meta, external_entity.asAll)
         else:
             return self
-
 
     def add_specification(self, spec):
         return FVariable(self.name, self.type, spec, self.cop, self.id, self.properties, self.spec_negation, self.meta, self.asAll)
@@ -189,6 +205,14 @@ class FUnaryPredicate:
     meta: str = field(default_factory=lambda: "FUnaryPredicate")
     # matched: bool = field(default_factory=lambda: False)
 
+    def extract_provenance(self):
+        if self.arg is not None:
+            yield from self.arg.extract_provenance()
+        for k,v in self.properties:
+            for x in v:
+                if isinstance(x, Formula):
+                    yield from x.extract_provenance()
+
     def bogusCopula(self):
         return FUnaryPredicate(self.rel, self.arg.bogusCopula(), self.score, update_property_function(self.properties, update_bogus_copula))
 
@@ -236,6 +260,16 @@ class FBinaryPredicate:
     properties: frozenset
     meta: str = field(default_factory=lambda: "FBinaryPredicate")
     # matched: bool = field(default_factory=lambda: False)
+
+    def extract_provenance(self):
+        if self.src is not None:
+            yield from self.src.extract_provenance()
+        if self.dst is not None:
+            yield from self.dst.extract_provenance()
+        for k,v in self.properties:
+            for x in v:
+                if isinstance(x, Formula):
+                    yield from x.extract_provenance()
 
     def bogusCopula(self):
         return FUnaryPredicate(self.rel, self.src.bogusCopula(), self.dst.bogusCopula(), self.score, update_property_function(self.properties, update_bogus_copula))
@@ -294,6 +328,10 @@ class FAnd:
     meta: str = field(default_factory=lambda: "FAnd")
     # matched: bool = field(default_factory=lambda: False)
 
+    def extract_provenance(self):
+        for x in self.args:
+            yield from x.extract_provenance()
+
     def bogusCopula(self):
         return FAnd([x.bogusCopula() for x in self.args])
 
@@ -321,6 +359,10 @@ class FOr:
     meta: str = field(default_factory=lambda: "FOr")
     # matched: bool = field(default_factory=lambda: False)
 
+    def extract_provenance(self):
+        for x in self.args:
+            yield from x.extract_provenance()
+
     def bogusCopula(self):
         return FOr([x.bogusCopula() for x in self.args])
 
@@ -347,6 +389,9 @@ class FNot:
     meta: str = field(default_factory=lambda: "FNot")
     matched: bool = field(default_factory=lambda: False)
 
+    def extract_provenance(self):
+        if self.arg is not None:
+            yield from self.arg.extract_provenance()
 
     def bogusCopula(self):
         return FNot(self.arg.bogusCopula())
@@ -445,7 +490,7 @@ def type_atom(f:Formula):
 
 
 
-def formula_from_dict(f: Union[dict, str]):
+def formula_from_dict(f: Union[dict, str], useId=False):
     """
     Loading a json file in its object-dictionary rerpesentation into formulaes.
     This is mainly used to run the pipeline from one point at a time.
@@ -456,49 +501,49 @@ def formula_from_dict(f: Union[dict, str]):
         return f
     from collections.abc import Iterable
     if isinstance(f, Iterable) and not (isinstance(f, dict)):
-        return list(map(formula_from_dict, f))
+        return list(map(lambda x:formula_from_dict(x, useId), f))
     assert "meta" in f
     meta = f["meta"]
     if meta == "FNot":
-        return FNot(arg=formula_from_dict(f["arg"]))
+        return FNot(arg=formula_from_dict(f["arg"], useId))
     if meta == "FOr":
-        return FOr(args=tuple(map(formula_from_dict, f["args"])))
+        return FOr(args=tuple(map(lambda x:formula_from_dict(x, useId), f["args"])))
     if meta == "FAnd":
-        return FAnd(args=tuple(map(formula_from_dict, f["args"])))
+        return FAnd(args=tuple(map(lambda x:formula_from_dict(x, useId), f["args"])))
     if meta == "FVariable":
         spec_negation = bool(f["spec_negation"]) if "spec_negation" in f and f["spec_negation"] is not None else False
         name = str(f["name"]) if "name" in f and f["name"] is not None else None
         type = str(f["type"]) if "name" in f and f["type"] is not None else None
-        id = None #int(f["id"]) if "id" in f and f["id"] is not None else -1
-        specification = formula_from_dict(f["specification"]) if "specification" in f and f["specification"] is not None else None
-        cop = formula_from_dict(f["cop"]) if "cop" in f else None
+        id = int(f["id"]) if useId and ("id" in f and f["id"] is not None) else None
+        specification = formula_from_dict(f["specification"], useId) if "specification" in f and f["specification"] is not None else None
+        cop = formula_from_dict(f["cop"], useId) if "cop" in f else None
         properties = defaultdict(set)
         if "properties" in f:
             for k, v in f["properties"].items():
                 for x in v:
-                    properties[k].add(formula_from_dict(x))
+                    properties[k].add(formula_from_dict(x, useId))
         properties = frozenset({k: tuple(v) for k, v in properties.items()}.items())
         return FVariable(name=name, type=type, specification=specification, cop=cop, id=id, spec_negation=spec_negation, properties=properties)
     if meta == "FUnaryPredicate":
         rel = str(f["rel"]) if "rel" in f and f["rel"] is not None else ""
-        arg = formula_from_dict(f["arg"]) if "arg" in f and f["arg"] is not None else None
+        arg = formula_from_dict(f["arg"], useId) if "arg" in f and f["arg"] is not None else None
         score = float(f["score"]) if "score" in f else 1.0
         properties = defaultdict(set)
         if "properties" in f:
             for k, v in f["properties"].items():
                 for x in v:
-                    properties[k].add(formula_from_dict(x))
+                    properties[k].add(formula_from_dict(x, useId))
         properties = {k: tuple(v) for k, v in properties.items()}
         return FUnaryPredicate(rel, arg, score, frozenset(properties.items()))
     if meta == "FBinaryPredicate":
         rel = str(f["rel"]) if "rel" in f else ""
-        src = formula_from_dict(f["src"]) if "src" in f else None
-        dst = formula_from_dict(f["dst"]) if "dst" in f else None
+        src = formula_from_dict(f["src"], useId) if "src" in f else None
+        dst = formula_from_dict(f["dst"], useId) if "dst" in f else None
         score = float(f["score"]) if "score" in f else 1.0
         properties = defaultdict(set)
         if "properties" in f:
             for k, v in f["properties"].items():
                 for x in v:
-                    properties[k].add(formula_from_dict(x))
+                    properties[k].add(formula_from_dict(x, useId))
         properties = {k: tuple(v) for k, v in properties.items()}
         return FBinaryPredicate(rel, src, dst, score, frozenset(properties.items()))

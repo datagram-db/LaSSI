@@ -126,7 +126,8 @@ def rewrite_predicate_with_new_first_argument(sentence, first_argument):
 
 class RewriteKernels:
 
-    def __init__(self, obj, meu_db_row):
+    def __init__(self, obj, meu_db_row, useId=False):
+        self.useId = useId
         self.meu_db_row = meu_db_row
         self.obj = obj
         from LaSSI.external_services.Services import Services
@@ -233,6 +234,12 @@ class RewriteKernels:
             cop = self.make_cop(coplist[0])
         elif len(coplist) > 1:
             cop = self.make_cop(" ".join(sorted(coplist, key=lambda x: self.meu_db_row.first_sentence.find(x))))
+        id = None
+        if self.useId:
+            if isinstance(entity, dict) and "id" in entity:
+                id = entity["id"]
+            elif hasattr(entity, "id"):
+                id = entity.id
         named_entity = props.pop("named_entity", None) if isinstance(entity,
                                                                      dict) else entity.get_name()  # TODO: Is this okay for getting the name of SetOfSingletons?
         type = props.pop("type", None) if isinstance(entity, dict) else entity.type
@@ -253,7 +260,7 @@ class RewriteKernels:
             cop = None
         props2 = self.props_as_unique_itemset(props2)
         test, props2 = has_prop_just_one_negated_constituent(props2)
-        result = FVariable(name=named_entity, type=type, specification=specifiaction, cop=cop, id=None,
+        result = FVariable(name=named_entity, type=type, specification=specifiaction, cop=cop, id=id,
                          properties=props2, asAll=asAll)
         return FNot(result) if test else result
 
@@ -595,7 +602,7 @@ class RewriteKernels:
                 raise RuntimeError(f"Unknown source type: {n}")
 
 
-def rewrite_kernels(obj, meudb):
-    r = RewriteKernels(obj, meudb)
+def rewrite_kernels(obj, meudb, useId=False):
+    r = RewriteKernels(obj, meudb, useId)
     tmp = r.rewrite_kernels()
     return tmp

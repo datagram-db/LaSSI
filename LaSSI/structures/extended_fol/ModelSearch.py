@@ -65,8 +65,6 @@ class ModelSearch:
 
     def compare(self, objLHS:ModelSearchBasis, objRHS:ModelSearchBasis, isLeftDrop = False, isRightDrop = False)->'CasusHappening':
         cp = (objLHS.original, objRHS.original)
-        # if cp in self.main_cache:
-        #     return self.main_cache[cp]
         if (objLHS.original == objRHS.original):
             self.main_cache[cp] = CasusHappening.EQUIVALENT
             return self.main_cache[cp]
@@ -118,15 +116,11 @@ class ModelSearch:
                     if firstConst is None:
                         firstConst = val
                     # return val
-            from LaSSI.Parmenides.TBox.ExpandConstituents import simplifyConstituents
             from LaSSI.Parmenides.TBox.ExpandConstituents import simplifyConstituentsAcross
             result = simplifyConstituentsAcross(elems)
-            # assert (firstConst is None) or (result == firstConst)
             if result != CasusHappening.INDIFFERENT:
                 self.main_cache[cp] = result
                 return result
-            elems = set()
-            firstConst = None
             for lhs in objLHS.binary:
                 if (isRightDrop) and isinstance(lhs, FNot):
                     continue
@@ -136,13 +130,5 @@ class ModelSearch:
                 if val == CasusHappening.EXCLUSIVES:
                     self.main_cache[cp] = val
                     return val
-                # elif val != CasusHappening.INDIFFERENT:
-                    # elems.add(val)
-                    # if firstConst is None:
-                    #     firstConst = val
-                    # return val
-            # from LaSSI.Parmenides.TBox.ExpandConstituents import simplifyConstituents
-            # result = simplifyConstituents(elems)
-            # # assert (firstConst is None) or (result == firstConst)
             self.main_cache[cp] = result
             return self.main_cache[cp]
