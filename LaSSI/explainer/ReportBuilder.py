@@ -104,7 +104,7 @@ class ReportBuilder:
 
         ## Constituent Motivation
         results.append(Tag(name="br"))
-        results.append("Constituent Motivation:")
+        results.append("Atom Motivation:")
         const_mot = List(False)
         for partial_result in ConstImplExpl.constituent_implication:
             const_mot.add(str(partial_result))

@@ -62,7 +62,11 @@ dependencies = [
     "latextools",
     "scikit-learn-extra",
     "ragatouille",
-    "psutil"
+    "psutil",
+    "lime",
+    "shap",
+    "accelerate<=0.26.0",
+    "intervaltree"
 ]
 
 #[tool.scikit-build]
