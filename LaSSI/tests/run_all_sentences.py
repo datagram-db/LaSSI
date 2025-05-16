@@ -63,8 +63,8 @@ if __name__ == '__main__':
              SentenceRepresentation.LogicalGraph,
             SentenceRepresentation.FullText,
             # SentenceRepresentation.Logical,
-            SentenceRepresentation.SimpleGraphDisabledAdHoc, SentenceRepresentation.LogicalGraphDisabledAdHoc,
-             SentenceRepresentation.LogicalDisabledAdHoc
+            SentenceRepresentation.SimpleGraphDisabledAPriori, SentenceRepresentation.LogicalGraphDisabledAPriori,
+             SentenceRepresentation.LogicalDisabledAPriori
         ]
 
         for transformation in transformations:

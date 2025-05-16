@@ -14,8 +14,8 @@ import time as ti
 
 
 class ResolveBasicTypes:
-    def __init__(self, recall_threshold: float, precision_threshold: float, disable_ad_hoc: bool):
-        self.disable_ad_hoc = disable_ad_hoc
+    def __init__(self, recall_threshold: float, precision_threshold: float, disable_a_priori: bool):
+        self.disable_a_priori = disable_a_priori
         self.recall_threshold = recall_threshold
         self.precision_threshold = precision_threshold
         self.services = Services.getInstance()
@@ -24,7 +24,7 @@ class ResolveBasicTypes:
 
     def resolve_basic_types(self, list_sentences):
         db = list()
-        if self.disable_ad_hoc:
+        if self.disable_a_priori:
             for idx, sentence in enumerate(list_sentences):
                 db.append(MeuDB(sentence, []))
         else:
@@ -75,4 +75,4 @@ class ResolveBasicTypes:
 
 
 def ExplainTextWithNER(self, sentences):
-    return ResolveBasicTypes(self.recall_threshold, self.precision_threshold, self.disable_ad_hoc).resolve_basic_types(sentences)
+    return ResolveBasicTypes(self.recall_threshold, self.precision_threshold, self.disable_a_priori).resolve_basic_types(sentences)

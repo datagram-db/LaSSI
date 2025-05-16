@@ -57,12 +57,12 @@ class LaSSI():
                  force=False,
                  should_benchmark=True,
                  legacy_conf: LegacySemanticConfiguration = None,
-                 disable_ad_hoc: bool = False,
+                 disable_a_priori: bool = False,
                  run_ex_post: bool = True,
                  useId:bool = False,
                  ):
         self.useId = useId
-        self.disable_ad_hoc = disable_ad_hoc
+        self.disable_a_priori = disable_a_priori
         if legacy_conf is None:
             self.legacy_conf = LegacySemanticConfiguration()
         else:
@@ -138,28 +138,28 @@ class LaSSI():
         self.precision_threshold = precision_threshold
         self.transformation = transformation
         self.full_transformation = transformation
-        if self.disable_ad_hoc:
+        if self.disable_a_priori:
             if self.transformation == SentenceRepresentation.Logical:
-                self.full_transformation = SentenceRepresentation.LogicalDisabledAdHoc
+                self.full_transformation = SentenceRepresentation.LogicalDisabledAPriori
             elif self.transformation == SentenceRepresentation.LogicalGraph:
-                self.full_transformation = SentenceRepresentation.LogicalGraphDisabledAdHoc
+                self.full_transformation = SentenceRepresentation.LogicalGraphDisabledAPriori
             elif self.transformation == SentenceRepresentation.SimpleGraph:
-                self.full_transformation = SentenceRepresentation.SimpleGraphDisabledAdHoc
-        if self.transformation == SentenceRepresentation.LogicalDisabledAdHoc:
-            self.disable_ad_hoc = True
+                self.full_transformation = SentenceRepresentation.SimpleGraphDisabledAPriori
+        if self.transformation == SentenceRepresentation.LogicalDisabledAPriori:
+            self.disable_a_priori = True
             self.transformation = SentenceRepresentation.Logical
         elif self.transformation == SentenceRepresentation.Logical:
-            self.disable_ad_hoc = False
-        elif self.transformation == SentenceRepresentation.SimpleGraphDisabledAdHoc:
-            self.disable_ad_hoc = True
+            self.disable_a_priori = False
+        elif self.transformation == SentenceRepresentation.SimpleGraphDisabledAPriori:
+            self.disable_a_priori = True
             self.transformation = SentenceRepresentation.SimpleGraph
         elif self.transformation == SentenceRepresentation.SimpleGraph:
-            self.disable_ad_hoc = False
-        elif self.transformation == SentenceRepresentation.LogicalGraphDisabledAdHoc:
-            self.disable_ad_hoc = True
+            self.disable_a_priori = False
+        elif self.transformation == SentenceRepresentation.LogicalGraphDisabledAPriori:
+            self.disable_a_priori = True
             self.transformation = SentenceRepresentation.LogicalGraph
         elif self.transformation == SentenceRepresentation.LogicalGraph:
-            self.disable_ad_hoc = False
+            self.disable_a_priori = False
         self.force = force
         self.should_benchmark = should_benchmark
         self.logger("init file structure")
@@ -390,8 +390,8 @@ class LaSSI():
         from LaSSI.files.FileDumpUtilities import target_file_dump
         n = len(sentences)
         self.logger("generating meuDB")
-        if self.disable_ad_hoc:
-            self.meu_dbs =ExplainTextWithNER(self, sentences)
+        if self.disable_a_priori:
+            self.meu_dbs = ExplainTextWithNER(self, sentences)
             meu_execution_time = [0.0, 'r']
         else:
             self.meu_dbs, meu_execution_time = target_file_dump(
