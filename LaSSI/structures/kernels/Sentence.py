@@ -8,18 +8,16 @@ __email__ = "ollie.fox5@gmail.com"
 __status__ = "Production"
 
 import re
+import time
 from collections import defaultdict
 from copy import copy
 from types import SimpleNamespace
-from typing import Any, Tuple
-
-from LaSSI.ner import node_functions
 
 from LaSSI.external_services.Services import Services
-from LaSSI.ner.node_functions import create_existential_node, create_props_for_singleton, NodeFunctions, \
-    get_min_position
-from LaSSI.ner.string_functions import lemmatize_verb, check_semi_modal
+from LaSSI.ner.node_functions import create_existential_node, create_props_for_singleton, get_min_position
+from LaSSI.ner.string_functions import lemmatize_verb, check_semi_modal, lemmatize_sentence
 from LaSSI.structures.internal_graph.EntityRelationship import Relationship, Singleton, SetOfSingletons, Grouping
+from LaSSI.tests.benchmark import Benchmark
 
 # @dataclass(order=True, frozen=True, eq=True)
 # class Sentence(Singleton):
@@ -195,52 +193,67 @@ def create_sentence(edges, nodes, negations, root_sentence_id, found_preposition
 
     # Create properties, rewrite relevant edges, check if we find a property that should be a kernel
     for edge in edges:
+        edge_source = edge.source
+        edge_target = edge.target
+        edge_label = edge.edgeLabel
+
         # Source
         kernel, properties, kernel_nodes = add_to_properties(
-            kernel, edge.source, 'source', kernel_nodes, properties, negations, node_functions)
+            kernel, edge_source, 'source', kernel_nodes, properties, negations, node_functions)
 
         # Target
         kernel, properties, kernel_nodes = add_to_properties(
-            kernel, edge.target, 'target', kernel_nodes, properties, negations, node_functions)
+            kernel, edge_target, 'target', kernel_nodes, properties, negations, node_functions)
 
         # Lemmatize edge name
-        edge = edge.update_vertex(edge.edgeLabel.update_name(lemmatize_verb(edge.edgeLabel.named_entity)) if edge.edgeLabel is not None else None, "edgeLabel")
+        if edge_label is not None:
+            lemmatized_name = lemmatize_verb(edge_label.named_entity)
+            edge = edge.update_vertex(edge_label.update_name(lemmatized_name), "edgeLabel")
+            edge_label = edge.edgeLabel
 
         # Add certain edges to be rewritten later
-        if edge.edgeLabel.named_entity in {'acl_relcl', 'nmod', 'nmod_poss'}:
-            if edge.edgeLabel.named_entity in {'acl_relcl'}:
-                acl_relcl_map[edge.target.id] = edge.source
-            valid_nodes = [kernel.source, kernel.target]
+        edge_label_name = edge_label.named_entity
+        if edge_label_name in frozenset({'acl_relcl', 'nmod', 'nmod_poss'}):
+            if edge_label_name == 'acl_relcl':
+                acl_relcl_map[edge_target.id] = edge_source
+
+            kernel_source = kernel.source
+            kernel_target = kernel.target
+            valid_nodes = [kernel_source, kernel_target]
 
             # Rewrite edge as a kernel
             edge_kernel = Singleton(
-                id=edge.edgeLabel.id,
+                id=edge_label.id,
                 named_entity="",
                 type="SENTENCE",
                 min=node_functions.get_min_from_nodes(valid_nodes),
                 max=node_functions.get_max_from_nodes(valid_nodes),
                 confidence=1,
                 kernel=Relationship(
-                    source=remove_acl_relcl_relationship(edge.source),
-                    target=remove_acl_relcl_relationship(edge.target),
-                    edgeLabel=edge.edgeLabel,
+                    source=remove_acl_relcl_relationship(edge_source),
+                    target=remove_acl_relcl_relationship(edge_target),
+                    edgeLabel=edge_label,
                     isNegated=edge.isNegated
                 ),
                 properties=frozenset(dict()),
             )
+
             kernel, properties, kernel_nodes = add_to_properties(
                 kernel, edge_kernel, 'edgeLabel', kernel_nodes, properties, negations, node_functions)
 
         # If we have an edge that is a verb and not already in the kernel nodes, use this as the "edge to loop", out the next iteration on the same root node
-        if (
-                edge.edgeLabel.type == 'verb' and
-                kernel.edgeLabel is not None and
-                edge.edgeLabel is not None and
-                kernel.edgeLabel.named_entity != edge.edgeLabel.named_entity and
-                not is_node_in_kernel_nodes(edge.edgeLabel, kernel_nodes) and
-                edge != prev_loop_settings.edgeForKernel
-        ):
-            loop_settings = SimpleNamespace(shouldLoop=True, edgeForKernel=edge, previousKernel=None)
+        kernel_edge_label = kernel.edgeLabel
+        if (edge_label is not None and
+                edge_label.type == 'verb' and
+                kernel_edge_label is not None and
+                kernel_edge_label.named_entity != edge_label_name and
+                not is_node_in_kernel_nodes(edge_label, kernel_nodes) and
+                edge != prev_loop_settings.edgeForKernel):
+            loop_settings = SimpleNamespace(
+                shouldLoop=True,
+                edgeForKernel=edge,
+                previousKernel=None
+            )
 
     # If we have a kernel returned from the previous loop, add this to the properties
     if prev_loop_settings.previousKernel is not None:
@@ -295,7 +308,7 @@ def create_sentence(edges, nodes, negations, root_sentence_id, found_preposition
             type="SENTENCE",
             min=node_functions.get_min_from_nodes(valid_nodes),
             max=node_functions.get_max_from_nodes(valid_nodes),
-            confidence=1, # TODO: Should this always be 1?
+            confidence=1,  # TODO: Should this always be 1?
             kernel=Relationship(
                 source=create_existential_node(),
                 target=final_kernel,
@@ -458,7 +471,7 @@ def add_to_properties(kernel, node, source_or_target, kernel_nodes, properties, 
                             (node.named_entity == "but" or node.named_entity == "and")
                     ) or
                     (
-                            isinstance(node,SetOfSingletons) and
+                            isinstance(node, SetOfSingletons) and
                             node.type == Grouping.AND and 'NEG' in node_functions.get_node_type(node.entities[0]) and
                             len(node.entities) == 1
                     )
@@ -532,17 +545,19 @@ def is_node_in_kernel_nodes(check_node, kernel_nodes):
 
 def assign_kernel(edges, kernel, negations, nodes, root_sentence_id, found_preposition_labels):
     chosen_edge = None
+    transitive_verbs = Services.getInstance().getParmenides().getTransitiveVerbs()
 
     # Find chosen edge, edge label IS a verb, source is = root ID,
     #  root ID in prepositions OR edge label NOT IN prepositions
+    found_preposition_values = set(found_preposition_labels.values())
     for edge in edges:
         if (
-                edge.edgeLabel.type == "verb" and
-                (
+            edge.edgeLabel.type == "verb" and
+            (
                     root_sentence_id in found_preposition_labels or
-                    edge.edgeLabel.named_entity not in found_preposition_labels.values()
-                ) and
-                edge.source.id == root_sentence_id
+                    edge.edgeLabel.named_entity not in found_preposition_values
+            ) and
+            edge.source.id == root_sentence_id
         ):
             chosen_edge = edge
             break
@@ -560,8 +575,8 @@ def assign_kernel(edges, kernel, negations, nodes, root_sentence_id, found_prepo
             )
             and
             (
-                root_sentence_id in found_preposition_labels or
-                edge.edgeLabel.named_entity not in found_preposition_labels.values()
+                    root_sentence_id in found_preposition_labels or
+                    edge.edgeLabel.named_entity not in found_preposition_values
             )
         ):
             # If edge label is NOT a verb, use the source instead
@@ -594,9 +609,8 @@ def assign_kernel(edges, kernel, negations, nodes, root_sentence_id, found_prepo
                         break
 
             # If NOT a transitive verb, remove target as target reflects direct object
-            if len({lemmatize_verb(x) for x in
-                    Services.getInstance().lemmatize_sentence(edge_label.named_entity)}.intersection(
-                    Services.getInstance().getParmenides().getTransitiveVerbs())) == 0:
+            lemmas = lemmatize_sentence(edge_label.named_entity)
+            if len({lemmatize_verb(x) for x in lemmas}.intersection(transitive_verbs)) == 0:
                 kernel = Relationship(
                     source=edge_source,
                     target=None,

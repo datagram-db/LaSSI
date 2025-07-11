@@ -109,7 +109,7 @@ class NodeFunctions:
         return dict(items)
 
     def is_node_but(self, gsm_item):
-        return len(gsm_item['xi']) > 0 and 'but' in gsm_item['xi'][0].lower() and 'cc' in gsm_item['ell'][0].lower()
+        return gsm_item is not None and len(gsm_item['xi']) > 0 and 'but' in gsm_item['xi'][0].lower() and 'cc' in gsm_item['ell'][0].lower()
 
     def node_bfs(self, edges, root_node_id):
         nodes = defaultdict(set)

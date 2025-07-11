@@ -75,65 +75,69 @@ class AssignTypeToSingleton:
     def preProcessing(self, gsm_json):
         # Pre-processing not semantically driven
         # Scan for 'inherit' edges and contain them in the node that has that edge
-        number_of_nodes = range(len(gsm_json))
-        ids_to_remove = []
-        hyph_ids_to_remove = []
-        for row in number_of_nodes:
-            gsm_item = gsm_json[row]
+        nodes_by_id = {item['id']: item for item in gsm_json}
+        nodes_by_begin = {item['properties']['begin']: item for item in gsm_json if
+                          'begin' in item.get('properties', {})}
+        nodes_by_end = {item['properties']['end']: item for item in gsm_json if 'end' in item.get('properties', {})}
 
+        # List of parent ID's for a given child ID
+        parent_map = defaultdict(list)
+        for node in gsm_json:
+            for edge in node['phi']:
+                child_id = edge['score']['child']
+                if child_id is not None:
+                    parent_map[child_id].append(node['id'])
+
+        ids_to_remove = set()
+        hyph_ids_to_remove = set()
+
+        # Concatenate hyphenated words from node properties
+        for gsm_item in gsm_json:
             # Look for hyphens, to properly concatenate
-            if 'HYPH' in gsm_item['ell'] and gsm_item['xi'][0] == '-':  # TODO: Handle '/' being typed as HYPH?
-                first_word = None
-                second_word = None
-                for inner_row in number_of_nodes:
-                    if first_word is not None and second_word is not None:
-                        break
+            if 'HYPH' in gsm_item['ell'] and gsm_item['xi'][0] == '-': # TODO: Handle '/' being typed as HYPH?
+                first_word = nodes_by_end.get(gsm_item['properties'].get('begin'))
+                second_word = nodes_by_begin.get(gsm_item['properties'].get('end'))
 
-                    inner_gsm_item = gsm_json[inner_row]
-                    if inner_gsm_item['properties']['begin'] == gsm_item['properties']['end']:
-                        second_word = inner_gsm_item
-                    elif inner_gsm_item['properties']['end'] == gsm_item['properties']['begin']:
-                        first_word = inner_gsm_item
-
-                if first_word is not None and second_word is not None:
+                if first_word and second_word:
                     first_word['xi'][0] = f"{first_word['xi'][0]}-{second_word['xi'][0]}"
-                    hyph_ids_to_remove.append(second_word['id'])
+                    hyph_ids_to_remove.add(second_word['id']) # Mark the hyphen node for removal
 
-        for row in number_of_nodes:
-            gsm_item = gsm_json[row]
+        for pos, gsm_item in enumerate(gsm_json):
+            if gsm_item['id'] in ids_to_remove:
+                continue
 
             # Skip empty nodes that provide no additional information
-            if (
-                    len(gsm_item["phi"]) == 0 and
-                    len(self.node_functions.get_node_parents(gsm_item, gsm_json)) == 0
-            ):
-               self.node_functions.remove_gsm_item_by_id(gsm_item['id'], gsm_json, ids_to_remove)
+            if len(gsm_item["phi"]) == 0 and not parent_map.get(gsm_item['id']):
+                ids_to_remove.add(gsm_item['id'])
+                continue
 
-            # Remove unwanted subjpass value
+            # Remove unwanted 'subjpass' value
             if 'subjpass' in gsm_item['xi']:
                 gsm_item['xi'].remove('subjpass')
 
             # Remove possible '-' dangling second word
-            keys_to_remove = []
             for remove_id in hyph_ids_to_remove:
-                remove_node = self.node_functions.get_gsm_item_from_id(remove_id, gsm_json)
+                remove_node = nodes_by_id.get(remove_id)
                 for key, value in dict(gsm_item['properties']).items():
                     try:
                         x = float(key)
                         if x == float(remove_node['properties']['pos']):
-                            keys_to_remove.append(key)
+                            del gsm_item['properties'][key]
                     except:
                         continue
 
-            for key in keys_to_remove:
-                del gsm_item['properties'][key]
-
             edges_to_keep = []
             for edge in gsm_item['phi']:
-                if 'inherit_' in edge['containment']:
-                    node_to_inherit = self.node_functions.get_gsm_item_from_id(edge['score']['child'], gsm_json)
-                    if edge['containment'].endswith('_edge'):
-                        # gsm_item['xi'] = node_to_inherit['xi']
+                containment = edge['containment']
+                child_id = edge['score']['child']
+                node_to_inherit = nodes_by_id.get(child_id)
+
+                if not node_to_inherit:
+                    edges_to_keep.append(edge)
+                    continue
+
+                if 'inherit_' in containment:
+                    if containment.endswith('_edge'):
                         if len(gsm_item['ell']) == 0:
                             gsm_item['ell'] = node_to_inherit['ell']
                         else:
@@ -143,29 +147,27 @@ class AssignTypeToSingleton:
                             new_properties = merge_properties(dict(gsm_item['properties']), dict(node_to_inherit['properties']), {'begin', 'end', 'pos'})
                             gsm_item['properties'] = new_properties
 
-                        if self.node_functions.get_node_parents(node_to_inherit, gsm_json) == [gsm_item['id']]:
-                           self.node_functions.remove_gsm_item_by_id(edge['score']['child'], gsm_json, ids_to_remove)
+                        # If the current node is the only parent, mark the inherited node for removal
+                        if parent_map.get(child_id) == [gsm_item['id']]:
+                            ids_to_remove.add(child_id)
 
+                    # Inherit edges from the target node
                     for edge_to_inherit in node_to_inherit['phi']:
                         edge_to_inherit['score']['parent'] = gsm_item['id']
                         gsm_item['phi'].append(dict(edge_to_inherit))
 
                     # Remove edges from node that has been inherited
                     node_to_inherit['phi'] = []
-                elif 'mark' in edge['containment']:
-                    mark_target_node = self.node_functions.get_gsm_item_from_id(edge['score']['child'], gsm_json)
-                    if 'IN' in mark_target_node['ell'] or 'TO' in mark_target_node['ell']:
-                        gsm_item['properties']['mark'] = mark_target_node['xi'][0]
-                elif 'punct' in edge['containment']:
-                    punct_target_node = self.node_functions.get_gsm_item_from_id(edge['score']['child'], gsm_json)
-                    gsm_item['properties']['punct'] = punct_target_node['xi'][0]
+                elif 'mark' in containment and ('IN' in node_to_inherit['ell'] or 'TO' in node_to_inherit['ell']):
+                    gsm_item['properties']['mark'] = node_to_inherit.get('xi', [""])[0]
+                elif 'punct' in containment:
+                    gsm_item['properties']['punct'] = node_to_inherit.get('xi', [""])[0]
                 else:
                     edges_to_keep.append(edge)
 
             # Ignore 'inherit_edge' as they are accounted for, keep all other edges
             gsm_item['phi'] = edges_to_keep
-
-        return [item for idx, item in enumerate(gsm_json) if idx not in ids_to_remove]
+        return [item for item in gsm_json if item['id'] not in ids_to_remove]
 
     def shouldInheritNode(self, node_to_inherit, gsm_item, gsm_json):
         # Check if 'orig' descendant positions are > 'inherit_edge' positions
@@ -370,42 +372,41 @@ class AssignTypeToSingleton:
             if 'conj' in gsm_item['properties'] or 'multipleindobj' in gsm_item['ell']:
                 continue  # Add SetOfSingletons later as we need ALL Singletons first
             else:
-                min_value = -1
-                max_value = -1
-                if len(gsm_item['xi']) > 0 and gsm_item['xi'][0] != '' and gsm_item['ell'][0] != '∃': # TODO: Checking for ∃ might not be valid...
-                    name = gsm_item['xi'][0]
-                    min_value = int(gsm_item['properties']['begin'])
-                    max_value = int(gsm_item['properties']['end'])
-                    node_type = gsm_item['ell'][0] if len(gsm_item['ell']) > 0 else "None"
-                else:
-                    # xi might be empty if the node is invented, therefore existential
-                    name = "?" + str(self.existentials.increaseAndGetExistential())
-                    node_type = 'existential'
+                self.generate_singleton(gsm_item, gsm_json)
 
-                # If we have "root" in "ell", add it to properties
-                if len(gsm_item['ell']) > 1:
-                    gsm_item['properties']['kernel'] = gsm_item['ell'][1]
-
-                if len(gsm_item['xi']) > 1 and 'subjpass' in gsm_item['xi'][1]:
-                    gsm_item['properties']['subjpass'] = gsm_item['xi'][1]
-
-                # Add 'det' to properties
-                if len(gsm_item['ell']) > 0 and 'det' in gsm_item['ell']:
-                    gsm_item['properties']['det'] = gsm_item['ell'][0]
-
-                self.nodes[gsm_item['id']] = Singleton(
-                    id=gsm_item['id'],
-                    named_entity=name,
-                    properties=frozenset(gsm_item['properties'].items()),
-                    min=min_value,
-                    max=max_value,
-                    type=node_type,
-                    confidence=1.0
-                )
-
-                # TODO: Need to resolve grouped entities before merging, is there a more elegant way to do this? Could this thus be removed from the phases?
-                self.associteNodeToBestMeuMatches(self.nodes[gsm_item['id']])
-                self.singletonTypeResolution(self.nodes[gsm_item['id']], gsm_json)
+    def generate_singleton(self, gsm_item, gsm_json):
+        min_value = -1
+        max_value = -1
+        if len(gsm_item['xi']) > 0 and gsm_item['xi'][0] != '' and gsm_item['ell'][
+            0] != '∃':  # TODO: Checking for ∃ might not be valid...
+            name = gsm_item['xi'][0]
+            min_value = int(gsm_item['properties']['begin'])
+            max_value = int(gsm_item['properties']['end'])
+            node_type = gsm_item['ell'][0] if len(gsm_item['ell']) > 0 else "None"
+        else:
+            # xi might be empty if the node is invented, therefore existential
+            name = "?" + str(self.existentials.increaseAndGetExistential())
+            node_type = 'existential'
+        # If we have "root" in "ell", add it to properties
+        if len(gsm_item['ell']) > 1:
+            gsm_item['properties']['kernel'] = gsm_item['ell'][1]
+        if len(gsm_item['xi']) > 1 and 'subjpass' in gsm_item['xi'][1]:
+            gsm_item['properties']['subjpass'] = gsm_item['xi'][1]
+        # Add 'det' to properties
+        if len(gsm_item['ell']) > 0 and 'det' in gsm_item['ell']:
+            gsm_item['properties']['det'] = gsm_item['ell'][0]
+        self.nodes[gsm_item['id']] = Singleton(
+            id=gsm_item['id'],
+            named_entity=name,
+            properties=frozenset(gsm_item['properties'].items()),
+            min=min_value,
+            max=max_value,
+            type=node_type,
+            confidence=1.0
+        )
+        # TODO: Need to resolve grouped entities before merging, is there a more elegant way to do this? Could this thus be removed from the phases?
+        self.associteNodeToBestMeuMatches(self.nodes[gsm_item['id']])
+        self.singletonTypeResolution(self.nodes[gsm_item['id']], gsm_json)
 
     # Phase 1.2
     def get_relationship_entities(self, grouped_nodes, gsm_json, gsm_item, has_relationship, norm_confidence,
@@ -609,20 +610,14 @@ class AssignTypeToSingleton:
         # If key is SetOfSingletons, loop over each Singleton and make association to type
         # Giacomo: FIX, but only if they are not logical predicates
 
-        # If we already have the association, remove it to re-add
-        if node.id in [x.id for x in self.associations]:
-            self.associations = {item for item in self.associations if item.id != node.id}
-
-        from LaSSI.structures.internal_graph.EntityRelationship import SetOfSingletons
-        if isinstance(node, SetOfSingletons) and ((node.type == Grouping.NONE) or (node.type == Grouping.GROUPING)):
-            for entity in node.entities:
-                self.associateNodeToMeuMatches(entity)
-
-            # merged_node = self.create_merged_node(node)  # So we can check if the concatenated name is in meuDB
-            # self.associateNodeToMeuMatches(node, meu_db_row)
-        elif isinstance(node, Singleton):
-            # assign_type_to_singleton(item, stanza_row, nodes, key)
-            self.associteNodeToBestMeuMatches(node)
+        id_associations = [x.id for x in self.associations]
+        if node.id not in id_associations:
+            if isinstance(node, SetOfSingletons) and ((node.type == Grouping.NONE) or (node.type == Grouping.GROUPING)):
+                for entity in node.entities:
+                    if entity.id not in id_associations:
+                        self.associateNodeToMeuMatches(entity)
+            elif isinstance(node, Singleton):
+                self.associteNodeToBestMeuMatches(node)
 
     # Phase 2.1
     def associteNodeToBestMeuMatches(self, item):
@@ -728,19 +723,20 @@ class AssignTypeToSingleton:
 
     ## Phase 4
     def resolveGraphNERs(self):
-        for key in self.nodes:
-            node = self.nodes[key]
-            # association = nbb[item]
-            # best_score = association.confidence
-            if not isinstance(node, SetOfSingletons):
-                self.ConfidenceAndEntityExpand(key)
-
-        for key in self.nodes:
-            node = self.nodes[key]
-            # association = nbb[item]
-            # best_score = association.confidence
-            if isinstance(node, SetOfSingletons):
-                self.ConfidenceAndEntityExpand(key)
+        # TODO: This appears to be unnecessary
+        # for key in self.nodes:
+        #     node = self.nodes[key]
+        #     # association = nbb[item]
+        #     # best_score = association.confidence
+        #     if not isinstance(node, SetOfSingletons):
+        #         self.ConfidenceAndEntityExpand(key)
+        #
+        # for key in self.nodes:
+        #     node = self.nodes[key]
+        #     # association = nbb[item]
+        #     # best_score = association.confidence
+        #     if isinstance(node, SetOfSingletons):
+        #         self.ConfidenceAndEntityExpand(key)
 
         # With types assigned, merge SetOfSingletons into Singleton
         for key in self.nodes:
@@ -1015,6 +1011,9 @@ class AssignTypeToSingleton:
                             self.create_edges(edge_label_name, gsm_item, non_verbs, source_node_id, target_node_id, gsm_json)
 
             for edge in gsm_item['phi']:
+                source_node_id = edge['score']['parent']
+                target_node_id = None
+
                 # Check if child node has 'multipleindobj' type, to reassign edges from each 'orig'
                 child_gsm_item = self.node_functions.get_gsm_item_from_id(edge['score']['child'], gsm_json)
                 if 'multipleindobj' in child_gsm_item['ell']:
@@ -1031,10 +1030,9 @@ class AssignTypeToSingleton:
                 if edge['containment'] not in rejected_edges:
                     if 'orig' not in edge['containment']:
                         edge_label_name = edge['containment']  # Name of edge label
-
-                        source_node_id = edge['score']['parent']
-                        target_node_id = edge['score']['child']
-                        self.create_edges(edge_label_name, gsm_item, non_verbs, source_node_id, target_node_id, gsm_json)
+                        if self.node_functions.get_node_id(edge['score']['child']) != target_node_id:
+                            target_node_id = edge['score']['child']
+                            self.create_edges(edge_label_name, gsm_item, non_verbs, source_node_id, target_node_id, gsm_json)
 
         # print(json.dumps(Graph(self.edges), cls=EnhancedJSONEncoder))
         return Graph(self.edges)
@@ -1061,11 +1059,11 @@ class AssignTypeToSingleton:
         edge_label_name = ' '.join(result_words)
 
         # Check if name of edge is in "non verbs"
-        edge_type = "verb"
-        for non_verb in non_verbs:
-            if edge_label_name == non_verb.strip():
-                edge_type = "non_verb"
-                break
+        non_verb_set = {nv.strip() for nv in non_verbs}
+        if edge_label_name in non_verb_set:
+            edge_type = "non_verb"
+        else:
+            edge_type = "verb"
 
         node_min = -1
         node_max = -1

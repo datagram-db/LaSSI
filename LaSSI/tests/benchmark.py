@@ -15,7 +15,7 @@ class Benchmark:
         self.data = Benchmark._data[name]
         self.phase_names = Benchmark._phase_names[name]
 
-    def add_row(self, id: Dict[int, str], phase_name: str, value: Dict[float, str]) -> None:
+    def add_row(self, id: Dict[int, str], phase_name: str, value: Dict[float, str], accumulate: bool=False) -> None:
         if self.name == "Metrics":
             value = f"{round(value, 2) if isinstance(value, float) else value:.2f}" if value != "N/A" else value
 
@@ -24,7 +24,10 @@ class Benchmark:
 
         for row in self.data:
             if row['id'] == id:
-                row[phase_name] = value
+                if accumulate and phase_name in row:
+                    row[phase_name] += value
+                else:
+                    row[phase_name] = value
                 return
 
         new_row = {'id': id, phase_name: value}

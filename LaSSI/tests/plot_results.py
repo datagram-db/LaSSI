@@ -13,17 +13,19 @@ def main():
 
     pd.set_option('display.max_columns', None)
 
-    data = pd.read_csv('benchmarks/mar18-benchmark-added-logical-expost__1.csv')  # FYI: mar18 is used in MDPI25 paper
+    data = pd.read_csv('benchmarks/jun17-benchmark.csv')  # FYI: mar18 is used in MDPI25 paper
 
-    data = data.loc[:, ['Dataset', 'Generating meuDB', 'Generating gsmDB', 'Generating intermediate representation',
-                        'Generating logical representation', 'Performing ex post explanation',
-                        'Loading sentences', 'Loading meuDB', 'Generating rewritten graphs']]
+    data = data.loc[:, ['Dataset', 'Loading sentences', 'Generating meuDB', 'Loading meuDB', 'Generating gsmDB',
+                        'Generating rewritten graphs', 'Generating intermediate representation',
+                        'Generating logical representation']]
+
+    # data = data.loc[:, ['Dataset', 'Generating meuDB', 'Generating gsmDB', 'Generating intermediate representation',
+    #                     'Generating logical representation', 'Performing ex post explanation',
+    #                     'Loading sentences', 'Loading meuDB', 'Generating rewritten graphs']]
 
     data = data.sort_values(by='Dataset')
     data = data.replace(0, np.nan)  # For generating/loading meuDB where values are 0
     averaged_data = data.groupby('Dataset', as_index=False).mean(numeric_only=True)
-
-
 
     # Create a new DataFrame for the GPT-3 data
     # gpt3_data = pd.DataFrame({
@@ -59,11 +61,11 @@ def main():
 
     last_dataset_data_meu = last_dataset_data[(last_dataset_data['Phase'] != "Loading meuDB")]
     total_time_last_dataset = last_dataset_data_meu['Time'].sum()
-    print(f"Total time for the {last_dataset_label} dataset w/ MEU: {total_time_last_dataset/60} minutes")
+    print(f"Total time for the {last_dataset_label} dataset w/ MEU: {total_time_last_dataset / 60} minutes")
 
     last_dataset_data_no_meu = last_dataset_data[(last_dataset_data['Phase'] != "Generating meuDB")]
     total_time_last_dataset = last_dataset_data_no_meu['Time'].sum()
-    print(f"Total time for the {last_dataset_label} dataset w/out MEU: {total_time_last_dataset} minutes")
+    print(f"Total time for the {last_dataset_label} dataset w/out MEU: {total_time_last_dataset} seconds")
 
     plot = (
             ggplot(melted_data, aes(x='Dataset', y='Time', color='Phase', group='Phase')) +
@@ -98,6 +100,7 @@ def main():
             + guides(color=guide_legend(nrow=4), shape=guide_legend(nrow=4))
     )
     plot.save('performance_metrics_plot.png', dpi=1200, width=7.5, height=5)
+
 
 if __name__ == "__main__":
     main()

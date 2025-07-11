@@ -37,7 +37,7 @@ def get_and_run_all_sentences(folders, transformation=SentenceRepresentation.Log
             try:
                 with open(os.devnull, 'w') as devnull:
                     sys.stdout = devnull
-                    pipeline = LaSSI(yaml_file, "/home/giacomo/Scrivania/LaSSI/connection_giacomo.yaml", transformation, transformer)
+                    pipeline = LaSSI(yaml_file, "/home/campus.ncl.ac.uk/b9063849/PycharmProjects/LaSSI/connection.yaml", transformation, transformer)
                     pipeline.run()
                     pipeline.close()
                 sys.stdout = sys.__stdout__
