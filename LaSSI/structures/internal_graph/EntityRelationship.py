@@ -125,6 +125,57 @@ class SetOfSingletons(NodeEntryPoint):  # Graph node representing conjunction/di
             map(lambda x: x.named_entity if hasattr(x, 'named_entity') else x.get_name(), self.entities))
         return f" {self.type}".join(sorted_entity_names)
 
+    def get_node_properties_string(self, node_to_use):
+        if node_to_use is None or not isinstance(node_to_use, Singleton):
+            return ''
+
+        props_to_ignore = ['begin', 'pos', 'end', 'kernel', 'lemma', 'specification', 'number', 'root', 'expl', 'cc',
+                           'conj', 'neg']
+        properties_list = defaultdict(list)
+        for key in dict(node_to_use.properties):
+            if key not in props_to_ignore:
+                properties_key_ = dict(node_to_use.properties)[key]
+                if isinstance(properties_key_, str) and properties_key_ != '':
+                    try:
+                        key = str(int(float(key)))
+                    except ValueError:
+                        key = key
+
+                    properties_list[key].append(properties_key_)
+                else:
+                    if isinstance(properties_key_, Singleton):
+                        properties_list[key].append(self.get_node_string(properties_key_))
+                    else:
+                        for node in properties_key_:
+                            if key == 'SENTENCE':  # It is a node with kernel (most likely)
+                                properties_list[key].append(self.to_string(node))
+                            else:
+                                if key in {'nmod', 'nmod_poss', 'acl_relcl'}:
+                                    properties_list[key].append(self.get_node_string(node))
+                                else:
+                                    properties_list[key].append(self.get_node_string(node))
+
+        return re.sub(r"(nmod|nmod_poss|acl_relcl):\1", r"\1",
+                      f"""[{", ".join(f'({k}:{v[0] if len(v) == 1 else "[" + ", ".join(v) + "]"})' for k, v in properties_list.items())}]""" if len(
+                          properties_list) > 0 else '')
+
+    def get_node_string(self, node=None):
+        if node is None:
+            node = self
+
+        node_string = node.named_entity if node is not None and isinstance(node, Singleton) else 'None'
+
+        # If node_string is empty, it is a kernel so return that
+        if node_string == '':
+            node_string = node.to_string(node) if node_string == "" else node_string
+        else:
+            # Join SetOfSingletons
+            node_string = f"{node.type.name}({', '.join(self.get_node_string(entity) for entity in node.entities)})" if isinstance(
+                node, SetOfSingletons) and node_string == 'None' else node_string
+
+            # Add properties
+            node_string = f"{node_string}{self.get_node_properties_string(node)}"
+        return node_string
 
 
 def deserialize_NodeEntryPoint(data: dict) -> NodeEntryPoint:
@@ -348,7 +399,7 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
             node_props.pop(prop_name)
         return self.update_node_props(node_props)
 
-    def add_root_property(self):
+    def add_property(self, prop_key, prop_value):
         if isinstance(self, SetOfSingletons):
             return SetOfSingletons(
                 id=self.id,
@@ -361,7 +412,7 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
             )
 
         node_props = dict(self.properties)
-        node_props['kernel'] = 'root'
+        node_props[prop_key] = prop_value
         return self.update_node_props(node_props)
 
     def strip_root_properties(self):
@@ -388,63 +439,69 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
         c["properties"] = frozenset(c["properties"].items())
         dacite.from_dict(Singleton, c)
 
+    def get_node_properties_string(self, node_to_use):
+        if node_to_use is None or not isinstance(node_to_use, Singleton):
+            return ''
+
+        props_to_ignore = ['begin', 'pos', 'end', 'kernel', 'lemma', 'specification', 'number', 'root', 'expl', 'cc',
+                           'conj', 'neg']
+        properties_list = defaultdict(list)
+        for key in dict(node_to_use.properties):
+            if key not in props_to_ignore:
+                properties_key_ = dict(node_to_use.properties)[key]
+                if isinstance(properties_key_, str) and properties_key_ != '':
+                    try:
+                        key = str(int(float(key)))
+                    except ValueError:
+                        key = key
+
+                    properties_list[key].append(properties_key_)
+                else:
+                    if isinstance(properties_key_, Singleton):
+                        properties_list[key].append(self.get_node_string(properties_key_))
+                    else:
+                        for node in properties_key_:
+                            if key == 'SENTENCE':  # It is a node with kernel (most likely)
+                                properties_list[key].append(self.to_string(node))
+                            else:
+                                if key in {'nmod', 'nmod_poss', 'acl_relcl'}:
+                                    properties_list[key].append(self.get_node_string(node))
+                                else:
+                                    properties_list[key].append(self.get_node_string(node))
+
+        return re.sub(r"(nmod|nmod_poss|acl_relcl):\1", r"\1",
+                      f"""[{", ".join(f'({k}:{v[0] if len(v) == 1 else "[" + ", ".join(v) + "]"})' for k, v in properties_list.items())}]""" if len(
+                          properties_list) > 0 else '')
+
+    def get_node_string(self, node=None):
+        if node is None:
+            node = self
+
+        node_string = node.named_entity if node is not None and isinstance(node, Singleton) else 'None'
+
+        # If node_string is empty, it is a kernel so return that
+        if node_string == '':
+            node_string = node.to_string(node) if node_string == "" else node_string
+        else:
+            # Join SetOfSingletons
+            node_string = f"{node.type.name}({', '.join(self.get_node_string(entity) for entity in node.entities)})" if isinstance(
+                node, SetOfSingletons) and node_string == 'None' else node_string
+
+            # Add properties
+            node_string = f"{node_string}{self.get_node_properties_string(node)}"
+        return node_string
+
     # Rewrite Singleton(kernel) in form edgeLabel[props](source[props], target[props])[props]
     def to_string(self, node=None):
-        def get_node_properties_string(node_to_use):
-            if node_to_use is None or not isinstance(node_to_use, Singleton):
-                return ''
-
-            props_to_ignore = ['begin', 'pos', 'end', 'kernel', 'lemma', 'specification', 'number', 'root', 'expl', 'cc', 'conj', 'neg']
-            properties_list = defaultdict(list)
-            for key in dict(node_to_use.properties):
-                if key not in props_to_ignore:
-                    properties_key_ = dict(node_to_use.properties)[key]
-                    if isinstance(properties_key_, str) and properties_key_ != '':
-                        try:
-                            key = str(int(float(key)))
-                        except ValueError:
-                            key = key
-
-                        properties_list[key].append(properties_key_)
-                    else:
-                        if isinstance(properties_key_, Singleton):
-                            properties_list[key].append(get_node_string(properties_key_))
-                        else:
-                            for node in properties_key_:
-                                if key == 'SENTENCE':  # It is a node with kernel (most likely)
-                                    properties_list[key].append(self.to_string(node))
-                                else:
-                                    if key in {'nmod', 'nmod_poss', 'acl_relcl'}:
-                                        properties_list[key].append(get_node_string(node))
-                                    else:
-                                        properties_list[key].append(get_node_string(node))
-
-            return re.sub(r"(nmod|nmod_poss|acl_relcl):\1", r"\1", f"""[{", ".join(f'({k}:{v[0] if len(v) == 1 else "[" + ", ".join(v) + "]"})' for k, v in properties_list.items())}]""" if len(properties_list) > 0 else '')
-
-        def get_node_string(node):
-            node_string = node.named_entity if node is not None and isinstance(node, Singleton) else 'None'
-
-            # If node_string is empty, it is a kernel so return that
-            if node_string == '':
-                node_string = node.to_string(node) if node_string == "" else node_string
-            else:
-                # Join SetOfSingletons
-                node_string = f"{node.type.name}({', '.join(get_node_string(entity) for entity in node.entities)})" if isinstance(
-                    node, SetOfSingletons) and node_string == 'None' else node_string
-
-                # Add properties
-                node_string = f"{node_string}{get_node_properties_string(node)}"
-            return node_string
-
         if node is None:
             node = self
 
         if node.kernel:
-            edge_label = get_node_string(node.kernel.edgeLabel) if node.kernel.edgeLabel is not None else 'None'
-            source = get_node_string(node.kernel.source) if node.kernel.source is not None else 'None'
-            target = get_node_string(node.kernel.target) if node.kernel.target is not None else 'None'
+            edge_label = self.get_node_string(node.kernel.edgeLabel) if node.kernel.edgeLabel is not None else 'None'
+            source = self.get_node_string(node.kernel.source) if node.kernel.source is not None else 'None'
+            target = self.get_node_string(node.kernel.target) if node.kernel.target is not None else 'None'
 
-            properties = get_node_properties_string(node)
+            properties = self.get_node_properties_string(node)
 
             return f"{edge_label}({source}, {target}){properties}" if not node.kernel.isNegated else f"NOT({edge_label}({source}, {target}){properties})"
         else:

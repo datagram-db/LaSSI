@@ -4,9 +4,9 @@ from LaSSI.ner.string_functions import has_auxiliary
 from LaSSI.structures.internal_graph.EntityRelationship import Singleton, Grouping, Relationship
 
 
-def create_existential_node():
+def create_existential_node(node_id=-1):
     return Singleton(
-        id=-1,
+        id=node_id,
         named_entity="?" + str(Services.getInstance().getExistentials().increaseAndGetExistential()),
         properties=frozenset(dict().items()),
         min=-1,

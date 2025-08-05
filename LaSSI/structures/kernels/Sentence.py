@@ -266,8 +266,8 @@ def create_sentence(edges, nodes, negations, root_sentence_id, found_preposition
 
         if (
                 # TODO: PATCH kernel_id_to_check is None or returned_kernel_id_to_check is None or  ## GIACOMO: This is a patch. TODO: handle the case
-                returned_kernel_id_to_check is None or
-                top_node_id_positions[kernel_id_to_check] < top_node_id_positions[returned_kernel_id_to_check]
+                kernel_id_to_check is not None and (returned_kernel_id_to_check is None or
+                top_node_id_positions[kernel_id_to_check] < top_node_id_positions[returned_kernel_id_to_check])
         ):
             kernel, properties, kernel_nodes = add_to_properties(
                 prev_loop_settings.previousKernel.kernel,
@@ -780,9 +780,11 @@ def is_kernel_in_props(node, check_jj=True):
         node_props = dict(node.properties)
         return (('kernel' in node_props or 'root' in node_props) and (
                 'JJ' not in node.type and check_jj or not check_jj)) or 'verb' in node.type
-    elif isinstance(node, dict):
+    elif isinstance(node, dict) and hasattr(node, 'properties'):
         node_props = node['properties']
         return 'kernel' in node_props or 'root' in node_props
+    else:
+        return False
 
     # TODO: Do we need to check if the JJ is/not a verb?
     # ('JJ' not in x.type or ('JJ' in x.type and self.is_label_verb(x.named_entity))))

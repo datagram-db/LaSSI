@@ -58,7 +58,7 @@ class LaSSI():
                  should_benchmark=True,
                  legacy_conf: LegacySemanticConfiguration = None,
                  disable_a_priori: bool = False,
-                 run_ex_post: bool = True,
+                 run_ex_post: bool = False,
                  useId:bool = False,
                  ):
         self.useId = useId

@@ -351,7 +351,7 @@ class Parmenides(RDFGraph):
         types = list(map(lambda x: str(x).lower(), types))
         ### TODO: within .ttl and type inference
         if any(map(lambda x: "verb" in x, types)):
-            return "VERB"
+            return "verb"
         elif "gpe" in types:
             return "GPE"
         elif "loc" in types:

@@ -39,38 +39,41 @@ class TestLaSSI(unittest.TestCase):
             split_check_assertion = re.split(" ⇒ ", assertion)
             try:
                 if assertions[split_check_assertion[0].lower()]:
-                    correct_assertion = assertions[split_check_assertion[0]]
-
-                    correct_rep = self.remove_properties(correct_assertion.lower())
-                    check_rep = self.remove_properties(split_check_assertion[1].lower())
-
-                    # Check for groups
-                    correct_groups, correct_rep = self.get_group_content(correct_rep)
-                    check_groups, check_rep = self.get_group_content(check_rep)
-                    # self.assertEqual(collections.Counter(correct_groups), collections.Counter(check_groups),
-                    #                  f"{assertion}")
-                    try:
-                        self.assertEqual(collections.Counter(correct_groups), collections.Counter(check_groups), f"{assertion}")
-                    except AssertionError as e:
-                        print(e)
-
-                    # Check reps are equal without props or groups
-                    # self.assertEqual(correct_rep.lower(), check_rep.lower(), f"{assertion}")
-                    try:
-                        self.assertEqual(correct_rep.lower(), check_rep.lower(), f"{assertion}")
-                    except AssertionError as e:
-                        print(e)
-
-                    # Check properties are equal
-                    args1 = self.get_properties(split_check_assertion[1])
-                    args2 = self.get_properties(correct_assertion)
-                    # self.assertEqual(collections.Counter(args1), collections.Counter(args2), f"{assertion}")
-                    try:
-                        self.assertEqual(collections.Counter(args1), collections.Counter(args2), f"{assertion}")
-                    except AssertionError as e:
-                        print(e)
+                    self.compare_internal_representations(split_check_assertion[1], assertions[split_check_assertion[0]])
             except KeyError as e:
                 raise Exception(f"Cannot find assertion for {assertion}")
+
+    def compare_internal_representations(self, assertion, correct_representation):
+        assertion = self.replace_existential(assertion.strip()).lower()
+        correct_representation = self.replace_existential(correct_representation.strip()).lower()
+
+        correct_rep = self.remove_properties(correct_representation.lower())
+        check_rep = self.remove_properties(assertion.lower())
+        # Check for groups
+        correct_groups, correct_rep = self.get_group_content(correct_rep)
+        check_groups, check_rep = self.get_group_content(check_rep)
+        # self.assertEqual(collections.Counter(correct_groups), collections.Counter(check_groups),
+        #                  f"{assertion}")
+        try:
+            self.assertEqual(collections.Counter(correct_groups), collections.Counter(check_groups), f"{assertion}")
+        except AssertionError as e:
+            print(e)
+        # Check reps are equal without props or groups
+        # self.assertEqual(correct_rep.lower(), check_rep.lower(), f"{assertion}")
+        try:
+            self.assertEqual(correct_rep.lower(), check_rep.lower(), f"{assertion}")
+        except AssertionError as e:
+            print(e)
+        # Check properties are equal
+        args1 = self.get_properties(correct_representation)
+        args2 = self.get_properties(assertion)
+        # self.assertEqual(collections.Counter(args1), collections.Counter(args2), f"{assertion}")
+        try:
+            self.assertEqual(collections.Counter(args1), collections.Counter(args2), f"{assertion}")
+            return True
+        except AssertionError as e:
+            print(e)
+            return False
 
     def get_properties(self, rep, new_args=None):
         # Regex for everything in innermost []

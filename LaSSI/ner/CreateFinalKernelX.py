@@ -17,14 +17,18 @@ from LaSSI.structures.kernels.Sentence import is_kernel_in_props, create_edge_ke
     rewrite_action_ed_node, get_prepositions
 
 
-class CreateFinalKernel:
-    def __init__(self, nodes, gsm_json, edges, negations, node_functions):
+class CreateFinalKernelX:
+    def __init__(self, G, negations, node_functions):
         self.services = Services.getInstance()
         self.existentials = self.services.getExistentials()
         self.negations = negations
-        self.edges = edges
-        self.nodes = nodes
-        self.gsm_json = gsm_json
+        self.edges = [Relationship(
+                source=G.nodes[edge[0]]['data'],
+                target=G.nodes[edge[1]]['data'],
+                edgeLabel=edge[2]['label'],
+                isNegated=edge[2]['isNegated']
+            ) for edge in G.edges(data=True)]
+        self.nodes = {node[0]: node[1]['data'] for node in G.nodes(data=True)}
         self.node_functions = node_functions
 
     def constructSentence(self) -> Singleton:
@@ -60,7 +64,7 @@ class CreateFinalKernel:
                         ((x.source.id, x.target.id) in used_edges and len(found_preposition_labels) > 0)
                     )
                     # Edge target is not equal to current root node in loop and target is not a verb
-                    and not (x.target.id == node_id and x.target.type == 'verb')
+                    and not (x.target.id == node_id and x.target.type.lower() == 'verb')
                 ]
 
                 # If we have an edge from the previous iteration use this as our edges
@@ -132,7 +136,7 @@ class CreateFinalKernel:
                 )
         ):
             # If a Singleton of type verb, make this an edge with no source or target
-            if final_kernel.type == 'verb':
+            if isinstance(final_kernel, Singleton) and final_kernel.type.lower() == 'verb':
                 final_kernel = create_edge_kernel(final_kernel)
                 final_kernel = self.kernel_post_processing(final_kernel, position_pairs)
             else:
@@ -167,10 +171,10 @@ class CreateFinalKernel:
             ):
                 filtered_nodes.add(edge_node.id)
 
-                # Remove SetOfSingleton children from filtered nodes
-                if isinstance(edge_node, SetOfSingletons):
-                    for entity in edge_node.entities:
-                        filtered_nodes = filtered_nodes - {entity.id}
+                # Remove SetOfSingleton children from filtered nodes TODO: SetOfSingleton ID share
+                # if isinstance(edge_node, SetOfSingletons):
+                #     for entity in edge_node.entities:
+                #         filtered_nodes = filtered_nodes - {entity.id}
 
             if edge_node is None or edge_node.id in filtered_top_node_ids:
                 continue
@@ -531,25 +535,32 @@ class CreateFinalKernel:
         properties_to_keep = dict()
         new_kernel = None
         if (
-                isinstance(kernel,
-                           Singleton) and kernel.kernel is not None and kernel.kernel.edgeLabel is not None and (
-        kernel.kernel.edgeLabel.named_entity == "be" if not force else True)
-                and
-                (
-                        ((kernel.kernel.source is not None and kernel.kernel.source.type == 'existential') and (
-                                kernel.kernel.target is not None and kernel.kernel.target.type == 'existential'))
-                        or
-                        ((kernel.kernel.source is None) and (kernel.kernel.target is None))
-                )
+                isinstance(kernel, Singleton) and
+                kernel.kernel is not None and
+                kernel.kernel.edgeLabel is not None and
+                kernel.kernel.edgeLabel.named_entity == "be" if not force else True
         ):
-            node_props = dict(kernel.properties)
-            if node_props is not None and 'SENTENCE' in node_props:
-                for key in node_props:
-                    if key == 'SENTENCE':
-                        new_kernel = node_props['SENTENCE'][0]  # TODO: Safe to use 0th element?
-                        new_kernel = self.check_if_empty_kernel(new_kernel)
-                    else:
-                        properties_to_keep[key] = node_props[key]
+            if (
+                    (
+                        (kernel.kernel.source is not None and kernel.kernel.source.type == 'existential') and
+                        (kernel.kernel.target is not None and kernel.kernel.target.type == 'existential')
+                    )
+                    or
+                    (
+                        (kernel.kernel.source is None) and
+                        (kernel.kernel.target is None)
+                    )
+            ):
+                node_props = dict(kernel.properties)
+                if len(node_props) > 0 and 'SENTENCE' in node_props:
+                    for key in node_props:
+                        if key == 'SENTENCE':
+                            new_kernel = node_props['SENTENCE'][0]  # TODO: Safe to use 0th element?
+                            new_kernel = self.check_if_empty_kernel(new_kernel)
+                        else:
+                            properties_to_keep[key] = node_props[key]
+                # elif len(node_props) == 0:
+                    #     return None
 
         if new_kernel is not None:
             if len(properties_to_keep) > 0:

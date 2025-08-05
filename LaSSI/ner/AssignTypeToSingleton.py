@@ -354,13 +354,17 @@ class AssignTypeToSingleton:
             group_type = Grouping.NONE
         return group_type
 
-    def get_group_enum(self, conj):
-        if 'and' in conj or 'but' in conj:
+    def get_group_enum(self, name):
+        if 'and' in name or 'but' in name:
             group_type = Grouping.AND
-        elif ('nor' in conj) or ('neither' in conj):
+        elif ('nor' in name) or ('neither' in name):
             group_type = Grouping.NEITHER
-        elif 'or' in conj:
+        elif 'or' in name:
             group_type = Grouping.OR
+        elif 'not' in name:
+            group_type = Grouping.NOT
+        elif 'multipleindobj' in name:
+            group_type = Grouping.MULTIINDIRECT
         else:
             group_type = Grouping.NONE
         return group_type
@@ -1035,6 +1039,11 @@ class AssignTypeToSingleton:
                             self.create_edges(edge_label_name, gsm_item, non_verbs, source_node_id, target_node_id, gsm_json)
 
         # print(json.dumps(Graph(self.edges), cls=EnhancedJSONEncoder))
+        # print("\nOG")
+        # for edge in self.edges:
+        #     print(
+        #         f"[({edge.source.id}): {edge.source.get_node_string()}] --({'NOT(' if edge.isNegated else ''}{edge.edgeLabel.named_entity}{')' if edge.isNegated else ''})--> [({edge.target.id}):, {edge.target.get_node_string()}]")
+
         return Graph(self.edges)
 
 
