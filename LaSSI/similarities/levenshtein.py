@@ -19,6 +19,7 @@ def ld(s, t):
     return 1 + min(l1, l2, l3)
 
 
+@lru_cache(maxsize=4096)
 def lev(x, y):
     if len(x) == 0 and len(y) == 0:
         return 1.0

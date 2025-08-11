@@ -1,9 +1,11 @@
+import tempfile
+
 from StanfordNLPExtractor.OldWrapper import OldWrapper
 from nltk import WordNetLemmatizer
 
-import LaSSI.Parmenides.paremenides
 from LaSSI.external_services.Existentials import Existentials
-from LaSSI.external_services.ParmenidesFuzzyMatch import ParmenidesFuzzyMatch
+from LaSSI.external_services.utilities.DatabaseConfiguration import load_db_configuration
+from LaSSI.external_services.utilities.FuzzyStringMatchDatabase import FuzzyStringMatchDatabase
 
 
 class Services:
@@ -31,6 +33,25 @@ class Services:
         return self.parmenides
 
     def getFuzzyParmenides(self):
+        if self.fuzzyParmenides is None:
+            # This exists for doing multiprocessing
+            from LaSSI.Parmenides.Parmenides import ParmenidesSingleton
+            fuzzyDBs = load_db_configuration("connection.yaml")
+
+            (FuzzyStringMatchDatabase
+             .instance()
+             .init(fuzzyDBs.db, fuzzyDBs.uname, fuzzyDBs.pw, fuzzyDBs.host, fuzzyDBs.port))
+
+            ParmenidesSingleton.instance()
+            ## TODO: move parmenides.ttl to the resources
+            ParmenidesSingleton.init("catabolites", fuzzyDBs.uname, fuzzyDBs.pw,
+                                     fuzzyDBs.host, fuzzyDBs.port, False, "parmenides.ttl")
+            self.setParmenides(ParmenidesSingleton.get())
+            with tempfile.NamedTemporaryFile() as parmenides_tab:
+                with open(parmenides_tab.name, 'w') as f:
+                    self.getParmenides().dumpTypedObjectsToTAB(f)
+                FuzzyStringMatchDatabase.instance().create("parmenides", parmenides_tab.name,
+                                                           '(id integer NOT NULL, idx text, t text, type text)')  # Typed
         return self.fuzzyParmenides
 
     def getGeoNames(self):
@@ -83,9 +104,9 @@ class Services:
 
     def __init__(self, logger=None):
         """ Virtually private constructor. """
-        if Services.__instance != None:
+        if Services.__instance is not None:
             raise Exception("This class is a singleton!")
-        elif logger == None:
+        elif logger is None:
             raise Exception("The first initialization should provide a non-None logger!")
         else:
             from LaSSI.external_services.Stanza import StanzaService

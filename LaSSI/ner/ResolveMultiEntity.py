@@ -129,6 +129,7 @@ __version__ = "2.0"
 __maintainer__ = "Oliver R. Fox, Giacomo Bergami"
 __status__ = "Production"
 
+from functools import lru_cache
 from typing import List
 
 from LaSSI.similarities.levenshtein import lev
@@ -137,7 +138,6 @@ from LaSSI.structures.meuDB.meuDB import MeuDBEntry
 
 
 # from gsmtosimilarity.TwoGrams import TwoGramSetSimilarity
-# from gsmtosimilarity.levenshtein import lev
 
 
 def build_loc_result(text, type, start_char, end_char, monad, conf, id, src):
@@ -187,26 +187,29 @@ class ResolveMultiNamedEntity:
         self.fa = fa
         self.result.clear()
         for sentence in nlp(stringa).sentences:
-            # List of lemmatized and non-lemmatized words from sentence
-            ls = [(token.text, token.start_char, token.end_char) for token in sentence.tokens] + [
-                (lemmatize_verb(token.text), token.start_char, token.end_char) for token in sentence.tokens]
-            for i in range(len(ls)):
-                m = None
-                if type is None:
-                    m = s.typedFuzzyMatch(self.threshold, ls[i][0])
-                    for k, v in m.items():
-                        for candidate, candidate_type in v:
-                            # cand = s.get(candidate)
-                            newK = lev(ls[i][0].lower(), candidate.lower())
-                            if newK >= self.threshold:
-                                self.test(ls[i][0], ls[i + 1:], newK, candidate, ls[i][1], ls[i][2], [candidate_type])
-                else:
-                    m = s.fuzzyMatch(self.threshold, ls[i][0])
-                    for k, v in m.items():
-                        for candidate in v:
-                            # cand = s.get(candidate)
-                            newK = lev(ls[i][0].lower(), candidate.lower())
-                            if newK >= self.threshold:
-                                self.test(ls[i][0], ls[i + 1:], newK, candidate, ls[i][1], ls[i][2], type)
+            tokens = [(token.text, token.start_char, token.end_char) for token in sentence.tokens]
+
+            for i, (text, start_char, end_char) in enumerate(tokens):
+                terms_to_check = [text, lemmatize_verb(text)]
+
+                for term in terms_to_check:
+                    term = term.lower()
+
+                    if type is None:
+                        m = s.typedFuzzyMatch(self.threshold, term)
+                        for k, v in m.items():
+                            for candidate, candidate_type in v:
+                                # cand = s.get(candidate)
+                                newK = lev(term, candidate.lower())
+                                if newK >= self.threshold:
+                                    self.test(term, tokens[i + 1:], newK, candidate, start_char, end_char, [candidate_type])
+                    else:
+                        m = s.fuzzyMatch(self.threshold, term)
+                        for k, v in m.items():
+                            for candidate in v:
+                                # cand = s.get(candidate)
+                                newK = lev(term, candidate.lower())
+                                if newK >= self.threshold:
+                                    self.test(term, tokens[i + 1:], newK, candidate, start_char, end_char, type)
 
         return self.result

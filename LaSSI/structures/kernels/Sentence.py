@@ -13,10 +13,10 @@ from collections import defaultdict
 from copy import copy
 from types import SimpleNamespace
 
-from LaSSI.external_services.Services import Services
 from LaSSI.ner.node_functions import create_existential_node, create_props_for_singleton, get_min_position
 from LaSSI.ner.string_functions import lemmatize_verb, check_semi_modal, lemmatize_sentence
 from LaSSI.structures.internal_graph.EntityRelationship import Relationship, Singleton, SetOfSingletons, Grouping
+from LaSSI.external_services.Services import Services
 from LaSSI.tests.benchmark import Benchmark
 
 # @dataclass(order=True, frozen=True, eq=True)

@@ -7,72 +7,64 @@ __maintainer__ = "Giacomo Bergami"
 __email__ = "bergamigiacomo@gmail.com"
 __status__ = "Production"
 
-from LaSSI.external_services.Services import Services
-from LaSSI.structures.meuDB.meuDB import MeuDBEntry, MeuDB
+from concurrent.futures import ProcessPoolExecutor
+from LaSSI.phases.ResolveSingleSentence import process_sentence_worker
+from LaSSI.structures.meuDB.meuDB import MeuDB
 from LaSSI.tests.benchmark import Benchmark
-import time as ti
 
 
 class ResolveBasicTypes:
-    def __init__(self, recall_threshold: float, precision_threshold: float, disable_a_priori: bool):
+    def __init__(self, recall_threshold: float, precision_threshold: float, disable_a_priori: bool, use_multiprocessing: bool):
+        from LaSSI.external_services.Services import Services
         self.disable_a_priori = disable_a_priori
         self.recall_threshold = recall_threshold
         self.precision_threshold = precision_threshold
         self.services = Services.getInstance()
         self.stanza_service = self.services.getStanzaNLP()
         self.sentences_benchmark = Benchmark()
+        self.use_multiprocessing = use_multiprocessing
 
     def resolve_basic_types(self, list_sentences):
-        db = list()
         if self.disable_a_priori:
-            for idx, sentence in enumerate(list_sentences):
-                db.append(MeuDB(sentence, []))
+            return [MeuDB(sentence, []) for sentence in list_sentences]
+
+        all_time_units = self.services.resolveTimeUnits(list_sentences)
+        db = [None] * len(list_sentences)
+
+        tasks_args = []
+        for i, sentence in enumerate(list_sentences):
+            args = (
+                i,
+                sentence,
+                all_time_units[i],
+                self.recall_threshold,
+                self.precision_threshold
+            )
+            tasks_args.append(args)
+
+        if self.use_multiprocessing:
+            with ProcessPoolExecutor(max_workers=8) as executor:
+                results_iterator = executor.map(process_sentence_worker, tasks_args)
+
+                for result in results_iterator:
+                    try:
+                        idx, meu_db_obj, benchmark_data = result
+                        db[idx] = meu_db_obj
+                        # self.sentences_benchmark.add_row(idx, "Generating meuDB", end_time - start_time)
+                        print(benchmark_data)
+                    except Exception as exc:
+                        print(f"A task generated an exception: {exc}")
         else:
-            for idx, (sentence, withTime) in enumerate(zip(list_sentences, self.services.resolveTimeUnits(list_sentences))):
-                start_time = ti.time()
-                entities = []
-                multi_entity_unit = []
-                for x in self.services.getFuzzyParmenides().resolve_u(self.recall_threshold, self.precision_threshold,
-                                                                      sentence):
-                    multi_entity_unit.append(x)
-
-                ## 1) Time Parsing
-                for time in withTime:
-                    time = MeuDBEntry.from_dict_with_src(time, "SUTime")
-                    multi_entity_unit.append(time)
-
-                for x in self.services.getGeoNames().resolve_u(self.recall_threshold, self.precision_threshold, sentence, "GPE"):
-                    multi_entity_unit.append(x)
-
-                for x in self.services.getConcepts().resolve_u(self.recall_threshold, self.precision_threshold, sentence, "ENTITY"):
-                    multi_entity_unit.append(x)
-
-                ## 2) Typed entity parsing
-                results = self.stanza_service(sentence)
-
-                for result_sentence in results.sentences:
-                    for word in result_sentence.words:
-                        if word.pos.lower() == 'verb':
-                            multi_entity_unit.append(MeuDBEntry(word.text, word.pos.lower(), word.start_char, word.end_char, word.lemma, 1.0, word.lemma, "Stanza"))
-
-                for ent in results.ents:
-                    # monad = ""
-                    entity = ent.text
-                    monad = entity.replace(" ", "")
-                    if ent.type == "ORG":  # Remove spaces to create one word 'ORG' entities
-                        entities.append([entity, monad])
-                    from LaSSI.similarities.levenshtein import lev
-                    multi_entity_unit.append(MeuDBEntry(ent.text, ent.type, ent.start_char, ent.end_char, monad, lev(monad.lower(), ent.text.lower()), monad, "Stanza"))
-
-                # Loop through all entities and replace in sentence before passing to NLP server
-                for entity in entities:
-                    sentence = sentence.replace(entity[0], entity[1])
-
-                db.append(MeuDB(sentence, multi_entity_unit))
-                end_time = ti.time()
-                self.sentences_benchmark.add_row(idx, "Generating meuDB", end_time - start_time)
+            for args in tasks_args:
+                try:
+                    result = process_sentence_worker(args)
+                    idx, meu_db_obj, benchmark_data = result
+                    db[idx] = meu_db_obj
+                    print(benchmark_data)
+                except Exception as exc:
+                    print(f"A task generated an exception: {exc}")
         return db
 
 
 def ExplainTextWithNER(self, sentences):
-    return ResolveBasicTypes(self.recall_threshold, self.precision_threshold, self.disable_a_priori).resolve_basic_types(sentences)
+    return ResolveBasicTypes(self.recall_threshold, self.precision_threshold, self.disable_a_priori, self.use_multiprocessing).resolve_basic_types(sentences)

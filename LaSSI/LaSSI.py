@@ -10,6 +10,7 @@ __status__ = "Production"
 import collections
 import io
 import json
+import multiprocessing
 import os.path
 import time
 
@@ -44,6 +45,9 @@ def write_variable_to_file(dir, text):
     except Exception as e:
         print(f"An error occurred: {e}")
 
+def logger_func(x):
+    return print(x)
+
 class LaSSI():
     def __init__(self, dataset_name: str,
                  fuzzyDBs: str | DatabaseConfiguration,
@@ -60,7 +64,14 @@ class LaSSI():
                  disable_a_priori: bool = False,
                  run_ex_post: bool = False,
                  useId:bool = False,
+                 use_multiprocessing=True,
                  ):
+        self.use_multiprocessing = use_multiprocessing
+        if use_multiprocessing:
+            try:
+                multiprocessing.set_start_method('spawn')
+            except RuntimeError:
+                pass
         self.useId = useId
         self.disable_a_priori = disable_a_priori
         if legacy_conf is None:
@@ -88,7 +99,7 @@ class LaSSI():
             self.matrix_file = None
         self.web_dir = web_dir
         if logger is None:
-            logger = lambda x: print(x)
+            logger = logger_func
         self.logger = logger
 
         self.logger("init postgres")
@@ -189,8 +200,7 @@ class LaSSI():
         with tempfile.NamedTemporaryFile() as parmenides_tab:
             with open(parmenides_tab.name, 'w') as f:
                 self.initServices.getParmenides().dumpTypedObjectsToTAB(f)
-            FuzzyStringMatchDatabase.instance().create_typed_table("parmenides", parmenides_tab.name)
-
+            FuzzyStringMatchDatabase.instance().create("parmenides", parmenides_tab.name, '(id integer NOT NULL, idx text, t text, type text)')  # Typed
 
     def create_catabolites_dir(self, dataset_name):
         from pathlib import Path

@@ -7,10 +7,11 @@ __maintainer__ = "Giacomo Bergami"
 __email__ = "bergamigiacomo@gmail.com"
 __status__ = "Production"
 
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
+from contextlib import contextmanager
 
 import psycopg2
-from psycopg2 import Error
+from psycopg2 import Error, sql
 
 from LaSSI.files.ReadFileContent import ReadFileContent
 
@@ -18,106 +19,67 @@ from LaSSI.files.ReadFileContent import ReadFileContent
 class FuzzyStringMatchDatabase:
     _instance = None
 
-    def create(self, tablename, file):
+    def create(self, tablename, file, columns='(id integer NOT NULL, idx text, t text)'):
         exists = False
         with self.connection.cursor() as cursor:
-            cursor.execute("select * from information_schema.tables")
-            records = cursor.fetchall()
-            S = set(map(lambda x: x[2], records))
-            exists = tablename in S
-            cursor.close()
+            cursor.execute("SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = %s)", (tablename,))
+            exists = cursor.fetchone()[0]
         if not exists:
-            print("Creating table " + tablename)
-            with self.connection.cursor() as cursor2:
-                cursor2 = self.connection.cursor()
-                cursor2.execute("DROP TABLE IF EXISTS " + tablename)
-                self.connection.commit()
-                cursor2.execute("CREATE TABLE " + tablename + " (id integer NOT NULL, idx text, t text)")
-                # self.connection.commit()
-                cursor2.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
-                # self.connection.commit()
-                from LaSSI.files.ReadFileContent import ReadFileContent
+            print(f"Creating table {tablename}")
+            with self.connection.cursor() as cursor:
+                cursor.execute(f"DROP TABLE IF EXISTS {tablename}")
+                cursor.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
+                cursor.execute(f"CREATE TABLE {tablename} {columns}")
+
+                print(f"Table '{tablename}' is empty. Loading data from '{file}'")
                 with ReadFileContent(file) as f:
-                    # Notice that we don't need the csv module.
                     next(f)  # Skip the header row.
-                    cursor2.copy_from(f, tablename, sep='\t')
-                cursor2.execute("CREATE INDEX " + tablename + "_idx ON " + tablename + " USING GIST (t gist_trgm_ops);")
-                self.connection.commit()
-                cursor2.close()
+                    cursor.copy_from(f, tablename, sep='\t')
+
+                print(f"Creating index on table '{tablename}' if it doesn't exist")
+                cursor.execute(
+                    f"CREATE INDEX IF NOT EXISTS {tablename}_idx ON {tablename} USING GIST (t gist_trgm_ops);")
+            self.connection.commit()
+            print(f"Table {tablename} created!")
         else:
             print(f"Table {tablename} already loaded!")
 
-    def create_typed_table(self, tablename, file):
-        exists = False
-        with self.connection.cursor() as cursor:
-            cursor.execute("select * from information_schema.tables")
-            records = cursor.fetchall()
-            S = set(map(lambda x: x[2], records))
-            exists = tablename in S
-            cursor.close()
-        if not exists:
-            print("Creating table " + tablename)
-            with self.connection.cursor() as cursor2:
-                cursor2 = self.connection.cursor()
-                cursor2.execute("DROP TABLE IF EXISTS " + tablename)
-                self.connection.commit()
-                cursor2.execute("CREATE TABLE " + tablename + " (id integer NOT NULL, idx text, t text, type text)")
-                # self.connection.commit()
-                cursor2.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
-                # self.connection.commit()
-                from LaSSI.files.ReadFileContent import ReadFileContent
-                with ReadFileContent(file) as f:
-                    # Notice that we don't need the csv module.
-                    next(f)  # Skip the header row.
-                    cursor2.copy_from(f, tablename, sep='\t')
-                cursor2.execute("CREATE INDEX " + tablename + "_idx ON " + tablename + " USING GIST (t gist_trgm_ops);")
-                self.connection.commit()
-                cursor2.close()
-        else:
-            print(f"Table {tablename} already loaded!")
-
-    def init(self, database_name, user="giacomo",
-             password="omocaig",
-             host="localhost",
-             port="5432"):
-        self.connection = psycopg2.connect(user=user,
-                                           password=password,
-                                           host=host,
-                                           port=port,
-                                           database=database_name)
+    def init(self, database_name, user="giacomo", password="omocaig", host="localhost", port="5432"):
+        self.db_params = {
+            'database': database_name,
+            'user': user,
+            'password': password,
+            'host': host,
+            'port': port
+        }
+        self.connection = psycopg2.connect(**self.db_params)
 
     def similarity(self, table, query, score=1.0):
         query = query.replace("'", "''")
-        poll = OrderedDict()
+        poll = defaultdict(set)
         with self.connection.cursor() as cursor:
-            cursor.execute(f"""SELECT idx, similarity(t, '{query}') AS sml
+            sql_query = f"""SELECT idx, similarity(t, '{query}') AS sml
                                FROM {table}
                                WHERE t % '{query}' AND similarity(t, '{query}')>={score}
-                               ORDER BY sml DESC, t""")
-            records = cursor.fetchall()
-            for row in records:
-                score = float(row[1])
-                if score not in poll:
-                    poll[score] = set()
-                poll[score].add(row[0])
-            cursor.close()
+                               ORDER BY sml DESC, t"""
+            cursor.execute(sql_query)
+
+            for monad, score in cursor:
+                poll[score].add(monad)
         return poll
 
     def typed_similarity(self, table, query, score=1.0):
         query = query.replace("'", "''")
-        poll = OrderedDict()
+        poll = defaultdict(set)
         with self.connection.cursor() as cursor:
-            cursor.execute(f"""SELECT idx, similarity(t, '{query}') AS sml, type
+            sql_query = f"""SELECT idx, similarity(t, '{query}') AS sml, type
                                FROM {table}
                                WHERE t % '{query}' AND similarity(t, '{query}')>={score}
-                               ORDER BY sml DESC, t""")
-            records = cursor.fetchall()
-            for row in records:
-                score = float(row[1])
-                if score not in poll:
-                    poll[score] = set()
-                poll[score].add((row[0], row[2]))
-            cursor.close()
+                               ORDER BY sml DESC, t"""
+            cursor.execute(sql_query)
+
+            for monad, score, r_type in cursor:
+                poll[score].add((monad, r_type))
         return poll
 
     def morphosyntax(self, table, word, ending):
@@ -136,6 +98,16 @@ class FuzzyStringMatchDatabase:
                     poll[score].add(tuple([row[0], row[1]]))
             cursor.close()
         return poll
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        if 'connection' in state:
+            del state['connection']
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.connection = psycopg2.connect(**self.db_params)
 
     @classmethod
     def instance(cls):

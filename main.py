@@ -1,11 +1,37 @@
+import multiprocessing
+import os
 import sys
+import yaml
 
 from LaSSI.Configuration import SentenceRepresentation
 from LaSSI.LaSSI import LaSSI
+from datasets import load_dataset
+
+
+def get_dataset(filename="test_sentences/commonsense/dataset.yaml", number=5):
+    if not os.path.exists(filename):
+        try:
+            questions = load_dataset("tau/commonsense_qa")['train']['question'][:number]
+            with open(filename, 'w') as f:
+                yaml.dump(questions, f, default_flow_style=False, width=float('inf'))
+
+        except Exception as e:
+            print(e)
+            return None
+
+    return filename
+
 
 if __name__ == '__main__':
-    dataset_name = "test_sentences/benchmarking/200.yaml"
+    commonsense_qa = False
+
+    if commonsense_qa:
+        dataset_name = get_dataset()
+    else:
+        dataset_name = "test_sentences/benchmarking/5.yaml"
+
     fuzzyDBs = "connection.yaml"
+
     if len(sys.argv) > 1:
         dataset_name = sys.argv[1]
     if len(sys.argv) > 2:
