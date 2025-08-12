@@ -30,10 +30,7 @@ class Services:
         self.fuzzyParmenides = ParmenidesFuzzyMatch(self.postgres, self.stanza.nlp_token, self.parmenides)
 
     def getParmenides(self):
-        return self.parmenides
-
-    def getFuzzyParmenides(self):
-        if self.fuzzyParmenides is None:
+        if self.parmenides is None:
             # This exists for doing multiprocessing
             from LaSSI.Parmenides.Parmenides import ParmenidesSingleton
             fuzzyDBs = load_db_configuration("connection.yaml")
@@ -47,6 +44,19 @@ class Services:
             ParmenidesSingleton.init("catabolites", fuzzyDBs.uname, fuzzyDBs.pw,
                                      fuzzyDBs.host, fuzzyDBs.port, False, "parmenides.ttl")
             self.setParmenides(ParmenidesSingleton.get())
+            return ParmenidesSingleton.get()
+        return self.parmenides
+
+    def getFuzzyParmenides(self):
+        if self.fuzzyParmenides is None:
+            # This exists for doing multiprocessing
+            from LaSSI.Parmenides.Parmenides import ParmenidesSingleton
+            fuzzyDBs = load_db_configuration("connection.yaml")
+
+            (FuzzyStringMatchDatabase
+             .instance()
+             .init(fuzzyDBs.db, fuzzyDBs.uname, fuzzyDBs.pw, fuzzyDBs.host, fuzzyDBs.port))
+
             with tempfile.NamedTemporaryFile() as parmenides_tab:
                 with open(parmenides_tab.name, 'w') as f:
                     self.getParmenides().dumpTypedObjectsToTAB(f)
@@ -116,6 +126,7 @@ class Services:
             from StanfordNLPExtractor.OldWrapper import OldWrapper
             from LaSSI.external_services.ParmenidesFuzzyMatch import ParmenidesFuzzyMatch
             self.logger = logger
+
             self.logger("init parmenides")
             self.parmenides = None
             self.logger("retrieving postgres")

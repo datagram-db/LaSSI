@@ -129,25 +129,109 @@ __version__ = "2.0"
 __maintainer__ = "Oliver R. Fox, Giacomo Bergami"
 __status__ = "Production"
 
-from functools import lru_cache
-from typing import List
+import itertools
+import multiprocessing
+from concurrent.futures import ProcessPoolExecutor
+from typing import Iterable
 
+from LaSSI.external_services.Services import Services
+from LaSSI.external_services.utilities.FuzzyStringMatchDatabase import DBFuzzyStringMatching, FuzzyStringMatchDatabase
+from LaSSI.ner.string_functions import lemmatize_verb
 from LaSSI.similarities.levenshtein import lev
-from LaSSI.structures.kernels.Sentence import lemmatize_verb
 from LaSSI.structures.meuDB.meuDB import MeuDBEntry
 
+def logger_func(x):
+    return
 
-# from gsmtosimilarity.TwoGrams import TwoGramSetSimilarity
+
+def _build_loc_result_worker(text, type, start_char, end_char, monad, conf, id_val, src):
+    if isinstance(id_val, str):
+        return [MeuDBEntry(text, type, start_char, end_char, monad, conf, id_val, src)]
+    if isinstance(id_val, Iterable):
+        return [MeuDBEntry(text, type, start_char, end_char, monad, conf, x, src) for x in id_val]
+    return [MeuDBEntry(text, type, start_char, end_char, monad, conf, str(id_val), src)]
 
 
-def build_loc_result(text, type, start_char, end_char, monad, conf, id, src):
-    if isinstance(id, str):
-        return [MeuDBEntry(text, type, start_char, end_char, monad, conf, id, src)]
-    from collections.abc import Iterable
-    if isinstance(id, Iterable):
-        return map(lambda x: MeuDBEntry(text, type, start_char, end_char, monad, conf, x, src), id)
+def test(current, rest, k, v, start, end, type_val, forinsert, trustworthiness_source, src, parmo):
+    results = []
+
+    # No more tokens to check in the sequence
+    if not rest:
+        if k >= forinsert:
+            if isinstance(type_val, list) and parmo:
+                type_val = parmo.most_specific_type(type_val)
+            results.extend(
+                _build_loc_result_worker(current, type_val, start, end, v, k * trustworthiness_source, v, src)
+            )
+        return results
+
+    # Recursive step
+    next_chunk = current + " " + rest[0][0]
+    val = lev(next_chunk.lower(), v.lower())
+
+    if val < k:
+        # Similarity dropped, so chain ends, current match might still be valid
+        if k >= forinsert:
+            if isinstance(type_val, list) and parmo:
+                type_val = parmo.most_specific_type(type_val)
+            results.extend(
+                _build_loc_result_worker(current, type_val, start, end, v, k * trustworthiness_source, v, src)
+            )
     else:
-        return [MeuDBEntry(text, type, start_char, end_char, monad, conf, str(id), src)]
+        # Similarity is good, continue the recursive check with the next token
+        results.extend(
+            test(next_chunk, rest[1:], val, v, start, rest[0][2], type_val, forinsert,
+                 trustworthiness_source, src, parmo)
+        )
+    return results
+
+services = None
+
+def process_sentence(args):
+    tokens_data, s, threshold, forinsert, src, parmo, trustworthiness_source, type_info = args
+
+    if s is None and parmo is None:
+        global services
+        if services is None:
+            services = Services(logger=logger_func)
+
+        s = DBFuzzyStringMatching(services.postgres, "parmenides")
+        parmo = services.getParmenides()
+
+    sentence_results = []
+
+    ls = [(text, start, end) for text, start, end in tokens_data] + \
+         [(lemmatize_verb(text), start, end) for text, start, end in tokens_data]
+
+    for i in range(len(ls)):
+        text, start_char, end_char = ls[i]
+        term = text.lower()
+
+        if type_info is None:
+            m = s.typedFuzzyMatch(threshold, term)
+            for k, v_list in m.items():
+                for candidate, candidate_type in v_list:
+                    newK = lev(term, candidate.lower())
+                    if newK >= threshold:
+                        sentence_results.extend(
+                            test(
+                                text, ls[i + 1:], newK, candidate, start_char, end_char,
+                                [candidate_type], forinsert, trustworthiness_source, src, parmo
+                            )
+                        )
+        else:
+            m = s.fuzzyMatch(threshold, term)
+            for k, v_list in m.items():
+                for candidate in v_list:
+                    newK = lev(term, candidate.lower())
+                    if newK >= threshold:
+                        sentence_results.extend(
+                            test(
+                                text, ls[i + 1:], newK, candidate, start_char, end_char,
+                                type_info, forinsert, trustworthiness_source, src, parmo
+                            )
+                        )
+    return sentence_results
 
 
 class ResolveMultiNamedEntity:
@@ -157,59 +241,50 @@ class ResolveMultiNamedEntity:
         self.parmo = parmo
         self.threshold = threshold
         self.forinsert = forinsert
-        self.result = []
+        self.src = src
         self.s = None
         self.fa = None
-        self.src = src
-
-    def test(self, current, rest, k, v, start, end, type: str | List[str]):
-        if len(rest) == 0:
-            if k >= self.forinsert:
-                if isinstance(type, list):
-                    type = self.parmo.most_specific_type(type)
-                for j in build_loc_result(current, type, start, end, v, k * self.trustworthiness_source, v, self.src):
-                    self.result.append(j)
-        else:
-            next = current + " " + rest[0][0]
-            val = lev(next.lower(), v.lower())
-            if val < k:
-                if k >= self.forinsert:
-                    if isinstance(type, list):
-                        type = self.parmo.most_specific_type(type)
-                    for j in build_loc_result(current, type, start, end, v, k * self.trustworthiness_source, v,
-                                              self.src):
-                        self.result.append(j)
-            else:
-                self.test(next, rest[1:], val, v, start, rest[0][2], type)
 
     def start(self, stringa, s, fa, nlp, type):
         self.s = s
         self.fa = fa
-        self.result.clear()
-        for sentence in nlp(stringa).sentences:
-            tokens = [(token.text, token.start_char, token.end_char) for token in sentence.tokens]
 
-            for i, (text, start_char, end_char) in enumerate(tokens):
-                terms_to_check = [text, lemmatize_verb(text)]
+        sentences_data = [
+            [(token.text, token.start_char, token.end_char) for token in sent.tokens]
+            for sent in nlp(stringa).sentences
+        ]
 
-                for term in terms_to_check:
-                    term = term.lower()
+        all_results = []
 
-                    if type is None:
-                        m = s.typedFuzzyMatch(self.threshold, term)
-                        for k, v in m.items():
-                            for candidate, candidate_type in v:
-                                # cand = s.get(candidate)
-                                newK = lev(term, candidate.lower())
-                                if newK >= self.threshold:
-                                    self.test(term, tokens[i + 1:], newK, candidate, start_char, end_char, [candidate_type])
-                    else:
-                        m = s.fuzzyMatch(self.threshold, term)
-                        for k, v in m.items():
-                            for candidate in v:
-                                # cand = s.get(candidate)
-                                newK = lev(term, candidate.lower())
-                                if newK >= self.threshold:
-                                    self.test(term, tokens[i + 1:], newK, candidate, start_char, end_char, type)
+        if multiprocessing.get_start_method() == "spawn" and False:  # Leaving for now as appears it might be worse than just doing it in series.
+            task_args = zip(
+                sentences_data,
+                itertools.repeat(None),
+                itertools.repeat(self.threshold),
+                itertools.repeat(self.forinsert),
+                itertools.repeat(self.src),
+                itertools.repeat(None),
+                itertools.repeat(self.trustworthiness_source),
+                itertools.repeat(type)
+            )
 
-        return self.result
+            with ProcessPoolExecutor(max_workers=8) as executor:
+                results_from_processes = executor.map(process_sentence, task_args)
+                all_results = list(itertools.chain.from_iterable(results_from_processes))
+        else:
+            for sentence_tokens in sentences_data:
+                args = (
+                    sentence_tokens,
+                    self.s,
+                    self.threshold,
+                    self.forinsert,
+                    self.src,
+                    self.parmo,
+                    self.trustworthiness_source,
+                    type
+                )
+
+                results_for_sentence = process_sentence(args)
+                all_results.extend(results_for_sentence)
+
+        return all_results

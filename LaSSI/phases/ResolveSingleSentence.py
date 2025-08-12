@@ -8,7 +8,7 @@ services = None
 stanza_service = None
 
 def logger_func(x):
-    return print(x)
+    return
 
 def process_sentence_worker(args):
     from LaSSI.external_services.Services import Services
