@@ -14,7 +14,7 @@ import networkx as nx
 
 from LaSSI.external_services.Services import Services
 from LaSSI.ner.MergeSetOfSingletons import merge_properties, GraphNER_withProperties
-from LaSSI.ner.node_functions import NodeFunctions, create_existential_node
+from LaSSI.ner.node_functions_X import NodeFunctions
 from LaSSI.ner.string_functions import does_string_have_negations
 from LaSSI.structures.internal_graph.EntityRelationship import Singleton, Grouping, SetOfSingletons
 from LaSSI.structures.kernels.Sentence import is_kernel_in_props, case_in_props
@@ -29,7 +29,7 @@ class CreateInternalGraph:
         self.existentials = self.services.getExistentials()
         self.is_simplistic_rewriting = is_simplistic_rewriting
         self.meu_db_row = meu_db_row
-        self.shouldDrawGraphs = True
+        self.shouldDrawGraphs = False
 
     def runGraphCreation(self, gsm_json, parmenides):
         self.max_id = max(map(lambda x: int(x["id"]), gsm_json)) + 1
@@ -100,12 +100,7 @@ class CreateInternalGraph:
                     ), isNegated=has_negations)
 
         # Get the nodes in (reverse) lexicographical topological order and create new graph in that order
-        sorted_nodes = list(reversed(list(nx.lexicographical_topological_sort(G, key=lambda x: -x))))
-        sorted_G = nx.MultiDiGraph()
-        sorted_G.add_nodes_from((n, G.nodes[n]) for n in sorted_nodes)
-        sorted_G.add_edges_from(G.edges(data=True, keys=True))
-
-        G = sorted_G
+        G = self.node_functions.sort_G(G)
 
         if self.shouldDrawGraphs:
             self.drawNetworkXGraph(G)
@@ -315,7 +310,7 @@ class CreateInternalGraph:
                     nx.set_node_attributes(G, {edge[0]: source['data'].update_node_props(new_properties)}, 'data')
                 if edge[1] not in nodes_to_remove:
                     nodes_to_remove.append(edge[1])
-            elif edge_label in {'mark', 'punct', 'amod', 'advmod', 'case'}: # and ('IN' in target['data'].type or 'TO' in target['data'].type):
+            elif edge_label in {'mark', 'punct', 'amod', 'advmod', 'case', 'adv'}: # and ('IN' in target['data'].type or 'TO' in target['data'].type):
                 if isinstance(target['data'], Singleton):
                     type_key = self.node_functions.get_node_type(target['data']) if edge_label != 'case' else 'case'
                 else:
@@ -323,12 +318,16 @@ class CreateInternalGraph:
                         map(lambda x: x.type, target['data'].entities))
 
                 if type_key != 'existential':
+                    diff_props = [(k, dict(target['data'].properties).get(k) or dict(source['data'].properties).get(k)) for k in dict(target['data'].properties).keys() ^ dict(source['data'].properties).keys()]
+                    for k, v in diff_props:
+                        nx.set_node_attributes(G, {
+                            edge[0]: source['data'].add_property(k, v)}, 'data')
                     nx.set_node_attributes(G, {edge[0]: source['data'].add_property(edge_label, target['data'].named_entity)}, 'data')
                     if edge[1] not in nodes_to_remove:
                         edges_to_remove.append(edge)
             elif edge_label in {'cop'} and target['data'].type.lower() == 'verb':
                 G.add_edge(edge[1], edge[0], label=target['data'], isNegated=edge[2]['isNegated'])
-                nx.set_node_attributes(G, {edge[1]: create_existential_node(edge[1]).add_property('kernel', 'root')},
+                nx.set_node_attributes(G, {edge[1]: self.node_functions.create_existential_node(G, edge[1]).add_property('kernel', 'root')},
                                        'data')
                 edges_to_remove.append(edge)
 
@@ -411,8 +410,10 @@ class CreateInternalGraph:
                 node_type = node['type']
 
                 # Append recursively through all node 'contractions'
-                # TODO: NOTE: Currently excluding 'Grouping' children as likely they are accounted for by the 'orig' nodes
-                grouped_nodes = (lambda f: f(f, node))(lambda f, node: ([node['data']] if 'data' in node and hasattr(node['data'], 'type') and not isinstance(node['data'].type, Grouping) else []) + [item for sub_node in node.get('contraction', {}).values() for item in f(f, sub_node)])
+                # TODO: NOTE: Currently excluding children with 'conj' as a property as likely they are accounted for by the 'orig' nodes
+                # grouped_nodes = (lambda f: f(f, node))(lambda f, node: ([node['data']] if 'data' in node and hasattr(node['data'], 'type') and not isinstance(node['data'].type, Grouping) else []) + [item for sub_node in node.get('contraction', {}).values() for item in f(f, sub_node)])
+
+                grouped_nodes = (lambda f: f(f, node))(lambda f, node: ([node['data']] if 'data' in node and hasattr(node['data'], 'type') and not (isinstance(node['data'], Singleton) and 'conj' in dict(node['data'].properties)) else []) + [item for sub_node in node.get('contraction', {}).values() for item in f(f, sub_node)])
 
                 # Absorb all properties and merge
                 for n in grouped_nodes[1:]:
@@ -461,7 +462,10 @@ class CreateInternalGraph:
                 else:
                     new_node = grouped_nodes[0]
 
-                nx.set_node_attributes(G, {node['data'].id: new_node}, 'data')
+                if new_node.id not in list(G.nodes):
+                    G.add_node(new_node.id, data=new_node)
+                else:
+                    nx.set_node_attributes(G, {node['data'].id: new_node}, 'data')
                 self.keepDataKey(G, node['data'].id)
 
                 # Re-check node type for new Singleton (meaning might have changed, i.e. compound_prt merge etc.)
@@ -469,14 +473,14 @@ class CreateInternalGraph:
                     nx.set_node_attributes(G, {node['data'].id: self.nodeTypeResolution(new_node, self.associateNodeToBestMeuMatch(new_node), G)}, 'data')
 
                 # Check if this new Singleton has a BUT parent node
-                for parent_id in [n for n in [edge[0] for edge in G.in_edges(node['data'].id)] if G.nodes[n]['data'].named_entity == 'but' and n not in nodes_to_remove]:
+                for parent_id in [n for n in [edge[0] for edge in G.in_edges(node['data'].id)] if (isinstance(G.nodes[n]['data'], Singleton) and G.nodes[n]['data'].named_entity == 'but') or (isinstance(G.nodes[n]['data'], SetOfSingletons) and G.nodes[n]['data'].entities[0].named_entity == 'but') and n not in nodes_to_remove]:
                     nodes_to_remove.append(node['data'].id)
 
                     # If BUT node has a negation, negate the newly created group
                     negation_nodes = [
                         e for e in G.out_edges(
                             [n for n in [edge[0] for edge in G.in_edges(node['data'].id)]
-                             if G.nodes[n]['data'].named_entity == 'but'][0], data=True
+                             if (isinstance(G.nodes[n]['data'], Singleton) and G.nodes[n]['data'].named_entity == 'but') or (isinstance(G.nodes[n]['data'], SetOfSingletons) and G.nodes[n]['data'].entities[0].named_entity == 'but')][0], data=True
                         ) if e[2]['label'].named_entity == 'neg'
                     ]
 
@@ -502,8 +506,25 @@ class CreateInternalGraph:
                         root=new_node.root
                     )}, 'data')
 
-        # Check if newly grouped node has a negation
-        for e in [n for n in [edge for edge in G.edges(data=True)] if G.nodes[n[1]]['data'].type == 'NEG' and n not in nodes_to_remove]:
+                # Check if newly grouped node has a negation, to ensure it's properly negated before perhaps being grouped further
+                self.check_for_negations(G, nodes_to_remove)
+
+        # Final check for negations incase there are nodes that weren't grouped that need to be negated
+        self.check_for_negations(G, nodes_to_remove)
+
+        G.remove_nodes_from(nodes_to_remove)
+
+        # Remove isolated nodes, as long as it is not a 'root' node, and there is more than one node in the graph
+        G.remove_nodes_from([node for node in nx.isolates(G) if (isinstance(G.nodes[node]['data'], Singleton) and 'kernel' not in dict(G.nodes[node]['data'].properties))]) if len(G.nodes()) > 1 else None
+
+        if self.shouldDrawGraphs:
+            self.drawNetworkXGraph(G)
+
+        return G
+
+    def check_for_negations(self, G, nodes_to_remove):
+        for e in [n for n in [edge for edge in G.edges(data=True)] if
+                  G.nodes[n[1]]['data'].type == 'NEG' and n not in nodes_to_remove]:
             node = G.nodes[e[0]]['data']
 
             new_node = SetOfSingletons(
@@ -531,16 +552,6 @@ class CreateInternalGraph:
             #     )
 
             nx.set_node_attributes(G, {new_node.id: new_node}, 'data')
-
-        G.remove_nodes_from(nodes_to_remove)
-
-        # Remove isolated nodes, as long as it is not a 'root' node, and there is more than one node in the graph
-        G.remove_nodes_from([node for node in nx.isolates(G) if (isinstance(G.nodes[node]['data'], Singleton) and 'kernel' not in dict(G.nodes[node]['data'].properties))]) if len(G.nodes()) > 1 else None
-
-        if self.shouldDrawGraphs:
-            self.drawNetworkXGraph(G)
-
-        return G
 
     def get_group_enum(self, name):
         if 'and' in name or 'but' in name or 'appos' in name:  # TODO: 'appos' assumption?
@@ -625,5 +636,6 @@ class CreateInternalGraph:
 
         nx.draw_networkx_edge_labels(G, pos, edge_labels=final_edge_labels, font_color='red')
 
-        plt.title(f"\"{self.meu_db_row.first_sentence}\"")
+        if hasattr(self, 'meu_db_row'):
+            plt.title(f"\"{self.meu_db_row.first_sentence}\"")
         plt.show()
