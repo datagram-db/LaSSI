@@ -19,18 +19,22 @@ def union(parent, node1, node2):
 def DSU(adjacency_db):
 
     parent = {node: node for node in adjacency_db.keys()}  # each node is its own parent
-
+    print("union")
     for node in adjacency_db.keys():
+        print(node)
         for neighbor in adjacency_db[node]:
             union(parent, node, neighbor)
 
     clusters = {}  # root -> set of connected nodes
+    print("clusters")
     for node in adjacency_db.keys():
+        print(node)
         root = find(parent, node)
         if root not in clusters:
             clusters[root] = set()
         clusters[root].add(node)   # the same root node can be added several times so Set type is useful
 
+    print("clusters list")
     for root, cluster in clusters.items():
         cluster_list = list(cluster)
 

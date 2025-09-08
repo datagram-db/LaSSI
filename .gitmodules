@@ -1,0 +1,3 @@
+[submodule "submodules/wiktextract"]
+	path = submodules/wiktextract
+	url = https://github.com/tatuylonen/wiktextract.git

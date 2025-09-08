@@ -24,15 +24,52 @@ class CompactRelation:
         except:
             d["data"] = json.loads(d["data"].replace('\\\\"', '\\"'))
 
-        self.rel = d["data"]["rel"].replace("/r/", "").replace("dbpedia/", "")
-        self.lang = d["data"]["start"].replace("_", " ").split('/')[2]
-        self.surfaceStart = d["data"]["surfaceStart"]
-        self.surfaceEnd = d["data"]["end"].split("/")[-1]
+        if "rel" in d["data"]:
+            self.rel = d["data"]["rel"]
+        else:
+            self.rel = d["relation_id"]
+        self.rel = self.rel.replace("/r/", "").replace("dbpedia/", "")
 
-        if self.surfaceStart is None:
+        if "start" in d["data"]:
+            self.lang = d["data"]["start"]
+        else:
+            self.lang = d["start_id"]
+        self.lang = self.lang.replace("_", " ").split('/')[2]
+
+        noSplit = True
+        if "surfaceStart" in d["data"]:
+            self.surfaceStart = d["data"]["surfaceStart"]
+        elif "sources" in d["data"] and "surfaceStart" in d["data"]["sources"][0]:
+            # assert len(d["data"]["sources"])==1
+            self.surfaceStart = d["data"]["sources"][0]["surfaceStart"]
+        else:
+            noSplit = False
+            self.surfaceStart = d["start_id"]
+        if not noSplit:
+            self.surfaceStart = self.surfaceStart.split("/")[3].replace("_", " ")
+
+        noSplit = True
+        if "end" in d["data"]:
+            self.surfaceEnd = d["data"]["end"]#.split("/")[-1]
+        elif "sources" in d["data"] and "surfaceEnd" in d["data"]["sources"][0]:
+            # assert len(d["data"]["sources"])==1
+            self.surfaceStart = d["data"]["sources"][0]["surfaceEnd"]
+        else:
+            noSplit = False
+            self.surfaceEnd = d["end_id"]
+        if self.rel == "ExternalURL":
+            noSplit = True
+        elif not noSplit and not self.surfaceEnd.startswith("/c/"):
+            noSplit = True
+        if not noSplit:
+            self.surfaceEnd = self.surfaceEnd.split("/")[3].replace("_", " ")
+
+        if self.surfaceStart is None and "start" in d["data"]:
             self.surfaceStart = d["data"]["start"].replace("_", " ").split('/')[3]
         if self.surfaceEnd is None:
             raise Exception("just wanna show u that some can be none")
+
+
 
 
 class Relation:
@@ -129,14 +166,14 @@ def declunk_edge_file(files, headers=None, lang=None):
 
                 maxVertId = max(maxVertId, int(r.start_id))
 
-def numberbatch_parsing(file):
-    import pandas
-    f = pandas.read_hdf(file, 'mat', encoding='utf-8')
-    for x in f.index:
-        concept = x.split("/")
-        if concept[2] == "en":
-            key = concept[3].replace("_", " ")
-            yield [key]
+# def numberbatch_parsing(file):
+#     import pandas
+#     f = pandas.read_hdf(file, 'mat', encoding='utf-8')
+#     for x in f.index:
+#         concept = x.split("/")
+#         if concept[2] == "en":
+#             key = concept[3].replace("_", " ")
+#             yield [key]
 
 
 def get_triplets(file, lang=None):
