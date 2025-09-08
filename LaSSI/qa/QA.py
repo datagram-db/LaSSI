@@ -1,6 +1,6 @@
-__author__ = "Giacomo Bergami"
+__author__ = "Franco O. Saez Vander Linder"
 __copyright__ = "Copyright 2024, Giacomo Bergami"
-__credits__ = ["Giacomo Bergami"]
+__credits__ = ["Franco O. Saez Vander Linder", "Giacomo Bergami", "Oliver Robert Fox"]
 __license__ = "GPL"
 __version__ = "2.0"
 __maintainer__ = "Giacomo Bergami"
