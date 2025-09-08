@@ -1,0 +1,97 @@
+# 2. If x has a property y which is an adjective, then x exists with such a property
+INVENT
+  from ( "have" ( "@x" none none , "@y" "JJ" none ) 1.0 {} )
+  as ( "be" ( "@x" none none  ( "@y" "JJ" none ) ) 1.0 {  } )
+  over isa "@y" "Adjective"
+  with-properties;
+
+# 3. If x has a property y and y is equivalent to z, then x has also z
+UPDATE ( "have" ( "@x" none none , "@y" "JJ" none ) 1.0 {} )
+   over "@y" "eqTo" "^z"
+   replace "y" -> "z";
+
+# 3. If x exists with y and y is equivalent to z, then x exists with z
+UPDATE ( "be" ( "@x" none none  ( "@y" "JJ" none ) ) 1.0 {  } )
+   over "@y" "eqTo" "^z"
+   replace "y" -> "z";
+
+# 4. If x has a property y and y is opposite to z, then x has not z
+INVENT
+  from ( "have" ( "@x" none none , "@y" "JJ" none ) 1.0 {} )
+  as ( NOT ( "have" ( "@x" none none , "@z" "JJ" none ) 1.0 {} ) )
+  over "@y" "neqTo" "^z"
+  with-properties;
+
+# 4. If x exists with y and y is opposite to z, then x does not exists with z
+INVENT
+   from ( "be" ( "@x" none none  ( "@y" "JJ" none ) ) 1.0 {  } )
+   as ( NOT ( "be" ( "@x" none none  ( "@z" "JJ" none ) ) 1.0 {  } ) )
+   over "@y" "neqTo" "^z"
+   with-properties;
+
+# 5.
+INVENT
+   from ( "have" ( "@x" none none  , "@y" none none ) 1.0 {} )
+   as ( "be" (  "@y" none none ) 1.0 { "GPE" : "@x" "LOC" none . } )
+   over isa "@x" "LOC"
+   with-properties;
+
+# 6. If x has y and x is related z, then x might also have z
+INVENT
+   from ( "have" ( "@x" none none  , "@y" "JJ" none ) 1.0 {} )
+   as ( "have" ( "@x" none none  ("@y" "JJ" none) , "@z" "ENTITY" none ) 1.0 {} )
+   over "@x[@y]" "relatedTo" "^z"
+   replace "y" -> "z"
+   with-properties;
+
+# 7.
+UPDATE ( "have" ( "@x" none none , "@z" "@t" none ) 1.0 {} )
+   over all [ "@z" "relatedTo" "^y" , isa "^z" "^t" ]
+   replace "z" -> "y";
+
+# 3.
+UPDATE ( "have" ( "@x" none none , "@z" none none ) 1.0 {} )
+   over "@z" "eqTo" "^y"
+   replace "z" -> "y";
+
+UPDATE ( "@y" ( "@x" none none , "@z" none none ) 1.0 {} )
+   over "@y" "eqTo" "^t"
+   replace "y" -> "t";
+
+UPDATE ( "@y" ( "@x" none none  ) 1.0 {} )
+   over "@y" "eqTo" "^t"
+   replace "y" -> "t";
+
+# 8.
+INVENT
+   from ( "be" ( "@x" none none   ) 1.0 {} )
+   as ( "@y" ( "@z" none none  , "@t" none none ) 1.0 {} )
+   over "@x" "capableOf" "^y(^z,^t)"
+   with-properties;
+
+# 9.
+INVENT
+   from ( "@y" ( "@x" none none  , "@z" none none ) 1.0 {} )
+   as ( "have" ( "@z" none none  , "@f" "JJ" none ) 1.0 {} )
+   over "@y" "adjectivalForm" "^f"
+   with-properties;
+
+INVENT
+   from ( "@y" ( "@x" none none   ) 1.0 {} )
+   as ( "be" ( "@x" none none  ( "@f" "JJ" none ) ) 1.0 {} )
+   over "@y" "adjectivalForm" "^f"
+   with-properties;
+
+# 9.
+INVENT
+   from ( "@y" ( "@x" none none  , "@z" none none ) 1.0 {} )
+   as ( "be" ( "@z" none none  ("@f" "JJ" none) ) 1.0 {} )
+   over "@y" "adjectivalForm" "^f"
+   with-properties;
+
+# 10.
+INVENT
+  from ( "be" ( "@x" "JJ" none  ) 1.0 { "GPE" : "@y" "@t" "@s" . } )
+  as ( ( "have" ( "@y" "@t" "@s" , "@x" "JJ" none ) 1.0 {} ) )
+  with-properties
+  rem "GPE" ;

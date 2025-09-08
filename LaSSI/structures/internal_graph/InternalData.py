@@ -1,0 +1,21 @@
+import dataclasses
+from dataclasses import dataclass
+from typing import List
+
+import dacite
+
+from LaSSI.structures.internal_graph.EntityRelationship import Singleton
+from LaSSI.structures.internal_graph.Graph import Graph
+
+@dataclass
+class InternalRepresentation:
+    internal_graph: Graph
+    sentences: List[Singleton] = dataclasses.field(default_factory=list)
+
+    @classmethod
+    def from_dict(cls, data):
+        return dacite.from_dict(Singleton, data)
+        # return cls(
+        #     internal_graph=Graph.from_dict(data.get('internal_graph')),
+        #     sentences=[Singleton.from_dict(x) for x in data.get('sentences')]
+        # )

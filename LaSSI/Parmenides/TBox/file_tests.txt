@@ -1,0 +1,9 @@
+INVENT
+   from ( "be" ( "@x" none none   ) 1.0 { "GPE" : "@y" none none . } )
+   as ( "be" ( "@x" none none   ) 1.0 { "GPE" : "@y" none "@z" . } )
+   over "@y" "isA" "^z"
+   with-properties;
+
+ UPDATE ( "be" ( "@x" none none   ) 1.0 { "GPE" : "@y" none "@z" . } )
+   over "^t" "partOf" "@z"
+   replace "z" -> "t" ;

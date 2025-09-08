@@ -1,0 +1,288 @@
+
+implication = (V)--[l:nsubj||csubj||nsubj]->(subject)
+        where ((V unmatched p3 . V) ∧ ((V unmatched p3pass . V) ∧ ((V unmatched p3expl . V) ∧ ((V unmatched p3expl . V) ∧ (V unmatched p3expl . V) ∧ (V unmatched p3expl . V) ∧ (V unmatched fauxcop . V)))))
+       ↪  set (𝜋 action @ subject) as if ( ℓ 0 @ V = verb ) over V then (𝜉 0 @ V) else nothing
+          set(   𝜋 root @ V) as SCRIPT "\"root\""
+          (V);
+
+
+passivity = (V)--[l:nsubjpass]->(subject)
+        where ((V unmatched p3 . V) ∧ ((V unmatched p3pass . V) ∧ ((V unmatched p3expl . V) ∧ ((V unmatched p3expl . V) ∧ (V unmatched p3expl . V) ∧ (V unmatched p3expl . V) ∧ (V unmatched fauxcop . V)))))
+       ↪  set (𝜋 action @ subject) as if ( ℓ 0 @ V = verb ) over V then (𝜉 0 @ V) else nothing
+          set(   𝜋 root @ V) as SCRIPT "\"root\""
+          (V);
+
+
+// Case matching the sentences having no subject!
+p4 = (>> V)<-[∀ ? w:]--(B)
+        --[∀l:dobj||ccomp||nmod||dep||obj||xcomp||obl]->(Z)
+        --[? nmod_tmod]->(TN)
+        --[? expl]->(E)
+        --[? iobj||parataxis]->(IOA)
+        --[? neg]->(N)
+        --[? advmod||advcl]->(>> ADM)
+        --[? compound_prt]->(TB)
+        --[? mark]->(M)
+     //(Z)--[? case]->(T)
+      where ((V unmatched p3 . V) ∧ ((V unmatched p3pass . V) ∧ ((V unmatched p3expl . V) ∧ (ℓ 0 @ V = verb))))
+     ↪  new j
+        set (𝜋 kernel @ h) as kernel
+        set(φ when , j) as TN
+        set(𝜋 expl @ j) as (ℓ 0 @ E)
+        set (𝜋 adv @ j) as (𝜉 0 @ ADM)
+        set (φ iobj , j) as IOA
+        set(   𝜋 root @ j) as SCRIPT "\"root\""
+       //set (φ dep , j) as XC
+        set(φ (if ((label l ) = nmod) over l then    // Defining the label in function of T, if this exists,
+                                                                              // otherwise using V
+                                                      SCRIPT "^ (^ (^ (^ (^ ([ (𝜉 ([⦃\"*.M\"⦄ 0]))  0]) \" \") ([ (𝜉 ([⦃\"*.N\"⦄ 0]))  0])) \" \") (^ ([(° (fun y → { l cp (fun x → { ^ (^ ([⦃x⦄ 0]) \" \") ([⦃x⦄ 1]) }) (\" \")  y } ) ( zip ( a {  (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.V\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.T\"⦄) } ) )) 0]) \" \")) ([ (𝜉 ([⦃\"*.TB\"⦄ 0]))  0])"
+                                                     else
+                                                      SCRIPT "^ (^ (^ (^ (^ ([ (𝜉 ([⦃\"*.M\"⦄ 0]))  0]) \" \") ([ (𝜉 ([⦃\"*.N\"⦄ 0]))  0])) \" \") (^ ([(° (fun y → { l cp (fun x → { ^ (^ ([⦃x⦄ 0]) \" \") ([⦃x⦄ 1]) }) (\" \")  y } ) ( zip ( a {   (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.V\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.T\"⦄) } ) )) 0]) \" \")) ([ (𝜉 ([⦃\"*.TB\"⦄ 0]))  0])"
+                                                     ), j) as Z
+       del V                                             // Removing a node
+       //del T
+       del E
+       //del ADM
+       set (φ inherit_edge , Z ) as V
+       (j);                                              // Instance of reference to be returned
+
+
+p0 = (>> Compl)<-[∀obl||xcomp||dep||obj]--(WithObl)
+       where ((WithObl unmatched p2 . X) ∧ (WithObl unmatched p3pass . V))
+     ↪  new h
+       set (ℓ 0 @ h) as SCRIPT "\"multipleindobj\""
+       set (φ orig , h) as Compl
+       set (𝜉 0 @ h) as (𝜉 0 @ Compl)
+       set (φ (label l), WithObl) as h
+
+       (h);
+
+
+p1 = (X)--[l:det||nmod_poss||amod||mark||case||punct||advmod||advcl||cc||punct||neg||nummod||auxpass]->(Y)                   // Graph matching, First pattern
+   where ((FILL ((ℓ 0 @ X ≠ verb) ∨ ((X unmatched p3fauxcop . V) ∧ ((X unmatched p3simple . V) ∧ ((X unmatched p3 . V) ∧ ((X unmatched p3expl . V) ∧ ((X unmatched p4 . V) ∧ (X unmatched p3pass . V)))))))) ∧ (FILL ((ℓ 0 @ Y = verb) ∧ ((Y unmatched p3fauxcop . V) ∧ ((Y unmatched p3simple . V) ∧ ((Y unmatched p3 . V) ∧ ((Y unmatched p3expl . V) ∧ ((Y unmatched p4 . V) ∧ (Y unmatched p3pass . V))))))))) ∨ (( FILL (label l ≠ neg)) ∧ ((TEST "= |𝜑 ⦃\"Y\"⦄ | 0 ") ∧ ( ( FILL (ℓ 0 @ Y ≠ CC) ) ∧ (( FILL (ℓ 0 @ X ≠ verb)) ∧ (( FILL (label l ≠ mark)) ∨ ((TEST "= |𝜑 ⦃\"X\"⦄ | 1 ")))))))
+   // OPTION 2: where ((Y unmatched p3pass . A) ∧ ( ((FILL ((ℓ 0 @ X ≠ verb) ∨ ((X unmatched p3fauxcop . V) ∧ ((X unmatched p3simple . V) ∧ ((X unmatched p3 . V) ∧ ((X unmatched p3expl . V) ∧ ((X unmatched p4 . V) ∧ ((Y unmatched p3pass . A) ∧ (X unmatched p3pass . V))))))))) ∧ (FILL ((ℓ 0 @ Y = verb) ∧ ((Y unmatched p3fauxcop . V) ∧ ((Y unmatched p3simple . V) ∧ ((Y unmatched p3 . V) ∧ ((Y unmatched p3expl . V) ∧ ((Y unmatched p4 . V) ∧ (Y unmatched p3pass . V))))))))) ∨ (( FILL (label l ≠ neg)) ∧ ((TEST "= |𝜑 ⦃\"Y\"⦄ | 0 ") ∧ ( ( FILL (ℓ 0 @ Y ≠ CC) ) ∧ (( FILL (ℓ 0 @ X ≠ verb)) ∧ (( FILL (label l ≠ mark)) ∨ ((TEST "= |𝜑 ⦃\"X\"⦄ | 1 ")))))))))
+   ↪ set (𝜋 if (( ℓ 0 @ Y ) = verb) over Y then SCRIPT "\"actioned\"" else ((if (label l = case) over Y then (𝜋 pos @ Y) else (label l))) @ X) as (𝜉 0 @ Y)                        // Property extension
+    X inheritpropfrom Y // Property inheritance, with no key overlaps
+    //del Y                                             // Removing a node
+    del l
+    set (φ inherit_edge , X ) as Y
+    (X);                                              // Instance of reference to be returned
+
+
+docop = (target)--[cop]->(V)
+                --[l:nsubj||csubj||nsubj]->(subject)
+        where ((V unmatched p3 . V) ∧ ((V unmatched p3pass . V) ∧ ((V unmatched p3expl . V) ∧ ((V unmatched p3expl . V) ∧ (V unmatched p4 . V)))))
+       ↪  new a
+          new b
+          set (φ (𝜉 0 @ V) , a) as b
+          set (𝜉 0 @ a) as (𝜉 0 @ subject)
+          set (𝜉 0 @ b) as (𝜉 0 @ target)
+          set (ℓ 0 @ a) as (ℓ 0 @ subject)
+          set (ℓ 0 @ b) as (ℓ 0 @ target)
+          set (φ inherit_edge , a) as subject
+          set (φ inherit_edge , b) as target
+          del l
+          del V
+          set (𝜋 kernel @ a) as SCRIPT "\"kernel\""
+          (a);
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+p2 = (>> H)<-[∀l:]--(X)                                   // Graph matching, Second pattern
+           --[conj] hook
+           --[? case]->(K)
+           --[? c : cc]->(Z)
+           //--[? g:]->(Y)
+    //where ((Y unmatched p4 . V) ∧ ((Y unmatched p2 . X) /*∧ (Y unmatched p3 . V)*/))
+     ↪  new h                                             // Creating a new node standing for H
+       set (φ orig , h) as H                             // This node will contain all the grouped element (>>)
+       set (𝜋 conj @ h) as (𝜉 0 @ Z)                     // Optional, only if Z exists!
+       set (𝜉 0 @ h) as (𝜉 0 @ H)
+       set (φ (if ((label l ) = nmod) over l then    // Defining the label in function of K, if this exists,
+                                                                      // otherwise using l
+                                       (𝜉 0 @ K)
+                                      else
+                                       (label l)
+                                      ), X) as h
+       del Z
+       del K
+       del l
+
+
+       (h);
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+p3fauxcop = (V)--[∀n:nsubj]->(S)
+               --[aux]->(A)
+               --[? neg]->(N)
+            where ((( FILL ( 𝜋 lemma @ A )= be ) ∨ (( FILL ( 𝜋 lemma @ A )= do ) ∨  (( FILL ( 𝜋 lemma @ A )= have ) ∨  (( FILL ( 𝜉 0 @ A )= have ) ∨ ( FILL ( 𝜉 0 @ A )= do ))))) ∧ ((V unmatched p4 . V) ∧((V unmatched p3 . V) ∧ ((V unmatched p3pass . V) ∧ ((V unmatched p3expl . V) ∧((ℓ 0 @ V = verb)))))))
+↪  new h
+   set (𝜋 action @ h) as (SCRIPT "(^(^(^(^ (^ ( [(𝜉 ⦃\"A\"⦄) 0])  \" \") ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])) \" \")")                        // Property extension
+   set (𝜋 begin @ h) as (𝜋 begin @ S)                        // Property extension
+   set (𝜋 end @ h) as (𝜋 end @ S)                            // Property extension
+   set (𝜉 0 @ h) as (𝜉 0 @ S)                                // Property extension
+   set (ℓ 0 @ h) as (ℓ 0 @ S)                               // Property extension
+   h inheritpropfrom S
+   set (ℓ 1 @ h) as (SCRIPT "\"root\"")                     // Property extension
+   set (𝜋 aux @ V) as (𝜉 0 @ A)                             // Retain aux attribute
+   del A                                                    // Removing a node
+   set (φ inherit_partial , h) as V
+   set (𝜋 kernel @ h) as kernel
+   set(   𝜋 root @ h) as SCRIPT "\"root\""
+         (h);                                              // Instance of reference to be returned
+
+
+p3simple = (V)--[∀n:nsubj]->(>>S)
+        --[? mark]->(M)
+        --[? compound_prt]->(FB)
+        --[? aux]->(A)
+        --[? neg]->(N)
+        --[∀l:dobj||ccomp||nmod||advmod||advcl||parataxis]->(>>Z) // Future work: nested join between >>Z and >>Z from the join, when required. This might require to re-do the join semantics
+     //(Z)--[? case]->(T)
+     where ((V unmatched p3pass . V) ∧ ((V unmatched p3expl . V) ∧((V unmatched p3 . V) ∧((ℓ 0 @ V = verb)))))
+     ↪
+        //new s
+        set(φ (SCRIPT "(^(^(^(^(^ (^ (^ (^ ( [(𝜉 ⦃\"M\"⦄) 0])  \" \")  ([ (𝜉 ⦃\"A\"⦄)  0]))  \" \") ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])) \" \") ([ (𝜉 ⦃\"FB\"⦄)  0]))") , S) as Z
+        //set(   𝜋 mark @ s) as (𝜉 0 @ M)
+        //set(   φ orig , s) as S
+        //set(   𝜉 0 @ s) as (𝜉 0 @ S)
+       //del V
+       //del T
+       del M
+       set (𝜋 kernel @ S) as kernel
+       set (φ inherit_edge , S ) as V
+       (S) ;
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    // This matches any direct clause with subject and (in)direct object.
+    // Still, we want to avoid having multiple matches: the idea is to group them by as in 4.
+
+p3 = (>> V)<-[∀ ? w:]--(B)
+        --[n:nsubj]->(>> S)
+        --[? mark]->(M)
+        --[? compound_prt]->(FB)
+        --[? aux]->(A)
+        --[? neg]->(N)
+        --[? expl]->(E)
+        --[? iobj||parataxis]->(IOZ)
+        --[? advmod||advcl]->(>> ADM)
+        --[ ge: dobj||ccomp||nmod||dep||obj||obl||xcomp]->( Z) // Future work: nested join between >>Z and >>Z from the join, when required. This might require to re-do the join semantics
+     //(Z)--[? case]->(T)
+     (S)--[? neg]->(NN)
+     where ((V unmatched p3pass . V) ∧ ((V unmatched p3expl . V) ∧((ℓ 0 @ V = verb))))
+     ↪
+       //new s
+       set (φ (SCRIPT "[(° (fun y → { l cp (fun x → { ^ (^ ([⦃x⦄ 0]) \" \") ([⦃x⦄ 1]) }) (\" \") y } ) ( zip ( a {  (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.M\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.A\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.N\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.V\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.ADM\"⦄) ; (° (fun y → {[(𝜉 y) 0]}) ⦃\"*.FB\"⦄) } ) )) 0]"), S) as Z
+       //set(   𝜋 mark @ s) as (𝜉 0 @ M)
+       //set(   φ orig , s) as S
+       //set(   𝜉 0 @ s) as (𝜉 0 @ S)
+       set (𝜋 expl @ S) as (ℓ 0 @ E)
+       set (φ iobj , S) as IOZ
+       set (φ adv , S) as ADM
+       set (φ dep , S) as Z
+       del V
+       //del T
+       del M
+       del A
+       del E
+       del NN
+       set (𝜋 kernel @ S) as kernel
+       (S);
+
+p3expl = (V)--[∀n:nsubj]->(>> S)
+        --[? mark]->(M)
+        --[? compound_prt]->(FB)
+        --[? aux]->(A)
+        --[? neg]->(N)
+        --[? iobj||parataxis]->(IOW)
+        --[? advmod||advcl]->(>> ADM)
+        --[? xcomp||dep||obj||obl||parataxis]->(XC)
+        --[l:expl]->(>> Z) // Future work: nested join between >>Z and >>Z from the join, when required. This might require to re-do the join semantics
+     //(Z)--[? case]->(T)
+     (S)--[? neg]->(NN)
+     //(S)--[nmod]->(C)
+     where (((ℓ 0 @ V = verb)))
+     ↪
+        //new s
+        set(φ (if ((label l ) = nmod) over l then    // Defining the label in function of T, if this exists,
+                                                                      // otherwise using V
+                                              SCRIPT "(^(^(^(^(^(^ (^ ( [(𝜉 ⦃\"M\"⦄) 0])  \" \") ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ([⦃\"S.NN\"⦄ 0]))  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])) \" \") ([ (𝜉 ⦃\"FB\"⦄)  0])"
+                                             else
+                                              SCRIPT "^(^(^ (^(^(^ ( [(𝜉 ⦃\"M\"⦄) 0])  \" \") ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ([⦃\"S.NN\"⦄ 0]))  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])"
+                                             ), S) as Z
+       set(𝜋 expl @ S) as (ℓ 0 @ Z)
+       set (φ iobj , S) as IOW
+       set (𝜋 adv @ S) as (𝜉 0 @ ADM)
+       set (φ dep , S) as XC
+       set(   𝜋 root @ S) as SCRIPT "\"root\""
+       del V
+       //del T
+       del M
+       del A
+       del NN
+       //del ADM
+       set (𝜋 kernel @ S) as kernel
+       (S);
+
+p3pass = (V)--[∀n:nsubjpass]->(>> S)
+        --[? mark]->(M)
+        --[? compound_prt]->(FB)
+        --[? auxpass]->(A)
+        --[? neg]->(N)
+        --[? expl]->(E)
+        --[? iobj||parataxis]->(IOB)
+        --[? advmod||advcl]->(>> ADM)
+       // --[? xcomp]->(XC)
+        --[? l:ccomp||nmod||dep||xcomp||obl]->(Z) // Future work: nested join between >>Z and >>Z from the join, when required. This might require to re-do the join semantics
+     //(Z)--[? case]->(T)
+     (S)--[? neg]->(NN)
+     where ((V unmatched p3expl . V) ∧ (ℓ 0 @ V = verb))
+     ↪
+        //new s
+        set(φ (if ((label l ) = nmod) over l then    // Defining the label in function of T, if this exists,
+                                                                      // otherwise using V
+                                              SCRIPT "^(^(^(^(^(^(  ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ⦃\"M\"⦄)  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])) \" \") ([ (𝜉 ⦃\"FB\"⦄)  0])"
+                                             else
+                                              SCRIPT "^(^(^(^(  ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ⦃\"M\"⦄)  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])"
+                                             ), Z) as S
+    set (𝜉 0 @ Z) as (𝜉 0 @ Z)
+    set (𝜉 1 @ Z) as SCRIPT "\"subjpass\""
+       set (φ iobj , Z) as IOB
+       set (𝜋 adv @ Z) as (𝜉 0 @ ADM)
+       //set (φ dep , Z) as XC
+       set(𝜋 expl @ s) as (ℓ 0 @ E)
+       set(   𝜋 root @ Z) as SCRIPT "\"root\""
+       del V
+       //del T
+       del M
+       del A
+       del E
+       del NN
+       //del ADM
+       //set (𝜋 kernel @ S) as kernel
+       (S);
+
+p3noobj = (V)--[∀n:nsubj]->(>>S)
+        --[? mark]->(M)
+        --[? compound_prt]->(FB)
+        --[? aux]->(A)
+        --[? neg]->(N)
+        --[? case]->(T)
+        --[? cc]->(CC)
+     where ((V unmatched p3pass . V) ∧ ((V unmatched p3expl . V) ∧((V unmatched p3 . V) ∧((V unmatched p3simple . V) ∧((ℓ 0 @ V = verb))))))
+     ↪
+        new obj
+        del n
+        set(φ (SCRIPT "(^(^(^(^(^ (^ (^(^ (^ ( [(𝜉 ⦃\"M\"⦄) 0])  \" \") ([ (𝜉 ⦃\"A\"⦄)  0])) \" \")  \" \") ([ (𝜉 ⦃\"N\"⦄)  0])) \" \") ([ (𝜉 ⦃\"V\"⦄)  0])) \" \") ([ (𝜉 ⦃\"FB\"⦄)  0]))") , S) as obj
+        set (𝜋 (SCRIPT "e cp (= (+ ( [(𝜉 ⦃\"CC\"⦄) 0]) 0.0) 0.0) \"\" ( \"cc\" )")  @ S) as (𝜉 0 @ CC)
+        //set (φ (SCRIPT "e cp (= (| ( [(𝜉 ⦃\"CC\"⦄) 0]) |) 0.0) \"\" ( \"cc\" )") , S ) as CC
+       set (𝜋 kernel @ S) as kernel
+              del M
+              del V
+              del N
+              del A
+              del CC
+       (S)
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

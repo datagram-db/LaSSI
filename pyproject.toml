@@ -1,0 +1,74 @@
+[build-system]
+requires = ["flit_core >=3.2,<4",  "requests==2.32.2"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "LaSSI"
+authors = [
+    {name = "Giacomo Bergami", email = "bergamigiacomo@gmail.com"},
+    {name = "Oliver R. Fox", email = "ollie.fox5@gmail.com"},
+]
+#readme = "README.md"
+requires-python = "3.10"
+#classifiers = ["License :: OSI Approved :: MIT License"]
+dynamic = ["version", "description"]
+dependencies = [
+    "requests==2.32.2",
+    "rdflib_sqlalchemy",
+    "pydot",
+    "sqlalchemy-utils",
+    "drawsvg[all]",
+    "psycopg2-binary==2.9.9",
+    "psycopg2==2.9.9",
+    "torch==2.5.1",
+    "stanza==1.8.1",
+    "news-please==1.5.35",
+    "newspaper3k==0.2.8",
+    "bs4==0.0.1",
+    "feedfinder2==0.0.4",
+    "feedparser==6.0.10",
+    "dateparser==1.1.8",
+    "python-dateutil==2.8.2",
+    "certifi==2024.7.4",
+    "lxml==4.9.3",
+    "colorama==0.4.6",
+    "pytz==2023.3.post1",
+    "plotille==5.0.0",
+    "urllib3==2.2.2",
+    "antlr4-python3-runtime==4.13.1",
+    "StanfordNLPExtractor @ git+https://github.com/datagram-db/stanfordnlp_dg_server.git",
+    "FunctionalMatch @ git+https://github.com/LogDS/FunctionalMatch.git",
+    "PyDatagramDB @ git+https://github.com/datagram-db/datagram-db.git#egg=PyDatagramDB&subdirectory=DatagramDB",
+    "rdflib==7.0.0",
+    "pandas==2.2.3",
+    "dacite",
+    "jsonpath_ng==1.7.0",
+    "websockets==13.0.1",
+    "fastapi==0.115.0",
+    "uvicorn==0.30.6",
+    "numpy==1.26.4",
+    "tqdm",
+    "markov-clustering==0.0.6.dev0",
+    "scikit-learn==1.6.0",
+    "networkx==3.4.1",
+    "plotnine",
+    "sentence-transformers==2.6.0",
+    "matplotlib",
+    "dash",
+    "dash_table",
+    "dashvis",
+    "dash_bootstrap_components",
+    "flask",
+    "latextools",
+    "scikit-learn-extra",
+    "ragatouille",
+    "psutil",
+    "lime",
+    "shap",
+    "accelerate<=0.26.0",
+    "intervaltree"
+]
+
+#[tool.scikit-build]
+#wheel.packages = ["python/src/LaSSI"]
+##cmake.build-type = "Release"

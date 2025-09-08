@@ -1,0 +1,23 @@
+import FBinaryPredicate                       in-module "FunctionalMatch.example.parmenides.Formulae"
+import FUnaryPredicate                        in-module "FunctionalMatch.example.parmenides.Formulae"
+import FNot                                   in-module "FunctionalMatch.example.parmenides.Formulae"
+import FVariable                              in-module "FunctionalMatch.example.parmenides.Formulae"
+import "nonEmptyMatch"                        in-module "FunctionalMatch.example.parmenides.queries"
+import "getMultiwayAdjectivalPoint"           in-module "FunctionalMatch.example.parmenides.queries"
+import "getMultiwayTargetSimpleSentence"      in-module "FunctionalMatch.example.parmenides.queries"
+import "isOfType"                             in-module "FunctionalMatch.example.parmenides.queries"
+import "addProperty"                          in-module "FunctionalMatch.example.parmenides.queries"
+import "getOutgoingNodes"                     in-module "FunctionalMatch.example.parmenides.queries"
+import "extractProperties"                    in-module "FunctionalMatch.example.parmenides.queries"
+import "extractJsonPath"                      in-module "FunctionalMatch.example.parmenides.queries"
+import "removeFromProperties"                 in-module "FunctionalMatch.example.parmenides.queries"
+import "addAdjective"                         in-module "FunctionalMatch.example.parmenides.queries"
+import "addSpecification"                     in-module "FunctionalMatch.example.parmenides.queries"
+import "getIngoingNodes"                      in-module "FunctionalMatch.example.parmenides.queries"
+import "dropCopula"                           in-module "FunctionalMatch.example.parmenides.queries"
+
+// query 9BIS: If the nome/adjective pair is related to a given concept, then this can be grouped as one single variable and represent the relatedness as a RelatedTo
+nested match  FVariable (var(y), var(a) ,var(b),var(c),var(d),var(e))
+       extend-with "getOutgoingNodes" with variable : "b"   result : "z"   rel : "eqTo"
+       as deep rewrite jsonpath "$0:$.specification" to var(z)
+       ;

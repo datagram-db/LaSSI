@@ -1,0 +1,334 @@
+- Q: Ssangyong Motor was taken over by creditors after it collapsed under heavy debts
+    during the 1997-98 Asian financial crisis.
+  R: Asian financial crisis takes over Ssangyong Motor
+  class: not_entailment
+  curr_pos_idx: 1
+  mark: false
+  orig_idx: 1
+- Q: The Qin (from which the name China is derived) established the approximate boundaries
+    and basic administrative system that all subsequent dynasties were to follow.
+  R: Qin Shi Huang was the first Chinese Emperor.
+  class: not_entailment
+  curr_pos_idx: 1
+  mark: true
+  orig_idx: 258
+- Q: '"The professoressa is a bit tired," an adviser to Rita Levi-Montalcini warned
+    me as I prepared to interview Italy''s Nobel prize-winning Life Senator on the
+    eve of her 100th birthday. "Don''t wear her out." I arrive to find the professoressa,
+    as she is universally known, in the dress shop below her office in Rome, in an
+    elegant black dress buttoned to the neck and a gold brooch of her own design,
+    white hair immaculately coiffed, examining the rails of clothes with close and
+    lively attention.'
+  R: Rita Levi-Montalcini is a global expert on the brain.
+  class: not_entailment
+  curr_pos_idx: 1
+  mark: false
+  orig_idx: 259
+- Q: The team drawing up Iraq's new constitution considered giving itself more time
+    to write the document on Sunday, but still looked set to meet its mid-August deadline
+    under intense U.S. pressure.
+  R: On Sunday, officials argued about whether to seek a delay of the August deadline
+    for completing the document in order to give them more time to hash out such sticky
+    issues.
+  class: not_entailment
+  curr_pos_idx: 1
+  mark: false
+  orig_idx: 260
+- Q: A closely divided U.S. Supreme Court said on Thursday its 2002 ruling that juries
+    and not judges must impose a death sentence applies only to future cases, a decision
+    that may affect more than 100 death row inmates.
+  R: The Supreme Court decided that only judges can impose the death sentence.
+  class: not_entailment
+  curr_pos_idx: 3
+  mark: false
+  orig_idx: 7
+- Q: Los Angeles County probation officials say they are now studying how other counties
+    recover juvenile detention costs, after admitting they mistakenly billed parents
+    for days when youths were held in probation camps and halls. By law, California
+    counties can bill parents and legal guardians for some daily costs of detaining
+    youths, but only those whose parents can afford to pay. Last year, more than 20,000
+    youths were admitted to probation camps and halls, and L.A. County billed parents
+    a daily charge of $11.94 for camps, $23.63 for halls.
+  R: In Los Angeles County all parents have to pay the detention costs of their children.
+  class: not_entailment
+  curr_pos_idx: 3
+  mark: false
+  orig_idx: 264
+- Q: Grieving father Christopher Yavelow hopes to deliver one million letters to the
+    queen of Holland to bring his children home.
+  R: Christopher Yavelow is the queen of Holland.
+  class: not_entailment
+  curr_pos_idx: 8
+  mark: true
+  orig_idx: 16
+- Q: Philadelphia is considered the birthplace of the United States of America, where
+    the Declaration of Independence and Constitution were written and signed in the
+    city's Independence Hall.
+  R: The US Declaration of Independence is located in Philadelphia.
+  class: not_entailment
+  curr_pos_idx: 10
+  mark: false
+  orig_idx: 276
+- Q: Andreessen, who helped define the Internet revolution as part of team that created
+    the first Internet browser (Mosaic) and his co-founding Netscape, told a packed
+    hall at the San Francisco Marriott hotel Thursday that he is "extremely committed"
+    to his startup Loudcloud.
+  R: The Internet browser Mosaic was created at the San Francisco Marriott hotel.
+  class: not_entailment
+  curr_pos_idx: 11
+  mark: true
+  orig_idx: 22
+- Q: Amazon shares fell nearly 4 percent following the results as the company said
+    operating income would drop as much as 42 percent in the second quarter.
+  R: Shares of Amazon fell 4 percent.
+  class: not_entailment
+  curr_pos_idx: 11
+  mark: false
+  orig_idx: 23
+- Q: Despite CNOOC's all-cash bid, Unocal said its recommendation to shareholders
+    in favor of the $16.4 billion offer of cash and stock from Chevron remains in
+    effect.
+  R: Unocal said it would evaluate the CNOOC offer.
+  class: not_entailment
+  curr_pos_idx: 11
+  mark: true
+  orig_idx: 20
+- Q: UN Secretary General Kofi Annan has noted that the Iraqi people turned out in
+    large numbers to vote in the January 30 ballot.
+  R: Kofi Annan was elected in the January 30 ballot.
+  class: not_entailment
+  curr_pos_idx: 11
+  mark: false
+  orig_idx: 25
+- Q: He also referred to the "illegal" arrest on 31 May of Mexican Professor Maria
+    Eugenia Ochoa Garcia, whom the Salvadoran government accused of having connections
+    with the Salvadoran guerrillas.
+  R: Professor Ochoa Garcia is a member of the Salvadoran government.
+  class: not_entailment
+  curr_pos_idx: 12
+  mark: false
+  orig_idx: 38
+- Q: Tropical storm Koni dumped significant rains on the Philippines before becoming
+    a minimal typhoon and eventually making landfall on the northern coast of Vietnam.
+  R: A tropical storm has caused significant property damage.
+  class: not_entailment
+  curr_pos_idx: 13
+  mark: false
+  orig_idx: 42
+- Q: The memo, written by Marc Allen Connelly (who was general counsel to the funeral
+    services commission at the time) and sent to Dick McNeil (the Bush-appointed chairman
+    of the funeral commission), stated that Connelly "received information" from Texas
+    state officials that two of the funeral commissioners worked for SCI.
+  R: Marc Allen Connelly worked for SCI.
+  class: not_entailment
+  curr_pos_idx: 14
+  mark: true
+  orig_idx: 48
+- Q: The extension of the effective period of marketing exclusivity for drugs is designed
+    to give pharmaceutical companies a fair return.
+  R: Prospective drugs must have long market life after regulatory approval in order
+    to be developed.
+  class: not_entailment
+  curr_pos_idx: 15
+  mark: false
+  orig_idx: 52
+- Q: VCU School of the Arts In Qatar is located in Doha, the capital city of Qatar.
+  R: Qatar is located in Doha.
+  class: not_entailment
+  curr_pos_idx: 16
+  mark: false
+  orig_idx: 60
+- Q: Primary prevention of Alzheimer's disease is not possible at present.
+  R: Alzheimer's disease is treated using drugs.
+  class: not_entailment
+  curr_pos_idx: 17
+  mark: false
+  orig_idx: 69
+- Q: On October 1 2001, EU and other countries introduced the option for domestic
+    animal owners to apply for Pet passports under the Pets Travel Scheme (PETS for
+    short), for pets returning from abroad to the United Kingdom. This replaced the
+    old system of 6 months compulsory quarantine for all domestic pets.
+  R: In 2001, the EU introduced a six-month compulsory quarantine for all domestic
+    pets.
+  class: not_entailment
+  curr_pos_idx: 18
+  mark: false
+  orig_idx: 85
+- Q: While Bush was in the air, the White House was evacuated, with many employees
+    running away from the premises on orders from Secret Service agents.
+  R: The U.S. military evacuated U.S. citizens.
+  class: not_entailment
+  curr_pos_idx: 18
+  mark: false
+  orig_idx: 89
+- Q: Rolling Stone, one of the music industry's foremost publications, has found itself
+    reporting false news gleaned from a Wikipedia article. The online edition of the
+    magazine's Rock & Roll Daily released an article entitled "Halle Berry Set to
+    Ruin Reputation..." on December 11, reporting on the news that the actor had announced
+    her intentions to release a musical album. The story was quickly picked up by
+    the Washington Post, All Headline News and other news agencies eager to report
+    on the Academy Award-winning actress' foray into the musical world. The only trouble
+    is, according to one of the album's alleged producers, Scott Storch, there is
+    no such album...and he definitely hasn't produced three songs for it.
+  R: Halle Berry works with Scott Storch.
+  class: not_entailment
+  curr_pos_idx: 18
+  mark: false
+  orig_idx: 97
+- Q: The investigation came about following the collapse of Barings Bank, when one
+    of its traders based in Singapore, Nick Leeson, amassed losses of the order of
+    600-700 million without the bank being aware of it.
+  R: Nick Leeson was arrested for collapse of Barings Bank PLC.
+  class: not_entailment
+  curr_pos_idx: 20
+  mark: false
+  orig_idx: 117
+- Q: An American journalist of Russian descent, Klebnikov was shot four times by at
+    least one assassin in a passing car as he stepped outside his office that evening
+    in Moscow.
+  R: Vladislav Listyev was murdered in Moscow.
+  class: not_entailment
+  curr_pos_idx: 20
+  mark: false
+  orig_idx: 118
+- Q: Monica Meadows, a 22-year-old model from Atlanta, was shot in the shoulder on
+    a subway car in New York City.
+  R: Monica Meadows, 23, was shot in shoulder while riding a subway car in New York
+    City
+  class: not_entailment
+  curr_pos_idx: 21
+  mark: false
+  orig_idx: 123
+- Q: Despite Bjork making her first live performance in two years, the crowd of 10,000
+    people was only half of what the hall in the Tokyo suburb of Makuhari could hold.
+  R: 10,000 people live in Tokyo.
+  class: not_entailment
+  curr_pos_idx: 22
+  mark: false
+  orig_idx: 126
+- Q: Hours earlier, Yasser Arafat called for an end to attacks against Israeli civilians
+    in the two weeks before Israeli elections.
+  R: Arafat condemned suicide bomb attacks inside Israel.
+  class: not_entailment
+  curr_pos_idx: 22
+  mark: false
+  orig_idx: 130
+- Q: FMLN reports to our people, and to the people of the world, that the massacre
+    against the Salvadoran Workers National Union Federation [Fenastras] was carried
+    out by Colonel Elena Fuente, as the head of the morbid death squad of the army's
+    1st Infantry Brigade, in response to our military attack on the army staff.
+  R: Fenastras was attacked by FMLN.
+  class: not_entailment
+  curr_pos_idx: 23
+  mark: false
+  orig_idx: 137
+- Q: A new report indicates that women's participation in decision-making in the country
+    is minimal.
+  R: Women are poorly represented in parliament.
+  class: not_entailment
+  curr_pos_idx: 23
+  mark: false
+  orig_idx: 146
+- Q: The humane organization, Caritas, quoting its branch in Iraq, announced today,
+    in Germany, that several Iraqi hospitals, especially Saddam Hospital, which is
+    considered the biggest hospital in Iraq, were hit in the American-British bombing
+    of the Iraqi capital.
+  R: Caritas announced that several Iraqi hospitals, (excluding Saddam Hospital,)
+    were hit in the shelling of Baghdad.
+  class: not_entailment
+  curr_pos_idx: 24
+  mark: false
+  orig_idx: 149
+- Q: The town is also home to the Dalai Lama and to more than 10,000 Tibetans living
+    in exile.
+  R: The Dalai Lama has been living in exile since 10,000.
+  class: not_entailment
+  curr_pos_idx: 24
+  mark: false
+  orig_idx: 151
+- Q: Hodler claimed there were also irregularities in the campaigns organized by Atlanta
+    for the 1996 Summer Games, Sydney for the Summer Olympics in 2000 and Salt Lake
+    City for the 2002 Winter Games.
+  R: Before Salt Lake City, Winter Olympic Games took place in Nagano.
+  class: not_entailment
+  curr_pos_idx: 24
+  mark: false
+  orig_idx: 153
+- Q: NIH's FY05 budget request of $28.8 billion includes $2 billion for the National
+    Institute of General Medical Sciences, a 3.4-percent increase, and $1.1 billion
+    for the National Center for Research Resources, and a 7.2-percent decrease from
+    FY04 levels.
+  R: A request was reduced to $1.1 billion
+  class: not_entailment
+  curr_pos_idx: 26
+  mark: false
+  orig_idx: 163
+- Q: But the message delivered by their performance piece was mostly sad and raw.
+    After just three weeks on the road, one of the two Italian artists, Pippa Bacca,
+    33, was killed by a driver who offered her a ride. Her naked body was found on
+    April 11 in some bushes near a Turkish village after a suspect led investigators
+    to the site. Although an official cause of death has not been given, local Turkish
+    authorities said Ms. Bacca had been raped and strangled.
+  R: Pippa Bacca was an Italian peace activist.
+  class: not_entailment
+  curr_pos_idx: 26
+  mark: false
+  orig_idx: 164
+- Q: When Albright was the US ambassador to the United Nations, Lesley Stahl of "60
+    Minutes" asked her about the sanctions and the deaths of Iraqi children. Albright
+    said it was America's responsibility to make sure the Gulf War did not have to
+    be fought again.
+  R: Albright said that to punish Saddam Hussein, the deaths of those children were
+    "worth it."
+  class: not_entailment
+  curr_pos_idx: 27
+  mark: false
+  orig_idx: 169
+- Q: The official visit of the Argentine minister marks a further step in the normalisation
+    of UK-Argentine relations.
+  R: Relations between Argentina and Great Britain are growing more cooperative.
+  class: not_entailment
+  curr_pos_idx: 28
+  mark: false
+  orig_idx: 173
+- Q: As a result of these weaknesses, computer systems and the operations that rely
+    on the systems were highly vulnerable to tampering, disruption, and misuse from
+    both internal and external sources.
+  R: Non-authorized personnel illegally entered into computer networks.
+  class: not_entailment
+  curr_pos_idx: 30
+  mark: false
+  orig_idx: 186
+- Q: At around 14:00 UTC today, a man climbed over the perimeter fence and made his
+    way onto the North runway, 27R, at London's  Heathrow Airport, the United Kingdom's
+    largest airport. The man, who was carrying a rucksack, then attempted to run in
+    front of a plane on the runway,  however it is believed that he was tackled to
+    the ground by armed police before reaching the wide runway.
+  R: The number of security screeners in US airports will be reduced.
+  class: not_entailment
+  curr_pos_idx: 35
+  mark: false
+  orig_idx: 201
+- Q: As regards the headquarters building, the Swiss are stipulating that they would
+    transfer it to the WTO for a value of about 51 million swiss franks.
+  R: The WTO headquarters are in Switzerland.
+  class: not_entailment
+  curr_pos_idx: 37
+  mark: false
+  orig_idx: 212
+- Q: Today's best estimate of giant panda numbers in the wild is about 1,100 individuals
+    living in up to 32 separate populations mostly in China's Sichuan Province, but
+    also in Shaanxi and Gansu provinces.
+  R: There are 32 pandas in the wild in China.
+  class: not_entailment
+  curr_pos_idx: 37
+  mark: false
+  orig_idx: 214
+- Q: NASA estimated, Monday, that it will cost $104 billion to return astronauts to
+    the moon, by 2018, in a new rocket that combines the space shuttle with the capsule
+    of an earlier NASA era.
+  R: The new space vehicle design uses shuttle rocket parts and an Apollo-style capsule.
+  class: not_entailment
+  curr_pos_idx: 39
+  mark: false
+  orig_idx: 227
