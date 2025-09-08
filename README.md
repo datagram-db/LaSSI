@@ -5,6 +5,7 @@ LaSSI stands for `LogicAl, Semantic, and Structure text Interpretation`. This pi
 ## Authors
 
 * Giacomo Bergami (2020 -)
+* Franco O. Saez Vander Linder (2025)
 * Oliver Robert Fox (2023 -)
 
 ## Installing
