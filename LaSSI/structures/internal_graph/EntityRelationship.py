@@ -443,8 +443,7 @@ class Singleton(NodeEntryPoint):  # Graph node representing just one entity
         if node_to_use is None or not isinstance(node_to_use, Singleton):
             return ''
 
-        props_to_ignore = ['begin', 'pos', 'end', 'kernel', 'lemma', 'specification', 'number', 'root', 'expl', 'cc',
-                           'conj', 'neg']
+        props_to_ignore = ['begin', 'pos', 'end', 'kernel', 'lemma', 'specification', 'number', 'root', 'expl']
         properties_list = defaultdict(list)
         for key in dict(node_to_use.properties):
             if key not in props_to_ignore:

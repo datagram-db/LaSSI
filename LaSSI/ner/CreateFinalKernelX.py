@@ -262,12 +262,21 @@ class CreateFinalKernelX:
 
         source_props = dict(kernel.kernel.source.properties) if isinstance(kernel.kernel.source, Singleton) else None
         if source_props is not None and 'adv' in source_props and source_props['adv']:
-            new_edge_label_name = f"{kernel.kernel.edgeLabel.named_entity} {source_props['adv']}"
+            word_permutations = itertools.permutations(kernel.kernel.edgeLabel.named_entity.split(' ') + source_props['adv'].split(' '))
+            combined_permutations = {' '.join(p) for p in word_permutations}
+
+            # If 'adv' name is in edge label, we don't need it in properties
+            if source_props['adv'] in kernel.kernel.edgeLabel.named_entity:
+                kernel = kernel.update_kernel(kernel.kernel.source.remove_prop('adv'), 'source')
+                nx.set_node_attributes(self.G, {kernel.id: kernel}, 'data')
 
             # If the concatenation is not present in the list of phrasal verbs, reject and return kernel as it was
             phrasal_verbs = Services.getInstance().getParmenides().getPhrasalVerbs()
-            if len({new_edge_label_name.replace(" ", "")}.intersection(x.replace(" ", "") for x in phrasal_verbs)) == 0:
+            found_phrasal_verbs = combined_permutations.intersection(phrasal_verbs)
+            if len(found_phrasal_verbs) == 0:
                 return kernel
+
+            new_edge_label_name = list(found_phrasal_verbs)[0] # TODO: What if more than one element?
 
             edge_label = kernel.kernel.edgeLabel.update_name(new_edge_label_name)
             edge_source = kernel.kernel.source.remove_prop('adv')
