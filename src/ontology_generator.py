@@ -1,7 +1,6 @@
 import edge_mapping
 import adjacency_list
-import transitive_closure
-import parse_conceptnet_file
+from LaSSI.Parmenides.conceptnet import parse_conceptnet_file, transitive_closure
 import wiktionary_json_extract
 import json
 import csv

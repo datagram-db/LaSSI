@@ -5,7 +5,7 @@ from typing import Union, Iterable
 
 import rdflib
 
-from Parmenides.GSMObject import GSMObject
+from LaSSI.Parmenides.GSMObject import GSMObject
 
 class RDFGsmObject(GSMObject):
     def __init__(self, idx, dv:'RDFGsmDatabase', type):
@@ -73,7 +73,7 @@ class RDFGsmDatabase:
     def _getSchemaTypeOf(self, item):
         item = rdflib.URIRef(item) if isinstance(item, str) else item
         xs = [self.schema[str(x)] for x in self.db.objects(subject=item, predicate=rdflib.RDF.type, unique=True) if str(x) in self.schema]
-        from Parmenides.schema import merge_schema_elements
+        from LaSSI.Parmenides.schema import merge_schema_elements
         return functools.reduce(merge_schema_elements, xs, {"property":[], "ell":[], "xi":[], "containment":[]})
 
     def __getattr__(self, item):
@@ -106,5 +106,5 @@ if __name__ == "__main__":
             else:
                 type_specification[type_info][type_of_field].add((str(predicate), score_field, str(target_type)))
     type_specification = {k: {k2:list(v2) for k2,v2 in v.items()} for k, v in type_specification.items()}
-    with open("/home/gyankos/ontology_integration/data/nt_schema.json", "w") as f:
+    with open("/data/nt_schema.json", "w") as f:
         json.dump(type_specification, f, indent=4)

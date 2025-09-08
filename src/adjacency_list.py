@@ -1,11 +1,10 @@
-from sqlitedict import SqliteDict
-from parse_conceptnet_file import Relation, CompactRelation
+# from sqlitedict import SqliteDict
+from LaSSI.Parmenides.conceptnet.parse_conceptnet_file import CompactRelation
 import csv
 
 # db = rocksdb.DB("adjacency_list.db", rocksdb.Options(create_if_missing=True)) # node key and corresponding url node value
 
 def process_conceptnet_csv(csv_file, db):
-
     with open(csv_file, "r", encoding="utf-8") as tsv:
         #reader = csv.reader(f)
 

@@ -3,11 +3,10 @@ import gzip
 import json
 import os.path
 
-import py7zr
 import io
 from collections import defaultdict
 
-from Parmenides.conceptnet.parse_conceptnet_file import CompactRelation
+from LaSSI.Parmenides.conceptnet.parse_conceptnet_file import CompactRelation
 
 
 class ConceptNet:
@@ -60,7 +59,7 @@ def getClusters(cnls:list[ConceptNet], db_name):
     """
     count = 0
     S = {"wiki", "resource", "wn31", "2012", "umbel"}
-    if not os.path.exists("/home/gyankos/ontology_integration/data/adj_list.json"):
+    if not os.path.exists("/data/adj_list.json"):
         db = defaultdict(set)
         for cn in cnls:
             for r in cn:
@@ -74,12 +73,12 @@ def getClusters(cnls:list[ConceptNet], db_name):
                 db[r.surfaceStart].add(r.surfaceEnd)
                 db[r.surfaceEnd].add(r.surfaceStart)
             print("done")
-        from Parmenides.conceptnet.transitive_closure import floyd_warshall, DSU, build_clusters
+        from LaSSI.Parmenides.conceptnet.transitive_closure import floyd_warshall, build_clusters
         db = {k:sorted(list(v)) for k,v in db.items()}
-        with open("/home/gyankos/ontology_integration/data/adj_list.json", "w", encoding="utf-8") as f:
+        with open("/data/adj_list.json", "w", encoding="utf-8") as f:
             json.dump(db, f, ensure_ascii=False, indent=4)
     else:
-        db = json.load(open("/home/gyankos/ontology_integration/data/adj_list.json"))
+        db = json.load(open("/data/adj_list.json"))
 
     print("floyd_warshall")
     floyd_warshall(db)

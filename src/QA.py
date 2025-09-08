@@ -7,14 +7,11 @@ __maintainer__ = "Giacomo Bergami"
 __email__ = "bergamigiacomo@gmail.com"
 __status__ = "Production"
 
-import dataclasses
 import urllib
 #--- rdflib 6.3.2, dependencies in pyproject.toml --- make a new project with a new env, install rdflib there
-import rdflib
-from rdflib.graph import Graph, ConjunctiveGraph
 from rdflib import Graph, URIRef, BNode, Literal, XSD
 from rdflib import Namespace
-from rdflib.namespace import OWL, RDF, RDFS, FOAF
+from rdflib.namespace import OWL, RDF, RDFS
 
 #from LaSSI.Parmenides import Prepositions, SentenceStructure
 # --> import below from formula.py
@@ -22,7 +19,7 @@ from rdflib.namespace import OWL, RDF, RDFS, FOAF
 from src.Formulae import FVariable, FUnaryPredicate, FBinaryPredicate, FNot # had to add "src." because then the type checks wont work cuz the rules txt imports with src
 from FunctionalMatch.language.LanguageMainPoint import parse_query
 from TBoxReasoning import KnowledgeExpansion
-from Parmenides import ParmenidesSingleton
+from LaSSI.Parmenides import ParmenidesSingleton
 # from LaSSI.structures.extended_fol.TBoxReasoning import KnowledgeExpansion   #### tboxreasoning.py
 
 
@@ -423,8 +420,6 @@ def make_ontology_from_raw():
     p.create_relationship_instance("people", "HasA", "blotter")
 
     import pandas as pd
-    import ast
-    import traceback
 
     #df = pd.read_csv(r"C:\Users\guygu\Downloads\new_ontology_triplets.tab", sep="\t")
     # i = 0

@@ -2,7 +2,7 @@
 # from LaSSI.structures.extended_fol.Formulae import FVariable, FUnaryPredicate, FBinaryPredicate, FNot
 # from LaSSI.Parmenides.Parmenides import ParmenidesSingleton
 from Formulae import FVariable, FUnaryPredicate, FBinaryPredicate, FNot
-from Parmenides import ParmenidesSingleton
+from LaSSI.Parmenides import ParmenidesSingleton
 
 ## TODO: use single_edge_src_multipoint to retrive the target nodes given the name, the adjective, and the relationship
 
