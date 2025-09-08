@@ -270,17 +270,112 @@ def make_ontology_from_raw():
     p.create_relationship_instance("home entertainment", "isA", "pasttime")
     p.create_relationship_instance("home", "eqTo", "house", refl=True)
     p.create_relationship_instance("home entertainment", "locatedIn", "home", refl=True)
+
+    p.create_concept("you", ["Noun"])
+    p.create_concept("woman", ["Noun"])
+    p.create_concept("he", ["Noun"])
+    p.create_concept("person", ["Noun"])
+
+    p.create_concept("television", ["Noun"])
+    p.create_concept("home", ["Noun"])
+    p.create_concept("house", ["Noun"])
+    p.create_concept("home entertainment", ["Noun"])
+    p.create_concept("entertainment", ["Noun"])
+    p.create_concept("pasttime", ["Noun"])
+    p.create_concept("equipment", ["Noun"])
+    p.create_concept("apparatus", ["Noun"])
+    p.create_concept("device", ["Noun"])
+    p.create_concept("bruh", ["Noun"])
+    p.create_concept("cable", ["Noun"])
+    p.create_concept("watching TV", ["Concept"])
+    p.create_relationship_instance("television", "isa", "home entertainment")
+    p.create_relationship_instance("home entertainment", "isa", "entertainment")
+    p.create_relationship_instance("home entertainment", "isa", "entertainment")  ### duplicated edges dont matter
+    p.create_relationship_instance("home entertainment", "isa", "pasttime")
+    p.create_relationship_instance("equipment", "isa", "apparatus",
+                                   refl=True)  # refl=True as seen in conceptnet for these 2 nodes
+    p.create_relationship_instance("apparatus", "eq", "device", refl=True)
+    p.create_relationship_instance("television", "isa", "device",
+                                   refl=True)  # r u dumb. device doesnt point to television, it's 1 way
+    # ok but maybe u could do it 2-way since maybe can go up from equipment to something more broad, and then down to something specific like television
+    p.create_relationship_instance("home", "eq", "house", refl=True)
+    p.create_relationship_instance("equipment", "eq", "bruh", refl=True)
+    p.create_relationship_instance("watching TV", "HasPrerequisite", "cable")
+    p.create_relationship_instance("television", "HasPrerequisite", "watching TV")
+    p.create_relationship_instance("home entertainment", "locatedIn", "home", refl=True)
+
+    p.create_concept("people", ["Noun"])
+    p.create_concept("race track", ["Noun"])
+    p.create_concept("apartment", ["Noun"])
+    p.create_concept("desert", ["Noun"])
+    p.create_concept("populated areas", ["Noun"])
+    p.create_relationship_instance("people", "AtLocation", "race track")
+    p.create_relationship_instance("people", "AtLocation", "apartment")
+    p.create_relationship_instance("people", "AtLocation", "populated areas")
+    p.create_relationship_instance("person", "AtLocation", "race track")
+    p.create_relationship_instance("person", "AtLocation", "apartment")
+    p.create_relationship_instance("person", "AtLocation", "populated areas")
+    p.create_relationship_instance("person", "AtLocation", "desert")
+
+    p.create_concept("choker", ["Noun"])
+    p.create_concept("jewelry box", ["Noun"])
+    p.create_concept("boutique", ["Noun"])
+    p.create_concept("jewelry store", ["Noun"])
+    p.create_relationship_instance("choker", "AtLocation", "jewelry box")
+    p.create_relationship_instance("choker", "AtLocation", "boutique")
+    p.create_relationship_instance("choker", "AtLocation", "jewelry store")
+    p.create_relationship_instance("person", "AtLocation", "jewelry store")
+
+    p.create_concept("baggage", ["Noun"])
+    p.create_concept("woman", ["Noun"])
+    p.create_concept("travelling", ["Noun"])
+    p.create_concept("airport", ["Noun"])
+    p.create_relationship_instance("person", "AtLocation", "airport")
+    p.create_relationship_instance("baggage", "AtLocation", "airport")
+    p.create_relationship_instance("baggage", "UsedFor", "travelling")
+    p.create_relationship_instance("travelling", "AtLocation", "airport")
+
+    p.create_concept("leftovers", ["Noun"])
+    p.create_concept("mold", ["Noun"])
+    p.create_concept("refrigerator", ["Noun"])
+    p.create_concept("container", ["Noun"])
+    p.create_concept("breadbox", ["Noun"])
+    p.create_concept("fridge", ["Noun"])
+    p.create_relationship_instance("leftovers", "AtLocation", "refrigerator")
+    p.create_relationship_instance("leftovers", "AtLocation", "container")
+    p.create_relationship_instance("mold", "AtLocation", "refrigerator")
+    p.create_relationship_instance("mold", "AtLocation", "breadbox")
+    p.create_relationship_instance("fridge", "eq", "refrigerator",
+                                   refl=True)  # even tho fridge=refrig, the answer retrieval says leftovers is atLoc refrig and not fridge
+
+    p.create_concept("fountain pen", ["Noun"])
+    p.create_concept("ink", ["Noun"])
+    p.create_concept("absorb", ["Noun"])
+    p.create_concept("blotter", ["Noun"])
+    p.create_concept("desk drawer", ["Noun"])
+    p.create_concept("calligrapher’s hand", ["Noun"])
+    p.create_concept("absorb ink", ["Concept"])
+    p.create_relationship_instance("blotter", "CapableOf", "absorb ink")
+    p.create_relationship_instance("blotter", "HasProperty", "container")
+    p.create_relationship_instance("fountain pen", "AtLocation", "blotter")
+    p.create_relationship_instance("fountain pen", "AtLocation", "calligrapher’s hand")
+    p.create_relationship_instance("fountain pen", "AtLocation", "desk drawer")
+    p.create_relationship_instance("fountain pen", "HasA", "desk drawer")
+    p.create_relationship_instance("ink", "AtLocation", "blotter")
+    p.create_relationship_instance("people", "HasA", "fountain pen")
+    p.create_relationship_instance("people", "HasA", "blotter")
+
     p.serialize("franco_parmenides.ttl")
 
 def parmenides_db_write():
     from LaSSI.Parmenides.Parmenides import ParmenidesSingleton
     ParmenidesSingleton.instance()
-    ParmenidesSingleton.init("/home/giacomo/projects/LaSSI/cache", "giacomo", "omocaig",
+    ParmenidesSingleton.init("/home/parallels/PycharmProjects/LaSSI/cache", "lassi", "drowssap",
                              "localhost", 5432, False, "franco_parmenides.ttl")
     from FunctionalMatch.language.LanguageMainPoint import parse_query
-    queries = parse_query("/home/giacomo/projects/LaSSI/query_franco.txt")
+    queries = parse_query("/home/parallels/PycharmProjects/LaSSI/query_franco.txt")
     from LaSSI.structures.extended_fol.TBoxReasoning import KnowledgeExpansion
-    ke = KnowledgeExpansion("/home/giacomo/projects/LaSSI/_kexp.pickle")
+    ke = KnowledgeExpansion("/home/parallels/PycharmProjects/LaSSI/_kexp.pickle")
 
     from LaSSI.structures.extended_fol.Formulae import FVariable
     var = FVariable("?1", "existential", None, None, 1)
